@@ -1,4 +1,4 @@
-Package: shinyTime
+Package: shinyTimeLine
 Type: Package
 Title: Longitudinal Patient Analysis
 Version: 0.1.0
