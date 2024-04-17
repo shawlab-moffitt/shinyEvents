@@ -1,7 +1,7 @@
 
 #' Timeline plot
 #'
-#'#' @description
+#' @description
 #' `timelinePlot()` is used to generate a patient timeline plot to view longitudinal data.
 #'
 #' @param data Data frame object with columns detailing the specific event, event category, event start time and event stop time
@@ -20,12 +20,13 @@
 #'
 #' @examples
 #' df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
-#' "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
+#'                            "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
 #'                  EventType = c("Clinical Time Point","Clinical Time Point","Medication",
-#'                  "Medication","Imaging","Imaging","Surgery Biopsy"),
+#'                                "Medication","Imaging","Imaging","Surgery Biopsy"),
 #'                  AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
 #'                  AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085))
-#' timelinePlot(data = df, event_col = "Event", event_type_col = "EventType", start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop")
+#' timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
+#'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop")
 #'
 
 
