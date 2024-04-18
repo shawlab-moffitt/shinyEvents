@@ -31,7 +31,7 @@
 
 
 timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, start_col = NULL, stop_col = NULL,
-                         title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE) {
+                         unit = "years", title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE) {
 
   if (is.null(data)) stop("Must provide event data")
   if (is.null(event_col)) event_col <- colnames(data)[1]
@@ -61,7 +61,7 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
     ## draw lines - inherits start time point x,y
     ggplot2::geom_segment(ggplot2::aes(xend = !!ggplot2::sym(stop_col), yend = index), linewidth = 2, lineend = "butt") +
     ## x and y labels
-    ggplot2::xlab("Age (Years)") +
+    ggplot2::xlab(paste0("Age (",unit,")")) +
     ggplot2::ylab('') +
     ggplot2::theme_minimal() +
     ## adjust x & y axis to accommodate the event lables
@@ -92,4 +92,6 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   return(plot2)
 
 }
+
+
 
