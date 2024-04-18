@@ -30,7 +30,7 @@
 #'                  AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085))
 #'
 #' timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
-#'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years)
+#'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years")
 #'
 #' # Plotly Example
 #' df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
@@ -47,7 +47,7 @@
 #'                  SiteDiagnostic = c(NA,NA,NA,NA,NA,NA,TRUE))
 #'
 #' timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
-#'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years", plotly = T)
+#'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years", plotly = TRUE)
 
 timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, start_col = NULL, stop_col = NULL, unit = "years",
                          plotly = FALSE, title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE) {
@@ -100,11 +100,17 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
       text = gsub("\\\\", '', text)
       data$text[r] = text
     }
+    plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
+                                                color = !!ggplot2::sym(event_type_col), text = text))
+  } else {
+    plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
+                                                color = !!ggplot2::sym(event_type_col)))
   }
 
-  plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
-                                              color = !!ggplot2::sym(event_type_col), text = text)) +
+  #plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
+  #                                            color = !!ggplot2::sym(event_type_col), text = text)) +
     ## Add end time points
+  plot2 <- plot2 +
     ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(stop_col), y=index),size=4)+
     ## draw lines - inherits start time point x,y
     ggplot2::geom_segment(ggplot2::aes(xend = !!ggplot2::sym(stop_col), yend = index), linewidth = 2, lineend = "butt") +
@@ -145,3 +151,29 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
 
 }
 
+df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
+                                                       "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
+                                             EventType = c("Clinical Time Point","Clinical Time Point","Medication",
+                                                           "Medication","Imaging","Imaging","Surgery Biopsy"),
+                                             AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
+                                             AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085))
+
+                            timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
+                                         start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years")
+
+
+                             df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
+                            "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
+                  EventType = c("Clinical Time Point","Clinical Time Point","Medication",
+                                "Medication","Imaging","Imaging","Surgery Biopsy"),
+                  AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
+                  AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085),
+                  Histology = c("84613 Serous Surface Papillary Carcinoma",NA,NA,NA,NA,NA,NA),
+                  SpecimenSiteOfOrigin = c("Peritoneum, NOS",NA,NA,NA,NA,NA,NA),
+                  CauseOfDeath = c(NA,"Probably Due to Cancer",NA,NA,NA,NA,NA),
+                  MedicationTreatmentLine = c(NA,NA,"First Line","First Line",NA,NA,NA),
+                  EvidenceOfLesion = c(NA,NA,NA,NA,TRUE,FALSE,NA),
+                  SiteDiagnostic = c(NA,NA,NA,NA,NA,NA,TRUE))
+
+ timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
+              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years", plotly = T)

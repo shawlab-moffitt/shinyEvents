@@ -50,3 +50,32 @@ plot
 \description{
 \code{timelinePlot()} is used to generate a patient timeline plot to view longitudinal data.
 }
+\examples{
+# Basic example
+df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
+                           "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
+                 EventType = c("Clinical Time Point","Clinical Time Point","Medication",
+                               "Medication","Imaging","Imaging","Surgery Biopsy"),
+                 AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
+                 AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085))
+
+timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
+             start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years")
+
+# Plotly Example
+df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
+                           "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
+                 EventType = c("Clinical Time Point","Clinical Time Point","Medication",
+                               "Medication","Imaging","Imaging","Surgery Biopsy"),
+                 AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
+                 AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085),
+                 Histology = c("84613 Serous Surface Papillary Carcinoma",NA,NA,NA,NA,NA,NA),
+                 SpecimenSiteOfOrigin = c("Peritoneum, NOS",NA,NA,NA,NA,NA,NA),
+                 CauseOfDeath = c(NA,"Probably Due to Cancer",NA,NA,NA,NA,NA),
+                 MedicationTreatmentLine = c(NA,NA,"First Line","First Line",NA,NA,NA),
+                 EvidenceOfLesion = c(NA,NA,NA,NA,TRUE,FALSE,NA),
+                 SiteDiagnostic = c(NA,NA,NA,NA,NA,NA,TRUE))
+
+timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
+             start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years", plotly = TRUE)
+}
