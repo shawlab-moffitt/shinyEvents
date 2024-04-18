@@ -10,6 +10,8 @@ timelinePlot(
   event_type_col = NULL,
   start_col = NULL,
   stop_col = NULL,
+  unit = "years",
+  plotly = FALSE,
   title = "Timeline Plot",
   title_font = 16,
   x_font = 14,
@@ -20,21 +22,25 @@ timelinePlot(
 \arguments{
 \item{data}{Data frame object with columns detailing the specific event, event category, event start time and event stop time}
 
-\item{event_col}{Column name of specific event name column. Defaults to first column.}
+\item{event_col}{String. Column name of specific event name column. Defaults to first column.}
 
-\item{event_type_col}{Column name of event category column. Defaults to second column.}
+\item{event_type_col}{String. Column name of event category column. Defaults to second column.}
 
-\item{start_col}{Column name of event start time column. Defaults to third column.}
+\item{start_col}{String. Column name of event start time column. Defaults to third column.}
 
-\item{stop_col}{Column name of event stop time column. Defaults to fourth column.}
+\item{stop_col}{String. Column name of event stop time column. Defaults to fourth column.}
 
-\item{title}{Desired plot title.}
+\item{unit}{String. Unit of time to label the x-axis.}
 
-\item{title_font}{Size of title font.}
+\item{plotly}{Boolean. If TRUE, function will return an interactive plotly object.}
 
-\item{x_font}{Size of font on the x-axis.}
+\item{title}{String. Desired plot title.}
 
-\item{y_font}{Size of font on the y-axis}
+\item{title_font}{Numeric. Size of title font.}
+
+\item{x_font}{Numeric. Size of font on the x-axis.}
+
+\item{y_font}{Numeric. Size of font on the y-axis}
 
 \item{na.rm}{Boolean. If TRUE, events with incomplete time data will be removed.}
 }
@@ -43,15 +49,4 @@ plot
 }
 \description{
 \code{timelinePlot()} is used to generate a patient timeline plot to view longitudinal data.
-}
-\examples{
-df <- data.frame(Event = c("Diagnosis","Death","Medication: Carboplatin","Medication: Carboplatin",
-                           "Imaging: Diagnostic","Imaging: Surveillance","Surgery Biopsy: Peritoneum, NOS"),
-                 EventType = c("Clinical Time Point","Clinical Time Point","Medication",
-                               "Medication","Imaging","Imaging","Surgery Biopsy"),
-                 AgeAtEventStart = c(69.085,71.507,69.189,69.441,69.142,70.134,69.085),
-                 AgeAtEventStop = c(69.085,71.507,69.326,69.647,69.142,70.134,69.085))
-timelinePlot(data = df, event_col = "Event", event_type_col = "EventType",
-             start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop")
-
 }
