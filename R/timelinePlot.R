@@ -106,10 +106,8 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
                                                 color = !!ggplot2::sym(event_type_col)))
   }
 
-  #plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
-  #                                            color = !!ggplot2::sym(event_type_col), text = text)) +
-    ## Add end time points
   plot2 <- plot2 +
+    ## Add end time points
     ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(stop_col), y=index),size=4)+
     ## draw lines - inherits start time point x,y
     ggplot2::geom_segment(ggplot2::aes(xend = !!ggplot2::sym(stop_col), yend = index), linewidth = 2, lineend = "butt") +
@@ -143,11 +141,12 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
     ## add title
     ggplot2::ggtitle(title)
   if (plotly) {
-    return(plotly::ggplotly(plot2,tooltip = "text"))
+    plot3 <- plotly::ggplotly(plot2,tooltip = "text")
+    plot3[["x"]][["layout"]][["yaxis"]][["ticktext"]] <- paste0("<span style='color:",newCols_df_uniq$cols,"'>",plot3[["x"]][["layout"]][["yaxis"]][["ticktext"]],"</span>")
+    return(plot3)
   } else {
     return(plot2)
   }
 
 }
-
 
