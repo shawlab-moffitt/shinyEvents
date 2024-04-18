@@ -65,11 +65,10 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   }
 
   # Get index of data to combine similar data points
-  data$EventTempCol <- data[,event_col]
+  EventTempCol <- data[,event_col]
   data[,event_col] <- paste0(data[,event_type_col],": ",data[,event_col])
   data$index <- as.numeric(factor(data[,event_col]))
-  data[,event_col] <- data$EventTempCol
-  data <- data[,grep("EventTempCol",colnames(data), value = T, invert = T)]
+  data[,event_col] <- EventTempCol
 
   # Get x axis min and max
   allAges <- c(data[,start_col],data[,stop_col])
@@ -150,4 +149,5 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   }
 
 }
+
 
