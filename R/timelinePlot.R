@@ -61,7 +61,7 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   if (!is.numeric(data[,stop_col])) stop("Event stop time must be numeric")
 
   if (na.rm) {
-    data <- data[which(!is.na(data[,start_col]) | !is.na(data[,stop_col])),] # remove data with incomplete time
+    data <- data[which(!is.na(data[,start_col]) & !is.na(data[,stop_col])),] # remove data with incomplete time
   }
 
   # Get index of data to combine similar data points
