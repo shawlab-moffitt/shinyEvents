@@ -50,7 +50,8 @@
 #'              start_col = "AgeAtEventStart", stop_col = "AgeAtEventStop", unit = "Years", plotly = TRUE)
 
 timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, start_col = NULL, stop_col = NULL, unit = "years",
-                         plotly = FALSE, title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE) {
+                         plotly = FALSE, title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE,
+                         svg_name = "plot", svg_height = 8, svg_width = 8, dot_size = 3) {
 
   if (is.null(data)) stop("Must provide event data")
   if (is.null(event_col)) event_col <- colnames(data)[1]
@@ -60,9 +61,12 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   if (!is.numeric(data[,start_col])) stop("Event start time must be numeric")
   if (!is.numeric(data[,stop_col])) stop("Event stop time must be numeric")
 
+  data[which(is.na(data[,start_col])),start_col] <- data[which(is.na(data[,start_col])),stop_col]
+  data[which(is.na(data[,stop_col])),stop_col] <- data[which(is.na(data[,stop_col])),start_col]
   if (na.rm) {
     data <- data[which(!is.na(data[,start_col]) & !is.na(data[,stop_col])),] # remove data with incomplete time
   }
+  data$index <- as.numeric(factor(data[,event_col], levels=unique(data[,event_col])))
 
   # Get index of data to combine similar data points
   EventTempCol <- data[,event_col]
@@ -106,9 +110,9 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
                                                 color = !!ggplot2::sym(event_type_col)))
   }
 
+  ## Add end time points
   plot2 <- plot2 +
-    ## Add end time points
-    ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(stop_col), y=index),size=4)+
+    ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(stop_col), y=index),size=dot_size)+
     ## draw lines - inherits start time point x,y
     ggplot2::geom_segment(ggplot2::aes(xend = !!ggplot2::sym(stop_col), yend = index), linewidth = 2, lineend = "butt") +
     ## x and y labels
@@ -143,10 +147,21 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   if (plotly) {
     plot3 <- plotly::ggplotly(plot2,tooltip = "text")
     plot3[["x"]][["layout"]][["yaxis"]][["ticktext"]] <- paste0("<span style='color:",newCols_df_uniq$cols,"'>",plot3[["x"]][["layout"]][["yaxis"]][["ticktext"]],"</span>")
+    plot3 <- plot3 %>%
+      config(
+        toImageButtonOptions = list(
+          format = "svg",
+          height = svg_height,
+          width = svg_width,
+          filename = svg_name
+        )
+      )
     return(plot3)
   } else {
     return(plot2)
   }
 
 }
+
+
 
