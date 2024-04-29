@@ -16,7 +16,11 @@ timelinePlot(
   title_font = 16,
   x_font = 14,
   y_font = 14,
-  na.rm = TRUE
+  na.rm = TRUE,
+  svg_name = "plot",
+  svg_height = 8,
+  svg_width = 8,
+  dot_size = 3
 )
 }
 \arguments{
@@ -43,6 +47,14 @@ timelinePlot(
 \item{y_font}{Numeric. Size of font on the y-axis}
 
 \item{na.rm}{Boolean. If TRUE, events with incomplete time data will be removed.}
+
+\item{svg_name}{String. Desired plot download name. Defualt = "Plot"}
+
+\item{svg_height}{Numeric. Plot download height in pixels. Default = 800.}
+
+\item{svg_width}{Numeric. Plot download width in pixels. Default = 1000.}
+
+\item{dot_size}{Numeric. Size of dot used to mark the event. Default = 3.}
 }
 \value{
 plot

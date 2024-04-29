@@ -16,6 +16,10 @@
 #' @param x_font Numeric. Size of font on the x-axis.
 #' @param y_font Numeric. Size of font on the y-axis
 #' @param na.rm Boolean. If TRUE, events with incomplete time data will be removed.
+#' @param svg_name String. Desired plot download name. Defualt = "Plot"
+#' @param svg_height Numeric. Plot download height in pixels. Default = 800.
+#' @param svg_width Numeric. Plot download width in pixels. Default = 1000.
+#' @param dot_size Numeric. Size of dot used to mark the event. Default = 3.
 #'
 #' @return plot
 #' @export
