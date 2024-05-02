@@ -6,7 +6,7 @@ Authors@R:
       person("Alyssa", "Obermeyer", role = c("cre","aut"),
       email = "Alyssa.Obermeyer@moffitt.org",
            comment = c(ORCID = ""))
-Maintainer: The package maintainer <Alyssa.Obermeyer@moffitt.org>
+Maintainer: The package maintainer Alyssa.Obermeyer@moffitt.org
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: MIT + file LICENSE
@@ -19,3 +19,4 @@ Imports:
     stringr,
     ggtext,
     plotly
+VignetteBuilder: knitr
