@@ -4,3 +4,6 @@
 .Ruserdata
 shinyEvents.Rproj
 .git
+shinyEvents-lite.Rproj
+renv/library/
+renv/staging/
