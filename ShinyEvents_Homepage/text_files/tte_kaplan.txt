@@ -1,0 +1,17 @@
+﻿<b>Data Input</b>
+<p>BatchFLEX provides an intuitive method for users to input and preview a matrix and meta file and to apply common preprocessing steps such as log 2 + 1 transformation. </p>
+<p style = "color:tomato">BatchFLEX will automatically detect whether the input data is <b><u>log normalized</u></b> or <b><u>raw counts</u></b> based on whether the input data matrix is <b><u>numeric or double</u></b>. Users can override this assumption by clicking the <b><u>"Input is RNAseq Count"</u></b> button on the <b><u>"Step 1 - Data Input" tab.</u></b> </p>
+<p>If BatchFLEX detects the data to be log normalized, then <b><u>ComBatSeq</u></b> will be <b><u>unavailable</u></b> as this method is used exclusively for raw counts. All other correction methods can be used on log normalized data and are available. </p>
+<b>Key Input Files</b>
+<b>1. Required Files</b>
+<b>a. Gene expression file</b>
+<b>b. Meta information file</b>
+<a href="" onclick="window.open('input.png','targetWindow', 'toolbar=no, location=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width = auto, height = auto'); return false;">Example Input File Layout</a> 
+<p>The matrix file should contain genes in the first column and sample IDs in the first row. The meta file should contain sample IDs in the first column and any accompanying meta information in subsequent columns. The sample IDs should match between the matrix and meta files. The meta file should include at least one column of known technical effects and at least one column of known biological effects. BatchFLEX defaults to selecting the second column of the meta file as the batch effect and the third column as the variable of interest. This can easily be changed by the user by simply selecting a different column using the dropdown menus.</p> 
+<b>2. Optional Files</b>
+<b>a. Housekeeping Gene List</b>
+<a href="" onclick="window.open('housekeeping.png','targetWindow', 'toolbar=no, location=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width = auto, height = auto'); return false;">Example Housekeeping Gene List</a> 
+<p>An optional housekeeping gene list for the RUVg correction method. The gene list should be a tab separated file with a single column of desired genes. </p>
+<b>b. Gene set of Interest</b>
+<a href="" onclick="window.open('gsea_list.png','targetWindow', 'toolbar=no, location=no, status=no, menubar=no, scrollbars=yes, resizable=yes, width = auto, height = auto'); return false;">Example Gene Set of Interest</a> 
+<p>An optional list of genes for a pathway of interest that can be used with the gene set enrichment analysis. Submitted lists should be in an Rdata format as a named list for each user defined pathway.</p>
