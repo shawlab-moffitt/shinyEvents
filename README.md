@@ -8,6 +8,7 @@ Intro...
 ## Dependencies
 The shinyEvents tool was developed under the following R Environement:
 * `R` - https://cran.r-project.org/bin/windows/base/old/4.4.1/
+
 |  |  |  |  |  |
 | --- | --- | --- | --- | --- |
 | shiny_1.10.0 | shinythemes_1.2.0 | shinyjqui_0.4.1 | shinycssloaders_1.1.0 | shinyWidgets_0.9.0 |
