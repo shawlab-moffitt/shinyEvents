@@ -27,6 +27,7 @@ library(shinycssloaders)
 library(listviewer)
 library(bsicons)
 library(readtext)
+library(svglite)
 
 library(ggsankey)
 library(ComplexHeatmap)
