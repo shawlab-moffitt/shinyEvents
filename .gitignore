@@ -9,5 +9,5 @@ Getting_Started/Package_Version_Installation_local.R
 .rscignore
 rsconnect/
 .Rprofile
-.renv.lock
+renv.lock
 Getting_Started/BiocVersion_3.19.1.tar.gz
