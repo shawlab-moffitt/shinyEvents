@@ -19,6 +19,20 @@ The shinyEvents tool was developed under the following R Environement:
 | shinyjs_2.1.0 | listviewer_4.0.0 | bsicons_0.1.2 | readtext_0.91 | svglite_2.2.1 |
 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |  |  |
 
+The last row of packages were installed mainly via GitHub with the following code:
+```{r}
+devtools::install_github("davidsjoberg/ggsankey", force = TRUE)
+# BiocManager, BiocVersion, S4Vectors, and IRanges are required for ComplexHeatmap
+devtools::install_github("Bioconductor/BiocManager", force = TRUE)
+# Installed BiocVersion with tar.gz file from this link: https://bioconductor.org/packages/3.19/bioc/src/contrib/BiocVersion_3.19.1.tar.gz
+#install.packages("Getting_Started/BiocVersion_3.19.1.tar.gz", repos = NULL, type = "source")
+devtools::install_github("Bioconductor/BiocGenerics", force = TRUE)
+devtools::install_github("Bioconductor/S4Vectors", force = TRUE)
+devtools::install_github("Bioconductor/IRanges", force = TRUE)
+devtools::install_github("jokergoo/ComplexHeatmap", force = TRUE)
+devtools::install_github("jokergoo/InteractiveComplexHeatmap", force = TRUE)
+```
+
 ## Application Setup
 
 ## Package Installation
