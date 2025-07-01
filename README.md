@@ -1,7 +1,6 @@
 # shinyEvents
 
-Intro...
-
+https://shawlab-moffitt.shinyapps.io/shinyevents/
 
 # shinyEvents Setup
 
