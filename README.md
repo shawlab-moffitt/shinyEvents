@@ -15,9 +15,9 @@ The shinyEvents tool was developed under the following R Environement:
 | data.table_1.17.6 | plotly_4.11.0 | stringr_1.5.1 | ggpubr_0.6.1 |
 | RColorBrewer_1.1-3 | reshape2_1.4.4 | rstatix_0.7.2 | survival_3.8-3 |
 | gtsummary_2.2.0 | powerSurvEpi_0.1.5 | readxl_1.4.5 | circlize_0.4.16 |
-| shinyjs_2.1.0 | listviewer_4.0.0 | bsicons_0.1.2 | readtext_0.91 |
+| bslib_0.9.0 | listviewer_4.0.0 | bsicons_0.1.2 | readtext_0.91 |
 | shinyWidgets_0.9.0 | DT_0.33 | ggrepel_0.9.6 | survminer_0.5.0 |
-| bslib_0.9.0 | svglite_2.2.1 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |
+| svglite_2.2.1 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |
 
 
 The last 3 packages were installed mainly via GitHub with the following code:
