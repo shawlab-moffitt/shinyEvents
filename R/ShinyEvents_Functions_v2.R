@@ -20,7 +20,7 @@ timelinePlot_lyprep <- function(data = NULL, event_type_col = NULL, start_col = 
                           paste0("\\<br\\>\\<b\\>", c, ":\\</b\\> ",data[r,c]))
           } else {
             text_vec <- c(text_vec,
-                          paste0("\\<br\\>\\<b\\>AgeAtEvent:\\</b\\> ",data[r,c]))
+                          paste0("\\<br\\>\\<b\\>EventTime:\\</b\\> ",data[r,c]))
           }
         } else {
           data_text <- ifelse(grepl("_Summary$",c),paste0("\n",data[r,c]),data[r,c])
