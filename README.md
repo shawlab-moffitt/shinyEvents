@@ -8,17 +8,19 @@ https://shawlab-moffitt.shinyapps.io/shinyevents/
 The shinyEvents tool was developed under the following R Environement:
 * `R` - https://cran.r-project.org/bin/windows/base/old/4.4.1/
 
-|  |  |  |  |  |
-| --- | --- | --- | --- | --- |
-| shiny_1.10.0 | shinythemes_1.2.0 | shinyjqui_0.4.1 | shinycssloaders_1.1.0 | shinyWidgets_0.9.0 |
-| dplyr_1.1.4 | tidyr_1.3.1 | readr_2.1.5 | ggplot2_3.5.2 | DT_0.33 |
-| data.table_1.17.6 | plotly_4.11.0 | stringr_1.5.1 | ggpubr_0.6.1 | ggrepel_0.9.6 |
-| RColorBrewer_1.1-3 | reshape2_1.4.4 | rstatix_0.7.2 | survival_3.8-3 | survminer_0.5.0 |
-| gtsummary_2.2.0 | powerSurvEpi_0.1.5 | readxl_1.4.5 | circlize_0.4.16 | bslib_0.9.0 |
-| shinyjs_2.1.0 | listviewer_4.0.0 | bsicons_0.1.2 | readtext_0.91 | svglite_2.2.1 |
-| ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |  |  |
+|  |  |  |  |
+| --- | --- | --- | --- |
+| shiny_1.10.0 | shinythemes_1.2.0 | shinyjqui_0.4.1 | shinycssloaders_1.1.0 |
+| dplyr_1.1.4 | tidyr_1.3.1 | readr_2.1.5 | ggplot2_3.5.2 |
+| data.table_1.17.6 | plotly_4.11.0 | stringr_1.5.1 | ggpubr_0.6.1 |
+| RColorBrewer_1.1-3 | reshape2_1.4.4 | rstatix_0.7.2 | survival_3.8-3 |
+| gtsummary_2.2.0 | powerSurvEpi_0.1.5 | readxl_1.4.5 | circlize_0.4.16 |
+| bslib_0.9.0 | listviewer_4.0.0 | bsicons_0.1.2 | readtext_0.91 |
+| shinyWidgets_0.9.0 | DT_0.33 | ggrepel_0.9.6 | survminer_0.5.0 |
+| svglite_2.2.1 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |
 
-The last row of packages were installed mainly via GitHub with the following code:
+
+The last 3 packages were installed mainly via GitHub with the following code:
 ```{r}
 devtools::install_github("davidsjoberg/ggsankey", force = TRUE)
 # BiocManager, BiocVersion, S4Vectors, and IRanges are required for ComplexHeatmap
