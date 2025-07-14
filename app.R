@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250701")
+version_id <- paste0("v1.0.20250710")
 
 
 # File Input ---------------------------------------------------------
@@ -26,8 +26,11 @@ TTE_End_Event_Crit <- ''
 
 
 
-Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
+Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData_v2_treat.txt"
 Example_wkbk_file <- "Example_Data/AACR_GENIE_NSCLC_Adenocarcinoma_Example.xlsx"
+
+example_eventdata_format_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventDataFormatting.txt"
+example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
 
 # Homepage files
 homepage_filepath <- "ShinyEvents_Homepage/text_files/"
@@ -42,6 +45,7 @@ for (file in homepage_tutorial_list){
 
 
 set.seed(42)
+
 
 
 # Load input data if available -------------------------------------------------
@@ -206,6 +210,12 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                         border: 1px solid #ddd;
                                                         padding: 10px;
                                                         }
+                                                        #desc_table table.dataTable td, 
+                                                        #desc_table table.dataTable th,
+                                                        #example_table table.dataTable td, 
+                                                        #example_table table.dataTable th {
+                                                          font-size: 12px !important;
+                                                        }
                                                         "))
                                       ),
                                       shiny::sidebarLayout(
@@ -243,9 +253,9 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                                                          justified = TRUE
                                                                                        ),
                                                                                        conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
-                                                                                                        div(fileInput("SuppDataFileInput1","Supplementary Data Upload", multiple = T, accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
+                                                                                                        div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
                                                                                                             style = "margin-top:-15px;margin-bottom:-15px"),
-                                                                                                        conditionalPanel(condition = "output.SuppDataFileInput1_found",
+                                                                                                        #conditionalPanel(condition = "output.SuppDataFileInput1_found",
                                                                                                                          fluidRow(
                                                                                                                            column(7, style = "margin-bottom:-25px",
                                                                                                                                   selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
@@ -261,7 +271,7 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                                                                                                                choices = c("Yes","No"), selected = "No", inline = T)
                                                                                                                            )
                                                                                                                          )
-                                                                                                        )
+                                                                                                        #)
                                                                                        )
                                                                       ),
                                                      p(),
@@ -278,6 +288,9 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                                       )
                                                      ),
                                                      actionButton("LoadExampleData","Load Example Data"),
+                                                     actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
+                                                                  style = "background-color: #2c3e50; border-color: #2c3e50"),
+                                                     uiOutput("EventDataHelp_modal"),
                                                      value = 1
                                             ),
                                             tabPanel("Data Adjustment",
@@ -1142,6 +1155,18 @@ CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
                                                                               textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
                                                                               ),
                                                              hr(),
+                                                             fluidRow(
+                                                               column(6,
+                                                                      materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event",
+                                                                                     value = FALSE, status = "success", inline = T)
+                                                                      ),
+                                                               column(6,
+                                                                      conditionalPanel(condition = "input.AddAnnoWindow == true",
+                                                                                       numericInput("AddAnnoWindowNum","Time Window (days)", value = 30, min = 0, step = 1)
+                                                                                       )
+                                                                      )
+                                                             ),
+                                                             hr(),
                                                              #textInput("NewColName","New Column Name", placeholder = "ReferenceEvent_RelativeTo_NewEvent"),
                                                              actionButton("SaveAnnotation","Save Annotation", width = "100%")
                                             ),
@@ -1367,6 +1392,7 @@ server <- function(input, output, session) {
       
       # Data Input -------------------------------------------------------------
       
+      
       ProjectName_react <- reactiveVal(Project_Name)
       Param_File_react <- reactiveVal(Event_Param_File)
       Workbook_file_predf_react <- reactiveVal()
@@ -1416,20 +1442,101 @@ server <- function(input, output, session) {
         
       })
       
-      eventDataInput_raw <- reactiveVal()
       
-      observeEvent(input$LoadExampleData, {
-        updateTabsetPanel(session,"shinyevents_tabs",selected = "patient_visual_analytics")
+      example_eventdata_format <- as.data.frame(fread(example_eventdata_format_file, na.strings = c("","NA")))
+      example_mini_eventdata <- as.data.frame(fread(example_mini_eventdata_file, na.strings = c("","NA")))
+      
+      output$desc_table <- renderDT({
+        datatable(example_eventdata_format,
+                  options = list(
+                    pageLength = 3,
+                    scrollX = TRUE,
+                    lengthMenu = c(3, 5, 10, 20, 50)
+                  ),
+                  class = 'stripe compact')
       })
+      
+      output$example_table <- renderDT({
+        datatable(example_mini_eventdata,
+                  options = list(
+                    pageLength = 3,
+                    scrollX = TRUE,
+                    lengthMenu = c(3, 5, 10, 20, 50)
+                  ),
+                  class = 'stripe compact')
+      })
+      observeEvent(input$EventDataHelp, {
+        showModal(modalDialog(
+          title = "Event Data Help",
+          size = "l",
+          easyClose = TRUE,
+          tagList(
+            #tags$p("The event data file can be tab or comma delimited and has a minimum requirement of four columns: patient ID, event name, event start time, and event end time. Each row should annotate an event for a single patient, so a patient would typically have multiple rows of events for different clinical time points, such as diagnosis, medications, radiation event, metastases or progressions, as well as death or last contact, among numerous other events a patient may experience during their clinical journey."),
+            #tags$p("A recommended, but not required, column is the event type or category column that can be used to group the events of similar nature. For instance, there may be separate events for different drugs administered. In this case you would add a column (e.g. EventType) to the event data and place the text 'Medication' in that column for each drug event row, and perform this similar annotation for different event groups."),
+            #tags$p("Additional columns of event details or other further supplementary patient information may be added with the utility of being used in data filtering, timeline plot hover text, or as stratification variables for the Kaplan-Meier plot in the time-to-event analysis."),
+            tags$p("The event data file must include at least four columns: patient ID, event name, event start time, and event end time."),
+            tags$p("Optional columns can include event type, event details, or patient details to aid in filtering and grouping."),
+            tags$h5("Event Data Column Descriptions"),
+            DTOutput("desc_table"),
+            tags$h5("Example Event Data"),
+            DTOutput("example_table")
+          )
+        ))
+      }, ignoreInit = TRUE)
+      
+      eventDataInput_raw <- reactiveVal()
       
       observeEvent(input$LoadExampleData, {
         updateSelectizeInput(session,"EventDataEventStartUnits", selected = "Years")
         updateSelectizeInput(session,"EventDataEventEndUnits", selected = "Years")
         updateSelectInput(session,"GlobalAppTimeUnit", selected = "Years")
         updateTextInput(session,"UserProjectName", value = "AACR Genie NSCLC Adenocarcinoma")
+        updateTabsetPanel(session,"shinyevents_tabs",selected = "patient_visual_analytics")
+        updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
       })
+      AllFilesReady_react <- reactiveVal(FALSE)
+      observe({
+        wkbk_react_anno <- wkbk_react_anno()
+        wkbk_react_anno_sub <- wkbk_react_anno_sub()
+        Clin_Supp_Cols_List_react <- Clin_Supp_Cols_List_react()
+        pat_react <- pat_react()
+        event_data_summ <- event_data_summ()
+        paramEvent_data <- paramEvent_data()
+
+        if (isTruthy(wkbk_react_anno) & isTruthy(wkbk_react_anno_sub) & isTruthy(Clin_Supp_Cols_List_react) & isTruthy(pat_react) & isTruthy(event_data_summ) & isTruthy(paramEvent_data)) {
+          AllFilesReady_react(TRUE)
+        } else { AllFilesReady_react(FALSE) }
+        
+      })
+      observeEvent(AllFilesReady_react(), {
+        #if (!AllFilesReady) {
+          if (input$LoadExampleData == 0) {
+            shinyalert::shinyalert(
+              title = "Data Processing Complete",
+              text = "Explore the app!",
+              size = "s", 
+              closeOnEsc = TRUE,
+              closeOnClickOutside = TRUE,
+              html = FALSE,
+              type = "success",
+              showConfirmButton = TRUE,
+              showCancelButton = FALSE,
+              confirmButtonText = "OK",
+              confirmButtonCol = "#AEDEF4",
+              timer = 3000,
+              imageUrl = "",
+              animation = TRUE
+            )
+          } else {
+            showNotification("Data Processing Complete!", type = "message")
+          }
+        #}
+      }, ignoreInit = TRUE)
       
       observeEvent(input$LoadExampleData, {
+        
+        withProgress(message = "Loading Example Data", value = 0, {
+          incProgress(0.2, detail = "Loading file")
         event_data <- as.data.frame(fread(Example_event_file, na.strings = c("","NA")))
         eventDataInput_raw(event_data)
         
@@ -1439,7 +1546,7 @@ server <- function(input, output, session) {
         EventDataEventTypecol <- "EventType"
         EventDataEventStartcol <- "EventStart"
         EventDataEventEndcol <- "EventEnd"
-        EventDataEventSummary <- "EventSummary"
+        #EventDataEventSummary <- "EventSummary"
         EventDataEventStartUnits <- "Years"
         EventDataEventEndUnits <- "Years"
         
@@ -1453,6 +1560,7 @@ server <- function(input, output, session) {
         cluster_window <- 1
         
         #save(list = ls(), file = "example_loading.RData", envir = environment())
+        incProgress(0.2, detail = "Formatting event data")
         
         event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
                                            Event = eventDataInput_raw[,EventDataEventcol],
@@ -1460,10 +1568,16 @@ server <- function(input, output, session) {
                                            EventTab = "InputData",
                                            EventStart = eventDataInput_raw[,EventDataEventStartcol],
                                            EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol],
-                                           EventSummary = eventDataInput_raw[,EventDataEventSummary])
-        event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
+                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
+                                           #EventSummary = eventDataInput_raw[,EventDataEventSummary]
+                                           )
+        #event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
         
+        event_wkbk_link <- "EventTab"
+        uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+        event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+        
+        incProgress(0.2, detail = "Formatting parameter file")
         param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
                         "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
         
@@ -1488,16 +1602,19 @@ server <- function(input, output, session) {
         event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
         event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
         
-        wkbk <- list(InputData = eventDataInput_raw)
         
+        wkbk <- read_excel_allsheets(Example_wkbk_file)
+        wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
+        
+        incProgress(0.2, detail = "Formatting patient selection table")
         pat_anno <- event_count_df(event_data_processed)
         
         if (!is.na(eventtype_in)) {
           event_new <- apply(event_data_processed,1,function(x) {
             event <- x[["Event"]]
             eventtype <- x[["EventType"]]
-            eventsumm <- x[["EventSummary"]]
-            if (is.na(eventsumm)) {
+            #eventsumm <- x[["EventSummary"]]
+            #if (is.na(eventsumm)) {
               if (event == eventtype) {
                 return(event)
               } else {
@@ -1507,12 +1624,40 @@ server <- function(input, output, session) {
                   return(paste0(eventtype,": ",event))
                 }
               }
-            } else {
-              return(event)
-            }
+            #} else {
+            #  return(event)
+            #}
           })
           event_data_processed$Event <- event_new
         }
+        
+        incProgress(0.2, detail = "Summarizing event clusters")
+        if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
+          #if (all(is.na(event_data_processed$EventSummary))) {
+          if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
+            treatment_events <- EventDataTreatmentEvents
+            response_events <- EventDataResponseEvents
+            if (isTruthy(treatment_events)) {
+              event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
+              event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+            } else { event_data_tr_cls <- NULL }
+            if (isTruthy(response_events)) {
+              event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
+              event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+            } else { event_data_re_cls <- NULL }
+            
+            event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+            event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+            event_data_cls <- event_data_cls %>%
+              group_by(Name) %>%
+              arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+            Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
+            Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+            Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+            event_data_processed <- Patient_Event_Data_cls_all
+          }
+        }
+        })
         
         ProjectName_react(input$UserProjectName)
         Param_File_react(NULL)
@@ -1531,6 +1676,7 @@ server <- function(input, output, session) {
         })
         Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
         pat_react(pat_anno)
+        event_data_raw(event_data_processed)
         event_data_summ(event_data_processed)
         event_data(event_data_processed)
         param_data(event_params)
@@ -1554,7 +1700,8 @@ server <- function(input, output, session) {
       
       output$SuppDataInput1_found <- reactive({
         SuppDataInput1 <- input$SuppDataInput1
-        if (isTruthy(SuppDataInput1)) {
+        if (SuppDataInput1 == "Yes") {
+        #if (isTruthy(SuppDataInput1)) {
           TRUE
         } else {
           FALSE
@@ -1564,7 +1711,11 @@ server <- function(input, output, session) {
       
       observeEvent(input$EventDataFileInput, {
         event_data_file <- input$EventDataFileInput$datapath
-        event_data <- as.data.frame(fread(event_data_file, na.strings = c("","NA")))
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.5, detail = "Loading input file")
+          event_data <- as.data.frame(fread(event_data_file, na.strings = c("","NA")))
+          incProgress(0.5, detail = "Complete!")
+        })
         eventDataInput_raw(event_data)
       })
       
@@ -1587,11 +1738,11 @@ server <- function(input, output, session) {
                                placeholder = 'Please select',
                                onInitialize = I('function() { this.setValue(""); }')
                              ))
-        updateSelectizeInput(session,"EventDataEventSummary",choices = col_choices, selected = summ_preSel, server = T,
-                             options = list(
-                               placeholder = 'Please select',
-                               onInitialize = I('function() { this.setValue(""); }')
-                             ))
+        #updateSelectizeInput(session,"EventDataEventSummary",choices = col_choices, selected = summ_preSel, server = T,
+        #                     options = list(
+        #                       placeholder = 'Please select',
+        #                       onInitialize = I('function() { this.setValue(""); }')
+        #                     ))
       })
       
       
@@ -1659,17 +1810,22 @@ server <- function(input, output, session) {
       observeEvent(input$ProcessInputData, {
         req(eventDataInput_raw())
         req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
+        withProgress(message = "Processing Input Data", value = 0, {
+          
         eventDataInput_raw <- eventDataInput_raw()
         EventDataPatientIDcol <- input$EventDataPatientIDcol
         EventDataEventcol <- input$EventDataEventcol
         EventDataEventTypecol <- input$EventDataEventTypecol
         EventDataEventStartcol <- input$EventDataEventStartcol
         EventDataEventEndcol <- input$EventDataEventEndcol
-        EventDataEventSummary <- input$EventDataEventSummary
+        #EventDataEventSummary <- input$EventDataEventSummary
         EventDataEventStartUnits <- input$EventDataEventStartUnits
         EventDataEventEndUnits <- input$EventDataEventEndUnits
         EventDataTreatmentEvents <- input$EventDataTreatmentEvents
         EventDataResponseEvents <- input$EventDataResponseEvents
+        
+        SuppEventColumnLink <- input$SuppEventColumnLink
+        SuppDataFileInput1 <- input$SuppDataFileInput1
         
         input_file <- input$EventDataFileInput$datapath
         if (!isTruthy(input_file)) {
@@ -1683,18 +1839,23 @@ server <- function(input, output, session) {
         updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
         
         
+        #save(list = ls(), file = "eventdata_make.RData", envir = environment())
+        
+        incProgress(0.2, detail = "Formatting event data")
+        
         event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
                                            Event = eventDataInput_raw[,EventDataEventcol],
                                            EventType = eventDataInput_raw[,EventDataEventTypecol],
                                            EventTab = "InputData",
                                            EventStart = eventDataInput_raw[,EventDataEventStartcol],
                                            EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol],
-                                           EventSummary = NA)
-        if (isTruthy(EventDataEventSummary)) {
-          event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
-          event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
-        }
+                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
+                                           #EventSummary = NA
+                                           )
+        #if (isTruthy(EventDataEventSummary)) {
+        #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
+        #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
+        #}
         if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
           event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
                                                       event_data_processed[,"EventStart"],
@@ -1703,14 +1864,19 @@ server <- function(input, output, session) {
                                                         event_data_processed[,"EventEnd"],
                                                         event_data_processed[,"EventStart"])
         }
-        #save(list = ls(), file = "eventdata_make.RData", envir = environment())
         
-        if (isTruthy(input$SuppEventColumnLink)) {
-          event_wkbk_link <- input$SuppEventColumnLink
-          uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
-          event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+        event_data_processed <- event_data_processed[which(!is.na(event_data_processed$Event)),]
+        
+        if (isTruthy(input$SuppDataFileInput1)) {
+          if (isTruthy(input$SuppEventColumnLink)) {
+            event_wkbk_link <- input$SuppEventColumnLink
+            uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+            event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          }
         }
         
+        
+        incProgress(0.2, detail = "Formatting parameter file")
         param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
                         "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
         
@@ -1744,14 +1910,16 @@ server <- function(input, output, session) {
         
         #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
         
+        incProgress(0.2, detail = "Formatting patient selection table")
         pat_anno <- event_count_df(event_data_processed)
+        
         
         if (!is.na(eventtype_in)) {
           event_new <- apply(event_data_processed,1,function(x) {
             event <- x[["Event"]]
             eventtype <- x[["EventType"]]
-            eventsumm <- x[["EventSummary"]]
-            if (is.na(eventsumm)) {
+            #eventsumm <- x[["EventSummary"]]
+            #if (is.na(eventsumm)) {
               if (event == eventtype) {
                 return(event)
               } else {
@@ -1761,15 +1929,17 @@ server <- function(input, output, session) {
                   return(paste0(eventtype,": ",event))
                 }
               }
-            } else {
-              return(event)
-            }
+            #} else {
+            #  return(event)
+            #}
             
           })
           event_data_processed$Event <- event_new
         }
         
-        if (all(is.na(event_data_processed$EventSummary))) {
+        incProgress(0.2, detail = "Summarizing event clusters")
+        if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
+        #if (all(is.na(event_data_processed$EventSummary))) {
           if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
             treatment_events <- EventDataTreatmentEvents
             response_events <- EventDataResponseEvents
@@ -1778,7 +1948,7 @@ server <- function(input, output, session) {
               event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
             } else { event_data_tr_cls <- NULL }
             if (isTruthy(response_events)) {
-              event_data_re <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
+              event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
               event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
             } else { event_data_re_cls <- NULL }
             
@@ -1794,6 +1964,8 @@ server <- function(input, output, session) {
           }
         }
         
+        incProgress(0.5, detail = "Complete!")
+        })
         
         #save(list = ls(), file = "eventdataparamswkbksumm_make.RData", envir = environment())
         
@@ -1828,19 +2000,19 @@ server <- function(input, output, session) {
       # Front End wkbk input ---------------------------------------------------
       
       
-      output$SuppDataFileInput1_found <- reactive({
-        req(input$SuppDataFileInput1)
-        suppDataFileInput <- input$SuppDataFileInput1
-        if (isTruthy(suppDataFileInput)) {
-          TRUE
-        } else {
-          FALSE
-        }
-      })
-      outputOptions(output, "SuppDataFileInput1_found", suspendWhenHidden = FALSE)
+      #output$SuppDataFileInput1_found <- reactive({
+      #  req(input$SuppDataFileInput1)
+      #  suppDataFileInput <- input$SuppDataFileInput1
+      #  if (isTruthy(suppDataFileInput) | input$LoadExampleData > 0) {
+      #    TRUE
+      #  } else {
+      #    FALSE
+      #  }
+      #})
+      #outputOptions(output, "SuppDataFileInput1_found", suspendWhenHidden = FALSE)
       observe({
         req(eventDataInput_raw())
-        req(input$SuppDataFileInput1)
+        #req(input$SuppDataFileInput1)
         event_data_raw <- eventDataInput_raw()
         col_choices <- colnames(event_data_raw)
         pre_sel_col <- ifelse(any(grepl("tab|table",col_choices,ignore.case = T)),grep("tab|table",col_choices,ignore.case = T, value = T)[1],1)
@@ -1868,26 +2040,38 @@ server <- function(input, output, session) {
         req(input$SuppDataFileInput1)
         file_df <- input$SuppDataFileInput1
         
-        if (nrow(file_df) == 1) {
+        #if (nrow(file_df) == 1) {
           if (tools::file_ext(file_df$datapath[1]) %in% c("xlsx","xls")) {
-            wkbk <- read_excel_allsheets(file_df$datapath[1])
+            withProgress(message = "Loading Supplementary Data", value = 0, {
+              incProgress(0.5, detail = "Loading input file")
+              wkbk <- read_excel_allsheets(file_df$datapath[1])
+              incProgress(0.5, detail = "Complete!")
+            })
             wkbk_raw_react(c(wkbk_raw_react(),wkbk))
           } else {
-            df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
-            tabName <- tools::file_path_sans_ext(file_df[row,"name"])
-            wkbk[[tabName]] <- df
+            withProgress(message = "Loading Supplementary Data", value = 0, {
+              incProgress(0.5, detail = "Loading input file")
+              df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
+              tabName <- tools::file_path_sans_ext(file_df[row,"name"])
+              wkbk[[tabName]] <- df
+              incProgress(0.5, detail = "Complete!")
+            })
             wkbk_raw_react(c(wkbk_raw_react(),wkbk))
           }
           # Multiple files loaded to be made to wkbk
-        } else if (nrow(file_df) > 1) {
-          wkbk <- list()
-          for (row in seq(nrow(file_df))) {
-            df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
-            tabName <- tools::file_path_sans_ext(file_df[row,"name"])
-            wkbk[[tabName]] <- df
-          }
-          wkbk_raw_react(c(wkbk_raw_react(),wkbk))
-        }
+        #} #else if (nrow(file_df) > 1) {
+          #withProgress(message = "Loading Supplementary Data", value = 0, {
+          #  incProgress(0.5, detail = "Loading input file")
+          #  incProgress(0.5, detail = "Complete!")
+          #})
+          #wkbk <- list()
+          #for (row in seq(nrow(file_df))) {
+          #  df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
+          #  tabName <- tools::file_path_sans_ext(file_df[row,"name"])
+          #  wkbk[[tabName]] <- df
+          #}
+          #wkbk_raw_react(c(wkbk_raw_react(),wkbk))
+        #}
         
         
       })
@@ -2056,7 +2240,11 @@ server <- function(input, output, session) {
           }
           if (input$ParamInputOpt == "Input Parameter File") {
             if (isTruthy(Param_File_react())) {
-              params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
+              withProgress(message = "Processing", value = 0, {
+                incProgress(0.5, detail = "Loading parameter file")
+                params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
+                incProgress(0.5, detail = "Complete!")
+              })
               param_data(params)
               param_events <- params[which(!is.na(params[,3])),]
               rownames(param_events) <- NULL
@@ -2065,7 +2253,11 @@ server <- function(input, output, session) {
           }
         } else {
           if (isTruthy(Param_File_react())) {
-            params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.5, detail = "Loading parameter file")
+              params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
+              incProgress(0.5, detail = "Complete!")
+            })
             param_data(params)
             param_events <- params[which(!is.na(params[,3])),]
             rownames(param_events) <- NULL
@@ -2090,43 +2282,48 @@ server <- function(input, output, session) {
           Clin_Supp_Cols_List <- list()
           wkbk_tabs <- unique(param[,1])
           
-          wkbk_adj <- lapply(names(wkbk), function(df_name) {
-            df <- wkbk[[df_name]]
-            if (df_name %in% param[,1]) {
-              param_tab <- unique(param[which(param[,1] == df_name),c(6,7,10,11)])
-              rownames(param_tab) <- NULL
-              start_col_names <- unique(param_tab[,"Event Start Column"])
-              if (any(start_col_names %in% colnames(df))) {
-                if (all(!is.na(start_col_names))) {
-                  start_col_names <- start_col_names[which(!is.na(start_col_names))]
-                  df <- df %>%
-                    arrange(!!!syms(c(colnames(df)[1],start_col_names))) %>%
-                    as.data.frame()
-                  
-                  for (row in 1:nrow(param_tab)) {
-                    row <- unlist(param_tab[row,])
-                    start_col_name <- row["Event Start Column"]
-                    stop_col_name <- row["Event End Column"]
-                    stop_col_name <- ifelse(is.na(stop_col_name),start_col_name,stop_col_name)
-                    start_unit <- row["Event Start Time Units"]
-                    stop_unit <- row["Event End Time Units"]
-                    stop_unit <- ifelse(is.na(stop_unit),start_unit,stop_unit)
+          withProgress(message = "Processing Supplementary Data", value = 0, {
+            data_to_proc <- length(names(wkbk))
+            
+            wkbk_adj <- lapply(names(wkbk), function(df_name) {
+              incProgress((1/data_to_proc), detail = paste0("Processing: ",df_name))
+              df <- wkbk[[df_name]]
+              if (df_name %in% param[,1]) {
+                param_tab <- unique(param[which(param[,1] == df_name),c(6,7,10,11)])
+                rownames(param_tab) <- NULL
+                start_col_names <- unique(param_tab[,"Event Start Column"])
+                if (any(start_col_names %in% colnames(df))) {
+                  if (all(!is.na(start_col_names))) {
+                    start_col_names <- start_col_names[which(!is.na(start_col_names))]
+                    df <- df %>%
+                      arrange(!!!syms(c(colnames(df)[1],start_col_names))) %>%
+                      as.data.frame()
                     
-                    if (!is.na(start_unit)) {
-                      df[,start_col_name] <- convert_time_units(suppressWarnings(as.numeric(df[,start_col_name])),start_unit,AppTimeUnit_low)
-                    }
-                    if (start_col_name != stop_col_name) {
-                      if (!is.na(stop_unit)) {
-                        df[,stop_col_name] <- convert_time_units(suppressWarnings(as.numeric(df[,stop_col_name])),stop_unit,AppTimeUnit_low)
+                    for (row in 1:nrow(param_tab)) {
+                      row <- unlist(param_tab[row,])
+                      start_col_name <- row["Event Start Column"]
+                      stop_col_name <- row["Event End Column"]
+                      stop_col_name <- ifelse(is.na(stop_col_name),start_col_name,stop_col_name)
+                      start_unit <- row["Event Start Time Units"]
+                      stop_unit <- row["Event End Time Units"]
+                      stop_unit <- ifelse(is.na(stop_unit),start_unit,stop_unit)
+                      
+                      if (!is.na(start_unit)) {
+                        df[,start_col_name] <- convert_time_units(suppressWarnings(as.numeric(df[,start_col_name])),start_unit,AppTimeUnit_low)
                       }
+                      if (start_col_name != stop_col_name) {
+                        if (!is.na(stop_unit)) {
+                          df[,stop_col_name] <- convert_time_units(suppressWarnings(as.numeric(df[,stop_col_name])),stop_unit,AppTimeUnit_low)
+                        }
+                      }
+                      #}
+                      
                     }
-                    #}
-                    
                   }
                 }
               }
-            }
-            return(df)
+              return(df)
+            })
             
           })
           names(wkbk_adj) <- names(wkbk)
@@ -2164,44 +2361,49 @@ server <- function(input, output, session) {
         
         #save(list = ls(), file = "ApplyDataFilter.RData", envir = environment())
         
-        if (isTruthy(filters)) {
-          req(tree_df)
-          filter_keys <- lapply(filters, function(x) {
-            if (!x$text[[1]] %in% unique(tree_df$variable_N)) {
-              id <- x[["id"]][[1]]
-              val <- x[["text"]][[1]]
-              if (val == "NA") {
-                val <- NA
+        withProgress(message = "Filtering Dataset", value = 0, {
+          incProgress(0.3, detail = "Organizing filter terms")
+          if (isTruthy(filters)) {
+            req(tree_df)
+            filter_keys <- lapply(filters, function(x) {
+              if (!x$text[[1]] %in% unique(tree_df$variable_N)) {
+                id <- x[["id"]][[1]]
+                val <- x[["text"]][[1]]
+                if (val == "NA") {
+                  val <- NA
+                }
+                col <- gsub(paste0("_",val,"$"),"",id)
+                return(c(col = col,val = val))
               }
-              col <- gsub(paste0("_",val,"$"),"",id)
-              return(c(col = col,val = val))
-            }
+            })
+            filter_keys <- Filter(Negate(is.null),filter_keys)
+            filter_keys2 <- setNames(lapply(filter_keys, `[[`, "val"), sapply(filter_keys, `[[`, "col"))
+            filter_keys3 <- lapply(split(filter_keys2, names(filter_keys2)), unlist)
+            filter_keys4 <- lapply(names(filter_keys3), function(x) {
+              filter_vals <- filter_keys3[[x]]
+              keys <- which(df[,x] %in% filter_vals)
+              return(keys)
+            })
+            filter_keys5 <- Reduce(intersect,filter_keys4)
+            df <- df[filter_keys5,]
+            subset_ids <- unique(df[,1])
+            subset_ids
+          } else {
+            subset_ids <- unique(df[,1])
+            subset_ids
+          }
+          incProgress(0.4, detail = "Filtering data")
+          wkbk_anno_subset <- lapply(wkbk_anno,function(df) {
+            return(df[which(df[,1] %in% subset_ids),])
           })
-          filter_keys <- Filter(Negate(is.null),filter_keys)
-          filter_keys2 <- setNames(lapply(filter_keys, `[[`, "val"), sapply(filter_keys, `[[`, "col"))
-          filter_keys3 <- lapply(split(filter_keys2, names(filter_keys2)), unlist)
-          filter_keys4 <- lapply(names(filter_keys3), function(x) {
-            filter_vals <- filter_keys3[[x]]
-            keys <- which(df[,x] %in% filter_vals)
-            return(keys)
+          wkbk_react_subset <- lapply(wkbk_react,function(df) {
+            return(df[which(df[,1] %in% subset_ids),])
           })
-          filter_keys5 <- Reduce(intersect,filter_keys4)
-          df <- df[filter_keys5,]
-          subset_ids <- unique(df[,1])
-          subset_ids
-        } else {
-          subset_ids <- unique(df[,1])
-          subset_ids
-        }
-        
-        wkbk_anno_subset <- lapply(wkbk_anno,function(df) {
-          return(df[which(df[,1] %in% subset_ids),])
+          event_data_subset <- event_data[which(event_data[,1] %in% subset_ids),]
+          pat_react_subset <- pat_react[which(pat_react[,1] %in% subset_ids),]
+          incProgress(0.3, detail = "Colmplete!")
         })
-        wkbk_react_subset <- lapply(wkbk_react,function(df) {
-          return(df[which(df[,1] %in% subset_ids),])
-        })
-        event_data_subset <- event_data[which(event_data[,1] %in% subset_ids),]
-        pat_react_subset <- pat_react[which(pat_react[,1] %in% subset_ids),]
+        showNotification("Data Filtering Complete!", type = "message")
         
         event_data_summ(event_data_subset)
         pat_react(pat_react_subset)
@@ -2258,55 +2460,63 @@ server <- function(input, output, session) {
         Patient_Event_Data <- event_data_raw()
         cluster_window <- Event_Cluster_Window
         
+        
         # Event data already has summary columns
         if (!any(grepl("summary$", colnames(Patient_Event_Data), ignore.case = T))) {
-          treatment_events <- unique(param[which(param$Treatment == TRUE),])
-          treatment_events <- unique(ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
-                                            paste0(treatment_events$`Event Category`,": ")))
-          response_events <- unique(param[which(param$Response == TRUE),])
-          response_events <- unique(ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
-                                           paste0(response_events$`Event Category`,": ")))
-          event_data_tr <- Patient_Event_Data[grepl(paste(treatment_events,collapse = "|"),Patient_Event_Data$Event),]
-          event_data_re <- Patient_Event_Data[grepl(paste(response_events,collapse = "|"),Patient_Event_Data$Event),]
-          
-          event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
-          event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
-          event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-          event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-          event_data_cls <- event_data_cls %>%
-            group_by(Name) %>%
-            arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-          Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,Patient_Event_Data), fill = T)
-          Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
-          Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
-          Patient_Event_Data <- Patient_Event_Data_cls_all
+          withProgress(message = "Summaizing Event Data", value = 0, {
+            incProgress(0.25, detail = "Summarizing treatment events")
+            treatment_events <- unique(param[which(param$Treatment == TRUE),])
+            treatment_events <- unique(ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
+                                              paste0(treatment_events$`Event Category`,": ")))
+            event_data_tr <- Patient_Event_Data[grepl(paste(treatment_events,collapse = "|"),Patient_Event_Data$Event),]
+            event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+            incProgress(0.25, detail = "Summarizing response events")
+            response_events <- unique(param[which(param$Response == TRUE),])
+            response_events <- unique(ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
+                                             paste0(response_events$`Event Category`,": ")))
+            event_data_re <- Patient_Event_Data[grepl(paste(response_events,collapse = "|"),Patient_Event_Data$Event),]
+            event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+            incProgress(0.25, detail = "Merging all event data")
+            event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+            event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+            event_data_cls <- event_data_cls %>%
+              group_by(Name) %>%
+              arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+            Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,Patient_Event_Data), fill = T)
+            Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+            Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+            Patient_Event_Data <- Patient_Event_Data_cls_all
+            incProgress(0.25, detail = "Colmplete!")
+          })
         }
         event_data_summ(Patient_Event_Data)
         
       })
       
-      observe({
-        
-        param <- paramEvent_data()
-        wkbk_raw <- wkbk_raw_react()
-        wkbk <- wkbk_react_sub()
-        wkbk_anno <- wkbk_react_anno_sub()
-        cluster_window <- input$MainClusterWindowSet
-        Patient_Event_Data <- event_data_raw()
-        event_data <- event_data_summ()
-        UpdateSummaryClusters <- input$UpdateSummaryClusters
-        event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
-        event_data <- event_data()
-        event_data_key <- event_data_key()
-        
-        ParamInputOpt <- input$ParamInputOpt
-        Param_File_react <- Param_File_react()
-        GenEventData <- input$GenEventData
-        
-        #save(list = ls(), file = "update_check.RData", envir = environment())
-      })
+      #observe({
+      #  
+      #  param <- paramEvent_data()
+      #  wkbk_raw <- wkbk_raw_react()
+      #  wkbk <- wkbk_react_sub()
+      #  wkbk_anno <- wkbk_react_anno_sub()
+      #  cluster_window <- input$MainClusterWindowSet
+      #  Patient_Event_Data <- event_data_raw()
+      #  event_data <- event_data_summ()
+      #  UpdateSummaryClusters <- input$UpdateSummaryClusters
+      #  event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
+      #  event_data <- event_data()
+      #  event_data_key <- event_data_key()
+      #  
+      #  ParamInputOpt <- input$ParamInputOpt
+      #  Param_File_react <- Param_File_react()
+      #  GenEventData <- input$GenEventData
+      #  
+      #  #save(list = ls(), file = "update_check.RData", envir = environment())
+      #})
       
       observeEvent(input$UpdateSummaryClusters, {
+        
+        #save(list = ls(), file = "UpdateSummaryClusters.RData", envir = environment())
         req(paramEvent_data())
         req(wkbk_react_sub())
         req(event_data_raw())
@@ -2316,109 +2526,112 @@ server <- function(input, output, session) {
         cluster_window <- input$MainClusterWindowSet
         Patient_Event_Data <- event_data_raw()
         
-        #save(list = ls(), file = "UpdateSummaryClusters.RData", envir = environment())
-        
         Patient_Event_Data <- Patient_Event_Data[!is.na(Patient_Event_Data$EventTab),]
         
-        treatment_events <- unique(param[which(param$Treatment == TRUE),])
-        treatment_events <- unique(ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
-                                          paste0(treatment_events$`Event Category`,": ")))
-        response_events <- unique(param[which(param$Response == TRUE),])
-        response_events <- unique(ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
-                                         paste0(response_events$`Event Category`,": ")))
-        event_data_tr <- Patient_Event_Data[grepl(paste(treatment_events,collapse = "|"),Patient_Event_Data$Event),]
-        event_data_re <- Patient_Event_Data[grepl(paste(response_events,collapse = "|"),Patient_Event_Data$Event),]
-        
-        event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
-        event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
-        event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-        
-        event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-        event_data_cls <- event_data_cls %>%
-          group_by(Name) %>%
-          arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-        
-        Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,Patient_Event_Data), fill = T)
-        Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
-        Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
-
-        # next update
-        event_data <- Patient_Event_Data_cls_all
-        treat_summ_events <- paste0(unique(param[which(param$Treatment == TRUE),"Event Category"])," Summary")
-        event_data_treat_summ <- event_data[which(event_data$EventType %in% c(treat_summ_events,"Full Treatment Summary")),]
-        event_data_treat_summ$EventType <- ifelse(event_data_treat_summ$EventType == "Full Treatment Summary","Full Treatment Summary",
-                                                  gsub(" Summary$","",event_data_treat_summ$EventType))
-        # Assign numeric cluster line treatments
-        event_data_clusters <- event_data_treat_summ %>%
-          mutate(Event = EventType) %>%
-          group_by(Name,Event) %>%
-          arrange(EventStart,EventEnd, .by_group = TRUE) %>%
-          mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n()))) %>%
-          mutate(Event = Treatment_Line_Cluster) %>%
-          select(-c(EventTab,EventColumn)) %>%
-          as.data.frame()
-        event_data_clusters$EventType <- ifelse(event_data_clusters$EventType == "Full Treatment Summary","Full Treatment Summary",
-                                                paste0(event_data_clusters$EventType," Cluster"))
-        # Clean event summary
-        sankey_event_opts <- unique(event_data_clusters$EventType)
-        
-        event_data_clusters_clean <- lapply(sankey_event_opts, function(x) {
-          event_data_clusters_sub <- event_data_clusters[which(event_data_clusters$EventType == x),]
-          x <- ifelse(x == "Full Treatment Summary","Full Treatment Summary",gsub(" Cluster$","",x))
-          if (all(grepl(gsub(" Summary$|Summary$","",x),event_data_clusters_sub$EventSummary))) {
-            event_data_clusters_sub$EventSummary <- gsub(gsub(" Summary$|Summary$","",x),"",event_data_clusters_sub$EventSummary)
-            event_data_clusters_sub$EventSummary <- trimws(event_data_clusters_sub$EventSummary)
-            event_data_clusters_sub$EventSummary <- gsub(", ",",",event_data_clusters_sub$EventSummary)
-            event_data_clusters_sub$EventSummary <- gsub("\\\r\n  |\\\n  ",", ",event_data_clusters_sub$EventSummary)
-          } else {
-            new_col <- unname(sapply(event_data_clusters_sub$EventSummary, function(y) {
-              # breakdown summary column into parts
-              check_splt <- strsplit(y,"\\\r\n|\\\n")[[1]]
-              if (length(check_splt) > 1) {
-                # Look for summary event header but checking for portion without leading space
-                headers <- grep("^\\s+",check_splt,invert = T)
-                # if there is more than one event type in the summary
-                if (length(headers) > 1) {
-                  new_col <- paste0(sapply(seq_along(headers), function(i) {
-                    header <- check_splt[headers[i]]
-                    start <- headers[i] + 1
-                    end <- if (i < length(headers)) headers[i+1] - 1 else length(check_splt)
-                    items <- trimws(check_splt[start:end])
-                    items_joined <- paste0(items, collapse = ", ")
-                    result_parts <- paste0(header, ": ", items_joined)
-                    return(result_parts)
-                  }), collapse = " - ")
+        withProgress(message = "Re-Clustering Event Data", value = 0, {
+          incProgress(0.2, detail = "Summarizing treatment events")
+          treatment_events <- unique(param[which(param$Treatment == TRUE),])
+          treatment_events <- unique(ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
+                                            paste0(treatment_events$`Event Category`,": ")))
+          event_data_tr <- Patient_Event_Data[grepl(paste(treatment_events,collapse = "|"),Patient_Event_Data$Event),]
+          event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+          incProgress(0.2, detail = "Summarizing response events")
+          response_events <- unique(param[which(param$Response == TRUE),])
+          response_events <- unique(ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
+                                           paste0(response_events$`Event Category`,": ")))
+          event_data_re <- Patient_Event_Data[grepl(paste(response_events,collapse = "|"),Patient_Event_Data$Event),]
+          event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+          incProgress(0.2, detail = "Merging all event data")
+          event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+          event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+          event_data_cls <- event_data_cls %>%
+            group_by(Name) %>%
+            arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+          
+          Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,Patient_Event_Data), fill = T)
+          Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+          Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+          incProgress(0.2, detail = "Annotating cluster treatment lines")
+          # next update
+          event_data <- Patient_Event_Data_cls_all
+          treat_summ_events <- paste0(unique(param[which(param$Treatment == TRUE),"Event Category"])," Summary")
+          event_data_treat_summ <- event_data[which(event_data$EventType %in% c(treat_summ_events,"Full Treatment Summary")),]
+          event_data_treat_summ$EventType <- ifelse(event_data_treat_summ$EventType == "Full Treatment Summary","Full Treatment Summary",
+                                                    gsub(" Summary$","",event_data_treat_summ$EventType))
+          # Assign numeric cluster line treatments
+          event_data_clusters <- event_data_treat_summ %>%
+            mutate(Event = EventType) %>%
+            group_by(Name,Event) %>%
+            arrange(EventStart,EventEnd, .by_group = TRUE) %>%
+            mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n()))) %>%
+            mutate(Event = Treatment_Line_Cluster) %>%
+            select(-c(EventTab,EventColumn)) %>%
+            as.data.frame()
+          event_data_clusters$EventType <- ifelse(event_data_clusters$EventType == "Full Treatment Summary","Full Treatment Summary",
+                                                  paste0(event_data_clusters$EventType," Cluster"))
+          incProgress(0.1, detail = "Cleaning event summaries")
+          # Clean event summary
+          sankey_event_opts <- unique(event_data_clusters$EventType)
+          event_data_clusters_clean <- lapply(sankey_event_opts, function(x) {
+            event_data_clusters_sub <- event_data_clusters[which(event_data_clusters$EventType == x),]
+            x <- ifelse(x == "Full Treatment Summary","Full Treatment Summary",gsub(" Cluster$","",x))
+            if (all(grepl(gsub(" Summary$|Summary$","",x),event_data_clusters_sub$EventSummary))) {
+              event_data_clusters_sub$EventSummary <- gsub(gsub(" Summary$|Summary$","",x),"",event_data_clusters_sub$EventSummary)
+              event_data_clusters_sub$EventSummary <- trimws(event_data_clusters_sub$EventSummary)
+              event_data_clusters_sub$EventSummary <- gsub(", ",",",event_data_clusters_sub$EventSummary)
+              event_data_clusters_sub$EventSummary <- gsub("\\\r\n  |\\\n  ",", ",event_data_clusters_sub$EventSummary)
+            } else {
+              new_col <- unname(sapply(event_data_clusters_sub$EventSummary, function(y) {
+                # breakdown summary column into parts
+                check_splt <- strsplit(y,"\\\r\n|\\\n")[[1]]
+                if (length(check_splt) > 1) {
+                  # Look for summary event header but checking for portion without leading space
+                  headers <- grep("^\\s+",check_splt,invert = T)
+                  # if there is more than one event type in the summary
+                  if (length(headers) > 1) {
+                    new_col <- paste0(sapply(seq_along(headers), function(i) {
+                      header <- check_splt[headers[i]]
+                      start <- headers[i] + 1
+                      end <- if (i < length(headers)) headers[i+1] - 1 else length(check_splt)
+                      items <- trimws(check_splt[start:end])
+                      items_joined <- paste0(items, collapse = ", ")
+                      result_parts <- paste0(header, ": ", items_joined)
+                      return(result_parts)
+                    }), collapse = " - ")
+                  } else {
+                    # event summary only contains one event type
+                    # remove comma's with space from original test, to differentiate from edited version
+                    check_splt_tocollapse <- gsub(", ",",",check_splt[-headers])
+                    new_col <- trimws(paste0(check_splt_tocollapse, collapse = ", "))
+                  }
                 } else {
-                  # event summary only contains one event type
-                  # remove comma's with space from original test, to differentiate from edited version
-                  check_splt_tocollapse <- gsub(", ",",",check_splt[-headers])
+                  check_splt_tocollapse <- gsub(", ",",",check_splt)
                   new_col <- trimws(paste0(check_splt_tocollapse, collapse = ", "))
                 }
-              } else {
-                check_splt_tocollapse <- gsub(", ",",",check_splt)
-                new_col <- trimws(paste0(check_splt_tocollapse, collapse = ", "))
-              }
-            }))
-            event_data_clusters_sub$EventSummary <- new_col
-          }
-          return(event_data_clusters_sub)
+              }))
+              event_data_clusters_sub$EventSummary <- new_col
+            }
+            return(event_data_clusters_sub)
+          })
+          event_data_clusters_clean <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),
+                                              event_data_clusters_clean)
+          sankey_added <- unique(paste0(event_data_clusters_clean$Event,": ",event_data_clusters_clean$EventSummary))
+          # next update
+          event_data_tr_clusters_clean <- event_data_clusters_clean
+          event_data <- Patient_Event_Data_cls_all
+          event_data_clusters_revent <- event_data_tr_clusters_clean %>%
+            mutate(EventType = Event) %>%
+            mutate(Event = paste0(Event,": ",EventSummary)) %>%
+            select(Name,Event,EventType,EventStart,EventEnd)
+          event_data2 <- as.data.frame(rbindlist(list(event_data,event_data_clusters_revent),fill = T))
+          event_data3 <- event_data2 %>%
+            group_by(!!sym(colnames(event_data2)[1])) %>%
+            arrange(Event %in% unique(event_data2$Event), .by_group = TRUE) %>%
+            as.data.frame()
+          incProgress(0.1, detail = "Colmplete!")
         })
-        event_data_clusters_clean <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),
-                                            event_data_clusters_clean)
-        sankey_added <- unique(paste0(event_data_clusters_clean$Event,": ",event_data_clusters_clean$EventSummary))
-
-        # next update
-        event_data_tr_clusters_clean <- event_data_clusters_clean
-        event_data <- Patient_Event_Data_cls_all
-        event_data_clusters_revent <- event_data_tr_clusters_clean %>%
-          mutate(EventType = Event) %>%
-          mutate(Event = paste0(Event,": ",EventSummary)) %>%
-          select(Name,Event,EventType,EventStart,EventEnd)
-        event_data2 <- as.data.frame(rbindlist(list(event_data,event_data_clusters_revent),fill = T))
-        event_data3 <- event_data2 %>%
-          group_by(!!sym(colnames(event_data2)[1])) %>%
-          arrange(Event %in% unique(event_data2$Event), .by_group = TRUE) %>%
-          as.data.frame()
+        showNotification("Event Re-Clustering Complete!", type = "message")
+        
 
         event_data_summ(Patient_Event_Data_cls_all)
         event_data_tr_clusters_clean(event_data_clusters_clean)
@@ -2590,12 +2803,12 @@ server <- function(input, output, session) {
                                                                                                options = list(
                                                                                                  placeholder = 'Please select',
                                                                                                  onInitialize = I('function() { this.setValue(""); }')
-                                                                                               )),
-                                                                                selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
-                                                                                               options = list(
-                                                                                                 placeholder = 'Please select',
-                                                                                                 onInitialize = I('function() { this.setValue(""); }')
-                                                                                               ))
+                                                                                               ))#,
+                                                                                #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
+                                                                                #               options = list(
+                                                                                #                 placeholder = 'Please select',
+                                                                                #                 onInitialize = I('function() { this.setValue(""); }')
+                                                                                #               ))
                                                                          ),
                                                                          column(4,
                                                                                 virtualSelectInput(
@@ -2620,7 +2833,8 @@ server <- function(input, output, session) {
                                                                        )
                                                                      ),
                                                                      p(),
-                                                                     h3("Event Data Preivew"),
+                                                                     h3("Input Data Preivew"),
+                                                                     #h3("Event Data Preivew"),
                                                                      div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
                                                     ),
                                    value = "Input Data Formatting"
@@ -2842,9 +3056,8 @@ server <- function(input, output, session) {
           grep(paste0(swimmer_y_lines,collapse = "|"),x,value = T)
         })
         highlight_opts <- Filter(length,highlight_opts)
-        
         highlight_opts_select <- ifelse(any(grepl("Metasta",names(highlight_opts), ignore.case = T)),
-                                        highlight_opts[[grep("Metasta",names(highlight_opts),value = T, ignore.case = T)]],
+                                        highlight_opts[[grep("Metasta",names(highlight_opts),value = T, ignore.case = T)[1]]],
                                         "")
         
         shinyWidgets::updateVirtualSelect(session = session,inputId = "HighlightEventSelect",choices = highlight_opts, selected = highlight_opts_select)
@@ -3082,7 +3295,7 @@ server <- function(input, output, session) {
         
         pat_event_opts <- single_patient_swimmer_ylines()
         sankey_events <- sankey_added_events()
-        if (!displaySumm) {
+        if (!displaySumm) { # Remove summary swimmer lines
           pat_event_opts_select <- unname(unlist(pat_event_opts[grep("Summary$",names(pat_event_opts),invert = T)]))
         } else {
           pat_event_opts_select <- unname(unlist(pat_event_opts))
@@ -3108,12 +3321,21 @@ server <- function(input, output, session) {
             yFont <- input$TimeLineYAxisSize
             eventsY <- input$SwimmerYlinesSelect
             Patient_Event_Data_sub <- PatientTimelinePlot_df()
+            #save(list = ls(), file = "PatientTimelinePlot_react.RData", envir = environment())
+            eventsY_summ <- grep("Summary",eventsY,value = T)
+            eventsY_reg <- grep("Summary",eventsY,value = T, invert = T)
+            eventsY <- c(eventsY_summ,eventsY_reg)
             if (isTruthy(eventsY)) {
               Patient_Event_Data_sub <- Patient_Event_Data_sub[which(Patient_Event_Data_sub[,2] %in% eventsY),]
               Patient_Event_Data_sub <- Patient_Event_Data_sub[order(match(Patient_Event_Data_sub[,2], eventsY)),]
             }
             Patient_Event_Data_sub$EventStart <- round(Patient_Event_Data_sub$EventStart,2)
             Patient_Event_Data_sub$EventEnd <- round(Patient_Event_Data_sub$EventEnd,2)
+            #data <- timelinePlot_lyprep(data = Patient_Event_Data_sub, event_type_col = "EventType",
+            #                            start_col = "EventStart", stop_col = "EventEnd",
+            #                            highlight_col = "highlight", text_col = "text")
+            #
+            #
             if (length(eventsY) == length(unique(Patient_Event_Data_sub$Event))) {
               #save(list = ls(), file = "eventhighlight.RData", envir = environment())
               plot2 <- timelinePlot(data = Patient_Event_Data_sub[,-1],event_col = "Event", event_type_col = "EventType",
