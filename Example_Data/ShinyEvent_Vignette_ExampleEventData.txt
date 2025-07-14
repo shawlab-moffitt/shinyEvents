@@ -1,0 +1,24 @@
+PatientID	Event Name	Event Type	Event Start	Event End	Event Detail	Sex	Race
+Patient 1	Diagnosis	Clinical Event	43.75	43.75	Papillary Carcinoma	Male	Black or African American
+Patient 1	Cisplatin	Medication	43.98	44.72		Male	Black or African American
+Patient 1	Gemcitabin Hydrochloride	Medication	43.98	44.72		Male	Black or African American
+Patient 1	Bladder Radiation	Radiation	45.23	45.48	"Rad Dose: 2000, Rad Fraction: 5"	Male	Black or African American
+Patient 1	Liver Metastasis	Metastatic Event	46.1	46.1		Male	Black or African American
+Patient 1	Pembrolizumab	Medication	46.35	47.25		Male	Black or African American
+Patient 1	Death	Clinical Event	49.45	49.45		Male	Black or African American
+Patient 2	Diagnosis	Clinical Event	67.24	67.24	Adenocarcinoma	Male	White
+Patient 2	Prostate Surgery	Surgery/Biopsy	67.32	67.32	Therapeutic Surgery	Male	White
+Patient 2	Prostate Sample Collection	Sample Collection	67.32	67.32	RNA sequencing performed	Male	White
+Patient 2	Abiraterone	Medication	67.56	68.23		Male	White
+Patient 2	Prostate Radiation	Radiation	68.47	68.68	Rad Modality: External beam	Male	White
+Patient 2	Surveillance Imaging	Imaging	68.75	68.75	No evidence of disease	Male	White
+Patient 2	Complete Response	Positive Response	69.26	69.26		Male	White
+Patient 3	Diagnosis	Clinical Event	56.89	56.89	Renal Cell Carcinoma	Female	White
+Patient 3	Diagnostic Imaging	Imaging	56.89	56.89		Female	White
+Patient 3	Kidney Biopsy	Surgery/Biopsy	56.92	56.92	Diagnosit Biopsy	Female	White
+Patient 3	Kidney Sample Collection	Sample Collection	56.92	56.92	RNA and WES	Female	White
+Patient 3	Pembrolizumab	Medication	57.05	57.59		Female	White
+Patient 3	Axitinib	Medication	57.05	57.59		Female	White
+Patient 3	Progressive Disease	Negative Response	57.47	57.47		Female	White
+Patient 3	Lung Metastasis	Metastatic Event	57.47	57.47	Left lung lobe	Female	White
+Patient 3	Radiation to Left Lung	Radiation	57.65	57.85	"Rad Dose: 4500, Rad Fraction: 15"	Female	White

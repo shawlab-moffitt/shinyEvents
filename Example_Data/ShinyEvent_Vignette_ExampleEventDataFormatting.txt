@@ -1,0 +1,8 @@
+Column Type	Note	Description	Example
+Patient ID	Required	Unique identifier for each patient.	"'Patient 1','Patient 2','Patient 3'"
+Event Name	Required	Specific clinical events the patient encountered.	"'Diagnosis','Cisplatin treatment','Progression','Radiation to Lymph Node'"
+Event Start Time	Required	"Numeric start time for the event with units of years, days, months, or hours. Units will be entered in app UI."	"58.75, 21458.44, 705, 12"
+Event End Time	"Required column, Optional value"	"Numeric end time for the event with units of years, days, months, or hours. Units will be entered in app UI. If an event is a single time instance this value can be left blank or be the same as the event start time value."	"58.75, 21458.44, 705, 12"
+Event Type	"Optional, single column"	Term that can be used to group events of a similar nature.	"'Clinical Time Point','Medication','Progression Event','Radiation'"
+Event Details	"Optional, One or more columns"	Details or notes regarding the event on the same row.	"'Stage III','Chemotherapy','Growing lesion from imaging','Radiation Dose 3000'"
+Patient Details	"Optional, One or more columns"	Patient annotations that add patient features. This can be added for all patients and repeated down the column on each event row for the patient.	"A column or multiple columns annotating patient features such as sex, smoking status, mutation status, and more"
