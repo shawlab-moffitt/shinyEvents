@@ -20,9 +20,7 @@ The shinyEvents tool was developed under the following R Environement:
 | svglite_2.2.1 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |
 
 
-<center>
 ![Figure 1: ShinyEvents Applicaiton Features](https://github.com/shawlab-moffitt/shinyEvents/blob/main/www/ShinyEvents_Figure_3_JD_V2_20250603_v3.png?raw=true)
-</center>
 
 # Required Data
 
