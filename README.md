@@ -20,6 +20,10 @@ The shinyEvents tool was developed under the following R Environement:
 | svglite_2.2.1 | ggsankey_0.0.99999 | ComplexHeatmap_2.25.2 | InteractiveComplexHeatmap_1.11.1 |
 
 
+<center>
+![Figure 1: ShinyEvents Applicaiton Features](www/ShinyEvents_Figure_3_JD_V2_20250603_v3.png)
+</center>
+
 # Required Data
 
 ## Option 1: Event Data Upload
@@ -46,6 +50,11 @@ Additional columns of event details or other further supplementary patient infor
 | Event Details | Optional, One or more columns | Details or notes regarding the event on the same row. | 'Stage III','Chemotherapy' |
 | Patient Details | Optional, One or more columns | Patient annotations that add patient features. This can be added for all patients and repeated down the column on each event row for the patient. | Patient features such as sex, smoking status, mutation status, and more |
 
+#### Example Event Data
+
+<center>
+![Figure 2: Example layout of Event Data Input File](www/ShinyEvents_ExampleEventData.png)
+</center>
 
 ### Optional Supplementary Data
 
@@ -53,9 +62,13 @@ Any additional supplementary patient data may be uploaded to the app to aid in p
 
 This data is intended to be linked with the event data, whereas a specific event might have been derived or can be linked to a patient or row from one of the tables in the supplementary data. For this, there must be a column in the event data that can link the event to the proper table/sheet of the supplementary data.
 
-Below in Figure 2 we highlight the file formats accepted by the ShinyEvents application. The Event Data table in this figure has a column named "Event Table" where the column values align with the table/sheet names in the supplementary excel data file. These two files are then linked via the user selection that informs the app which column to link by.
+Below in Figure 3 we highlight the file formats accepted by the ShinyEvents application. The Event Data table in this figure has a column named "Event Table" where the column values align with the table/sheet names in the supplementary excel data file. These two files are then linked via the user selection that informs the app which column to link by.
 
-## Option 2: Parameter File Input
+<center>
+![Figure 3: ShinyEvents Data User Upload](www/ShinyEvents_DataUploadHelp_v6_min_v2.png)
+</center>
+
+## Option 3: Parameter File Input
 
 While the essential event data table is only of four required columns, the data that it is derived from can be quite extensive and include a variety of different data tables and event column variables and details. To assist in generating this data or for more advanced use cases, it may be preferable to perform some additional pre-processing steps and setup an application instance dedicated to a specific data set. 
 
@@ -67,7 +80,7 @@ This file should be formatted as a tab or comma delimited table of 11 columns wi
 
 The files this table describes should be text files that are located in the app folder, as the app will be reading over this table to read the individual files and extract the desired data to generate the event data. There could be multiple events annotated within a single file or there may also be files of purely supplementary information  that does not correlate to an event but could provide further patient information within the app.
 
-#### Table 3: Parameter File Column Descriptions and Examples
+#### Table 2: Parameter File Column Descriptions and Examples
 
 | Column Name | Note | Description | Examples |
 | :--- | :--- | :---------- | :----------- |
@@ -83,20 +96,53 @@ The files this table describes should be text files that are located in the app 
 | Event Start Time Units | User Defined | The unit of time used in the event start column. | Must be one of the following: 'Years','Months','Days','Hours' |
 | Event End Time Units | User Defined | The unit of time used in the event end column. | Must be one of the following: 'Years','Months','Days','Hours' |
 
-#### Optional Pre-Processing
+#### Example Parameter File
+
+<center>
+![Figure 4: Exmaple ShinyEvent Parameter File](www/ShinyEvents_ParameterFile.png)
+</center>
+
+Figure 5 annotates how the column defined event data is derived or not. In the case of diagnosis and death events, highlighted in orange, the event is uniform and binary over all patients, annotating if a diagnosis or death happened or not, so we set 'Column Defined Event' to FALSE. When deriving events of specific medication regimens, highlighted in green, we set 'Column Defined Event' to TRUE, which informs ShinyEvents to expand and observe a column that contains a more specific name for the event, in this case the 'Medication' column providing the name of the drug.
+
+<center>
+![Figure 5: Column Defined Event Example in Parameter Table](www/ShinyEvents_ColDefinedEvent_Example.png)
+</center>
+
+### Optional Pre-Processing
 
 To aid in application setup, the user can perform pre-processing steps with the prepared parameter file to generate the event data file and patient selection table prior to app start-up. This is helpful when working with larger data sets, as part of the application is event clustering which can take additional computing time to analyse, and if only the parameter file is used as input this step will run every time the application is deployed.
 
-##### Event Data File
+#### Event Data File
 
 We have provided some helpful functions that allow users to generate an event data table from the parameter file. The `getEventData()` function is located in the `R/ShinyEvents_Functions.R` file. Upon sourcing this file with `source('R/ShinyEvents_Functions.R')` users can run this function with the parameter file as the input, which will create a data.frame object of the event data. This can be written to file and used in the app through the front-end UI data upload or the back-end application start-up.
+
+Once the event data is written to file and placed in the app.R folder with the parameter file and supplementary data, users can edit the top of the app.R script to fill in the event data file name on the line that contains `Patient_Event_Data_File <- ''`.
+
+```
+source('R/ShinyEvents_Functions.R')
+parameter_df <- as.data.frame(fread("Example_Data/ShinyEvent_Vignette_ExampleParameterData.txt",na.strings = c("","NA")))
+example_event_data <- getEventData(param = parameter_df, # Parameter data used to generate the event data (shown in example above)
+                                   read_files = TRUE,    # TRUE/FALSE to read in the file names provided in the second column of the parameter file
+                                   #read_files = FALSE,  # Users can also set this to FALSE and read in the data files listed in the parameter file prior
+                                   #data = data_list,    # An R list of data frames, named according to the name aligned in the parameter file
+                                   summary = TRUE,       # TRUE/FALSE to apply a summary cluster function to the treatment and response events
+                                   verbose = FALSE)
+```
+
+#### Patient Selection Table
+
+The patient selection table is used in the app interface to select patients when viewing their clinical timeline. This is generated in the application after the event data is registered, and it summarizes the number of events per patient and their length of time on record. This table does not require much computing time, so it is not necessary to pre-process. If there is a preference for additional patient annotation that can aid in patient selection users can generate a customized patient selection table with the requirement that there is only 1 row per patient and the first column is the patient ID that can align with the event data.
+
+Once the patient selection table is written to file and placed in the app.R folder with the parameter file and supplementary data and optional event data, users can edit the top of the app.R script to fill in the patient selection data file name on the line that contains `Patient_Annotation_File <- ''`.
+
+# Application Setup
 
 # shinyEvents Application Key Features
 
 
 # Application sessionInfo()
 
-```{r}
+```
 > sessionInfo()
 R version 4.4.1 (2024-06-14 ucrt)
 Platform: x86_64-w64-mingw32/x64
