@@ -1,0 +1,2 @@
+PatientID	SurgeryBiopsySite	SiteTherapeutic	SiteDiagnostic	SitePalliative	AgeAtSurgery
+Patient 2	Prostate	Yes	No	No	67.32

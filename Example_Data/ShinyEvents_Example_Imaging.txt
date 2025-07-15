@@ -1,0 +1,3 @@
+PatientID	ImagingSite	ImagingDiagnostic	ImagingSurvellance	ImagingScanType	AgeAtImaging	EvidenceOfLesion
+Patient 2	Prostate	No	Yes	CT	68.75	No
+Patient 3	Kidney	Yes	No	CT	56.89	Yes

@@ -1,0 +1,2 @@
+PatientID	SurgeryBiopsySite	SiteTherapeutic	SiteDiagnostic	SitePalliative	AgeAtSurgery
+Patient 3	Kidney	No	Yes	No	56.92

@@ -1,0 +1,7 @@
+PatientID	Medication	MedLineRegimen	AgeAtMedStart	AgeAtMedEnd
+Patient 1	Cisplatin	FirstLine	43.98	44.72
+Patient 1	Gemcitabine Hydrochloride	FirstLine	43.98	44.72
+Patient 1	Pembrolizumab	SecondLine	46.35	47.25
+Patient 2	Abiraterone	FirstLine	67.56	68.23
+Patient 3	Pembrolizumab	FirstLine	57.05	57.59
+Patient 3	Axitinib	FirstLine	57.05	57.59

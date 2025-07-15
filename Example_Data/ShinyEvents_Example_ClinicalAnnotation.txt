@@ -1,0 +1,4 @@
+PatientID	DiseaseType	Histology	Stage	AgeAtDiagnosis	AgeAtLastDiseaseStatus	Disease Status	AgeAtDeath	AgeAtCompleteResponse	AgeAtProgression
+Patient 1	Bladder Cancer	Papillary Carcinoma	IV	43.75	49.45		49.45		
+Patient 2	Prostate Cancer	Adenocarcinoma	I	67.24	69.26	Complete Response		69.26	
+Patient 3	Kidney Cancer	Renal Cell Carcinoma	IV	56.89	57.47	Progressive Disease			57.47

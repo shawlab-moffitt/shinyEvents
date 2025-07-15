@@ -1,0 +1,182 @@
+---
+title: "ShinyEvents Getting Started"
+author: "Alyssa Obermayer"
+output: 
+  html_document: 
+    toc: true
+    toc_float: 
+      collapsed: false
+    toc_depth: 2
+---
+
+<style type="text/css">
+.main-container {
+  max-width: 1800px !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library("DT")
+library("data.table")
+library("dplyr")
+```
+
+
+
+
+<center>
+![Figure 1: ShinyEvents Applicaiton Features](www/ShinyEvents_Figure_3_JD_V2_20250603_v3.png)
+</center>
+
+# Required Data
+
+## Option 1: Event Data Upload
+
+The event data table contains all the information that is needed to power the ShinyEvents application. With only four required columns, users can upload the event data of their patients, select the columns of required data, and click a button to process and explore their longitudinal data.
+
+### Event Data File Format
+
+The event data file can be tab or comma delimited and has a minimum requirement of four columns: **patient ID, event name, event start time, and event end time**. Each row should annotate an event for a single patient, so a patient would typically have multiple rows of events for different clinical time points, such as diagnosis, medications, radiation event, metastases or progressions, as well as death or last contact, among numerous other events a patient may experience during their clinical journey.
+
+A recommended, but not required, column is the event type or category column that can be used to group the events of similar nature. For instance, there may be separate events for different drugs administered. In this case you would add a column (e.g. EventType) to the event data and place the text 'Medication' in that column for each drug event row, and perform this similar annotation for different event groups.
+
+Additional columns of event details or other further supplementary patient information may be added with the utility of being used in data filtering, timeline plot hover text, or as stratification variables for the Kaplan-Meier plot in the time-to-event analysis.
+
+#### Table 1: Event Data Column Descriptions and examples
+
+| Column Type | Note | Description | Examples |
+| :---- | :---- | :---------- | :------ |
+| Patient ID | Required | Unique identifier for each patient. | 'Patient 1','Patient 2' |
+| Event Name | Required | Specific clinical events the patient encountered. | 'Diagnosis','Cisplatin treatment' |
+| Event Start Time | Required | Numeric start time for the event with units of years, days, months, or hours. | 58.75, 21458.44 |
+| Event End Time | Required if event with start and end time | Numeric end time for the event with units of years, days, months, or hours. Can be left blank if only one time point. | 58.75, 21458.44 |
+| Event Type | Optional, single column | Term that can be used to group events of a similar nature. | 'Clinical Time Point','Medication' |
+| Event Details | Optional, One or more columns | Details or notes regarding the event on the same row. | 'Stage III','Chemotherapy' |
+| Patient Details | Optional, One or more columns | Patient annotations that add patient features. This can be added for all patients and repeated down the column on each event row for the patient. | Patient features such as sex, smoking status, mutation status, and more |
+
+#### Table 2: Example Event Data
+
+```{r, echo=FALSE}
+event_ex <- as.data.frame(fread("Example_Data/ShinyEvent_Vignette_ExampleEventData.txt",na.strings = c("","NA")))
+DT::datatable(event_ex,
+              options = list(lengthMenu = c(3, 5, 10, 20, 100, 1000),
+                             pageLength = 3,
+                             scrollX = T))
+```
+
+### Optional Supplementary Data
+
+Any additional supplementary patient data may be uploaded to the app to aid in plot annotation, data sub-setting, and time-to-event Kaplan-Meier stratification. This data should be a tabular excel file where each tab/sheet is named properly according to the data it contains and the first column of each sheet should contain the patient identifier that can be linked to the event data.
+
+This data is intended to be linked with the event data, whereas a specific event might have been derived or can be linked to a patient or row from one of the tables in the supplementary data. For this, there must be a column in the event data that can link the event to the proper table/sheet of the supplementary data.
+
+Below in Figure 2 we highlight the file formats accepted by the ShinyEvents application. The Event Data table in this figure has a column named "Event Table" where the column values align with the table/sheet names in the supplementary excel data file. These two files are then linked via the user selection that informs the app which column to link by.
+
+<center>
+![Figure 2: ShinyEvents Data User Upload](www/ShinyEvents_DataUploadHelp_v6_min_v2.png)
+</center>
+
+## Option 2: Parameter File Input
+
+While the essential event data table is only of four required columns, the data that it is derived from can be quite extensive and include a variety of different data tables and event column variables and details. To assist in generating this data or for more advanced use cases, it may be preferable to perform some additional pre-processing steps and setup an application instance dedicated to a specific data set. 
+
+This requires a parameter file which would be user derived and contain fields of information that will be used to generate the event data table from more raw or unprocessed data. While this is a manually made file, once it is setup properly, a very detailed event data and ShinyEvents application can be deployed.
+
+### Parameter File
+
+This file should be formatted as a tab or comma delimited table of 11 columns with precise column names as described here. This file is be similar to an instruction manual that guides ShiynEvents to identifying the correct events and event times within their designated data table, as well as grouping events categorically and annotating specific events as treatment or response associated.
+
+The files this table describes should be text files that are located in the app folder, as the app will be reading over this table to read the individual files and extract the desired data to generate the event data. There could be multiple events annotated within a single file or there may also be files of purely supplementary information  that does not correlate to an event but could provide further patient information within the app.
+
+#### Table 3: Parameter File Column Descriptions and Examples
+
+| Column Name | Note | Description | Examples |
+| :--- | :--- | :---------- | :----------- |
+| Data Table Name | User Derived | Name of data table that can associate with the data file from that row. | 'ClinicalAnnotation','MedRegimen' |
+| Data File | File Name | Name of file to read and obtain event information from | 'ShinyEvents_ClinicalAnnotation.txt' |
+| Event Name | Column Name or User Derived | If the event is more general or uniform over all patients this would be a user derived name. If the event is linked to a column that provides further specificity this would be the column name of that column. | In the case of a uniform event, this may be 'Death' which may only be defined by the event time column. For a more specific event, such as 'Medication', a user may specify a column in the data named 'Medications' which contains multiple different medication names as a unique event row for a patient.  |
+| Column Defined Event | TRUE/FALSE | This value is associated with the type of event name that is defined. If the event if defined by further specificity in a column, this will be TRUE, else this would be FALSE | Referencing the Event Name parameter example above, the event of 'Death' would be FALSE and the event 'Medications' would be TRUE, because the 'Medications' column contains a further defining event name. |
+| Event Category | User Derived | Name that can be used to group events of similar nature. | 'Clinical Event','Medication' |
+| Event Start Column | Column Name | Name of column in data that defines the event start time. | 'AgeAtDiagnosis','AgeAtMedStart' |
+| Event End Column | Column Name | Name of column in data that defines the event end time. Can be left blank if only one time instance for event. | 'AgeAtMedEnd' |
+| Treatment | TRUE/FALSE | TRUE or FALSE if the event in this row describes a patient treatment or not. | If event is diagnosis, this would be FALSE. If event was a medication, this would be TRUE |
+| Response | TRUE/FALSE | TRUE or FALSE if the event in this row describes a patient response or not. May be of interest to separate positive and negative responses into two event categories. | If event is metastasis, this would be TRUE. If event was a surgery, this would be FALSE |
+| Event Start Time Units | User Defined | The unit of time used in the event start column. | Must be one of the following: 'Years','Months','Days','Hours' |
+| Event End Time Units | User Defined | The unit of time used in the event end column. | Must be one of the following: 'Years','Months','Days','Hours' |
+
+#### Table 4: Example Parameter File
+
+```{r, echo=FALSE}
+param_ex <- as.data.frame(fread("Example_Data/ShinyEvent_Vignette_ExampleParameterData.txt",na.strings = c("","NA")))
+DT::datatable(param_ex,
+              options = list(lengthMenu = c(3, 5, 10, 20, 100, 1000),
+                             pageLength = 3,
+                             scrollX = T))
+
+#param_pre <- param_ex
+#wkbk_files <- unique(param_pre[,c(1,2)])
+#  if (nrow(wkbk_files) > 1) {
+#    wkbk_pre <- list()
+#    for (row in seq(nrow(wkbk_files))) {
+#      df <- as.data.frame(fread(wkbk_files[row,2], na.strings = c("","NA")))
+#      tabName <- wkbk_files[row,1]
+#      wkbk_pre[[tabName]] <- df
+#    }
+#  }
+#
+#example_event_data <- getEventData(param = param_pre, data = wkbk_pre, summary = T)
+#example_event_data_nosumm <- getEventData(param = param_pre, data = wkbk_pre, summary = F)
+#example_pat_anno <- event_count_df(example_event_data)
+#example_pat_anno_nosumm <- event_count_df(example_event_data_nosumm)
+
+
+
+```
+
+Figure 3 annotates how the column defined event data is derived or not. In the case of diagnosis and death events, highlighted in orange, the event is uniform and binary over all patients, annotating if a diagnosis or death happened or not, so we set 'Column Defined Event' to FALSE. When deriving events of specific medication regimens, highlighted in green, we set 'Column Defined Event' to TRUE, which informs ShinyEvents to expand and observe a column that contains a more specific name for the event, in this case the 'Medication' column providing the name of the drug.
+
+<center>
+![Figure 3: Column Defined Event Example in Parameter Table](www/ShinyEvents_ColDefinedEvent_Example.png)
+</center>
+
+### Optional Pre-Processing
+
+To aid in application setup, the user can perform pre-processing steps with the prepared parameter file to generate the event data file and patient selection table prior to app start-up. This is helpful when working with larger data sets, as part of the application is event clustering which can take additional computing time to analyse, and if only the parameter file is used as input this step will run every time the application is deployed.
+
+#### Event Data File
+
+We have provided some helpful functions that allow users to generate an event data table from the parameter file. The `getEventData()` function is located in the `R/ShinyEvents_Functions.R` file. Upon sourcing this file with `source('R/ShinyEvents_Functions.R')` users can run this function with the parameter file as the input, which will create a data.frame object of the event data. This can be written to file and used in the app through the front-end UI data upload or the back-end application start-up.
+
+Once the event data is written to file and placed in the app.R folder with the parameter file and supplementary data, users can edit the top of the app.R script to fill in the event data file name on the line that contains `Patient_Event_Data_File <- ''`.
+
+```{r}
+source('R/ShinyEvents_Functions.R')
+parameter_df <- as.data.frame(fread("ShinyEvent_Vignette_ExampleParameterData.txt",na.strings = c("","NA")))
+example_event_data <- getEventData(param = parameter_df, # Parameter data used to generate the event data (shown in example above)
+                                   read_files = TRUE,    # TRUE/FALSE to read in the file names provided in the second column of the parameter file
+                                   #read_files = FALSE,  # Users can also set this to FALSE and read in the data files listed in the parameter file prior
+                                   #data = data_list,    # An R list of data frames, named according to the name aligned in the parameter file
+                                   summary = TRUE,       # TRUE/FALSE to apply a summary cluster function to the treatment and response events
+                                   verbose = FALSE)
+DT::datatable(example_event_data,
+              options = list(lengthMenu = c(3, 5, 10, 20, 100, 1000),
+                             pageLength = 3,
+                             scrollX = T))
+
+```
+
+#### Patient Selection Table
+
+The patient selection table is used in the app interface to select patients when viewing their clinical timeline. This is generated in the application after the event data is registered, and it summarizes the number of events per patient and their length of time on record. This table does not require much computing time, so it is not necessary to pre-process. If there is a preference for additional patient annotation that can aid in patient selection users can generate a customized patient selection table with the requirement that there is only 1 row per patient and the first column is the patient ID that can align with the event data.
+
+Once the patient selection table is written to file and placed in the app.R folder with the parameter file and supplementary data and optional event data, users can edit the top of the app.R script to fill in the patient selection data file name on the line that contains `Patient_Annotation_File <- ''`.
+

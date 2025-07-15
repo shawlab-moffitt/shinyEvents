@@ -1,0 +1,3 @@
+PatientID	SiteOfSpecimenCollection	AgeAtSpecimenCollection	Storage Method	RNASeqPerformed	WESPerformed
+Patient 2	Prostate	67.32	FFPE	Yes	No
+Patient 3	Kidney	56.92	FFPE	Yes	Yes

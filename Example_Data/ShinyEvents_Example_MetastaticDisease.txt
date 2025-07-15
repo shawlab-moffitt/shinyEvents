@@ -1,0 +1,3 @@
+PatientID	MetastaticSite	AgeAtMetastasis	PrimaryDiseaseSite
+Patient 1	Liver	46.1	Bladder
+Patient 3	"Lung, Left Lobe"	57.47	Kidney

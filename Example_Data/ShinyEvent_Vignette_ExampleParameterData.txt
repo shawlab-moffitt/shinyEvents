@@ -1,0 +1,12 @@
+Data Table Name	Data File	Event Name	Column Defined Event	Event Category	Event Start Column	Event End Column	Treatment	Response	Event Start Time Units	Event End Time Units
+ClinicalAnnotation	ShinyEvents_Example_ClinicalAnnotation.txt	Diagnosis	FALSE	Clinical Event	AgeAtDiagnosis		FALSE	FALSE	Years	Years
+ClinicalAnnotation	ShinyEvents_Example_ClinicalAnnotation.txt	Death	FALSE	Clinical Event	AgeAtDeath		FALSE	TRUE	Years	Years
+ClinicalAnnotation	ShinyEvents_Example_ClinicalAnnotation.txt	Disease Status	TRUE	Positive Response	AgeAtCompleteResponse		FALSE	FALSE	Years	Years
+ClinicalAnnotation	ShinyEvents_Example_ClinicalAnnotation.txt	Disease Status	TRUE	Negative Response	AgeAtProgression		FALSE	TRUE	Years	Years
+Pathology	ShinyEvents_Example_Pathology.txt	SiteOfSpecimenCollection	TRUE	Sample Collection	AgeAtSpecimenCollection		FALSE	FALSE	Years	Years
+Imaging	ShinyEvents_Example_Imaging.txt	ImagingSite	TRUE	Imaging	AgeAtImaging		FALSE	FALSE	Years	Years
+MedRegimen	ShinyEvents_Example_MedRegimen.txt	Medication	TRUE	Medication	AgeAtMedStart	AgeAtMedEnd	TRUE	FALSE	Years	Years
+Radiation	ShinyEvents_Example_Radiation.txt	RadiationSite	TRUE	Radiation	AgeAtRadStart	AgeAtRadEnd	TRUE	FALSE	Years	Years
+SurgeryTherapeutic	ShinyEvents_Example_SurgeryTherapeutic.txt	SurgeryBiopsySite	TRUE	SurgeryTherapeutic	AgeAtSurgery		TRUE	FALSE	Years	Years
+SurgeryBiopsy	ShinyEvents_Example_SurgeryBiopsy.txt	SurgeryBiopsySite	TRUE	Surgery/Biopsy	AgeAtSurgery		FALSE	FALSE	Years	Years
+MetastaticDisease	ShinyEvents_Example_MetastaticDisease.txt	MetastaticSite	TRUE	Metastatic Event	AgeAtMetastasis		FALSE	TRUE	Years	Years

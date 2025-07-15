@@ -1,0 +1,4 @@
+PatientID	RadiationSite	RadiationDose	RadiationFractions	RadiationModality	AgeAtRadStart	AgeAtRadEnd
+Patient 1	Bladder	2000	5	External beam	45.23	45.48
+Patient 2	Prostate			External beam	68.47	68.68
+Patient 3	"Lung, Left Lobe"	4500	15	External beam	57.65	57.85
