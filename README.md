@@ -50,9 +50,7 @@ Additional columns of event details or other further supplementary patient infor
 
 #### Example Event Data
 
-<center>
-![Figure 2: Example layout of Event Data Input File](www/ShinyEvents_ExampleEventData.png)
-</center>
+![Figure 2: Example layout of Event Data Input File](https://github.com/shawlab-moffitt/shinyEvents/blob/main/www/ShinyEvents_ExampleEventData.png?raw=true)
 
 ### Optional Supplementary Data
 
@@ -62,9 +60,7 @@ This data is intended to be linked with the event data, whereas a specific event
 
 Below in Figure 3 we highlight the file formats accepted by the ShinyEvents application. The Event Data table in this figure has a column named "Event Table" where the column values align with the table/sheet names in the supplementary excel data file. These two files are then linked via the user selection that informs the app which column to link by.
 
-<center>
-![Figure 3: ShinyEvents Data User Upload](www/ShinyEvents_DataUploadHelp_v6_min_v2.png)
-</center>
+![Figure 3: ShinyEvents Data User Upload](https://github.com/shawlab-moffitt/shinyEvents/blob/main/www/ShinyEvents_DataUploadHelp_v6_min_v2.png?raw=true)
 
 ## Option 3: Parameter File Input
 
@@ -96,15 +92,11 @@ The files this table describes should be text files that are located in the app 
 
 #### Example Parameter File
 
-<center>
-![Figure 4: Exmaple ShinyEvent Parameter File](www/ShinyEvents_ParameterFile.png)
-</center>
+![Figure 4: Exmaple ShinyEvent Parameter File](https://github.com/shawlab-moffitt/shinyEvents/blob/main/www/ShinyEvents_ParameterFile.png?raw=true)
 
 Figure 5 annotates how the column defined event data is derived or not. In the case of diagnosis and death events, highlighted in orange, the event is uniform and binary over all patients, annotating if a diagnosis or death happened or not, so we set 'Column Defined Event' to FALSE. When deriving events of specific medication regimens, highlighted in green, we set 'Column Defined Event' to TRUE, which informs ShinyEvents to expand and observe a column that contains a more specific name for the event, in this case the 'Medication' column providing the name of the drug.
 
-<center>
-![Figure 5: Column Defined Event Example in Parameter Table](www/ShinyEvents_ColDefinedEvent_Example.png)
-</center>
+![Figure 5: Column Defined Event Example in Parameter Table](https://github.com/shawlab-moffitt/shinyEvents/blob/main/www/ShinyEvents_ColDefinedEvent_Example.png?raw=true)
 
 ### Optional Pre-Processing
 
