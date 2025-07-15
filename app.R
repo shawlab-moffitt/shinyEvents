@@ -1,16 +1,17 @@
 version_id <- paste0("v1.0.20250710")
 
 
-# File Input ---------------------------------------------------------
+# User File Input ---------------------------------------------------------
 
 Project_Name <- ''
 
 Event_Param_File <- ''
-Workbook_file <- ''
+
+# OPTIONAL - Recommended
+Patient_Event_Data_File <- ''
 
 # OPTIONAL
 Patient_Annotation_File <- ''
-Patient_Event_Data_File <- ''
 Event_Cluster_Window <- 1
 Data_Contains_Longitudinal_Biomarkers <- FALSE
 
@@ -18,19 +19,16 @@ Data_Contains_Longitudinal_Biomarkers <- FALSE
 Password_Protected <- FALSE
 PasswordSet <- ''
 
-# Advanced Setup
-TTE_Start_Event_Col <- ''
-TTE_Start_Event_Crit <- ''
-TTE_End_Event_Col <- ''
-TTE_End_Event_Crit <- ''
 
+# app.R processing - DO NOT EDIT
 
-
-Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData_v2_treat.txt"
+# Back-end data required for app
+Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
 Example_wkbk_file <- "Example_Data/AACR_GENIE_NSCLC_Adenocarcinoma_Example.xlsx"
 
 example_eventdata_format_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventDataFormatting.txt"
-example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
+#example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
+example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData_v3.txt"
 
 # Homepage files
 homepage_filepath <- "ShinyEvents_Homepage/text_files/"
@@ -51,7 +49,8 @@ set.seed(42)
 # Load input data if available -------------------------------------------------
 
 wkbk_pre <- NULL
-if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
+if (file.exists(Event_Param_File)) {
+#if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
   param_pre <- as.data.frame(fread(Event_Param_File,na.strings = c("","NA")))
   wkbk_files <- unique(param_pre[,c(1,2)])
   if (nrow(wkbk_files) > 1) {
@@ -64,7 +63,8 @@ if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
   }
 }
 
-if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & (file.exists(Workbook_file) | isTruthy(wkbk_pre))) {
+if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & isTruthy(wkbk_pre)) {
+#if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & (file.exists(Workbook_file) | isTruthy(wkbk_pre))) {
   AllFilesReady <- TRUE
   start_trigger <- 1
 } else {
@@ -80,6 +80,7 @@ if (exists("Project_Name")) {
   
   Project_Name <- "ShinyEvents"
 }
+Workbook_file <- ""
 
 #Drug_anno <- as.data.frame(fread(Drug_anno_file))
 
@@ -99,18 +100,18 @@ if ("InteractiveComplexHeatmap" %in% pacakges) {
   heat_hover_avail <- FALSE
 }
 
-if (!isTruthy(TTE_Start_Event_Col)) {
-  TTE_Start_Event_Col <- NULL
-}
-if (!isTruthy(TTE_Start_Event_Crit)) {
-  TTE_Start_Event_Crit <- NULL
-}
-if (!isTruthy(TTE_End_Event_Col)) {
-  TTE_End_Event_Col <- NULL
-}
-if (!isTruthy(TTE_End_Event_Crit)) {
-  TTE_End_Event_Crit <- NULL
-}
+#if (!isTruthy(TTE_Start_Event_Col)) {
+#  TTE_Start_Event_Col <- NULL
+#}
+#if (!isTruthy(TTE_Start_Event_Crit)) {
+#  TTE_Start_Event_Crit <- NULL
+#}
+#if (!isTruthy(TTE_End_Event_Col)) {
+#  TTE_End_Event_Col <- NULL
+#}
+#if (!isTruthy(TTE_End_Event_Crit)) {
+#  TTE_End_Event_Crit <- NULL
+#}
 
 if (!exists("Data_Contains_Longitudinal_Biomarkers")) {
   Data_Contains_Longitudinal_Biomarkers <- FALSE
