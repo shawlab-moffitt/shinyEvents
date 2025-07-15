@@ -3902,7 +3902,8 @@ server <- function(input, output, session) {
         #save(list = ls(), file = "sankeyEvent.RData", envir = environment())
         updateSelectInput(session,"sankeyEvent", choices = sankey_event_choices, selected = sankey_event_select)
       })
-      observeEvent(input$sankeyEvent,{
+      observe({
+      #observeEvent(input$sankeyEvent,{
         req(event_data_tr_clusters_clean())
         req(input$sankeyEvent)
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
