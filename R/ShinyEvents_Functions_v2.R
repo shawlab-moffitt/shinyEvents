@@ -683,9 +683,81 @@ data_to_event <- function(df = NULL,
 
 
 
-getEventData <- function(param = NULL,data = NULL, summary = TRUE, cluster_window = 1, verbose = TRUE) {
+#getEventData <- function(param = NULL,data = NULL, summary = TRUE, cluster_window = 1, verbose = TRUE) {
+#  if (is.null(param)) stop("Must provide file parameter data.")
+#  if (is.null(data)) stop("Must provide list of data frames.")
+#  param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
+#                  "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
+#  if (!all(colnames(param) == param_cols)) {
+#    stop("Please check parameter file header names or column order.")
+#  }
+#  param <- param[which(!is.na(param[,"Event Name"])),]
+#  #Event_End <- ifelse(is.na(param[row,"Event End Column"]),Event_Start,param[row,"Event End Column"])
+#  param[,"Event End Column"] <- ifelse(is.na(param[,"Event End Column"]),param[,"Event Start Column"],param[,"Event End Column"])
+#  param[,"Event Start Time Units"] <- ifelse(is.na(param[,"Event Start Time Units"]),"years",param[,"Event Start Time Units"])
+#  param[,"Event End Time Units"] <- ifelse(is.na(param[,"Event End Time Units"]),"years",param[,"Event End Time Units"])
+#  if (verbose) message("Formatting Event Data")
+#  
+#  event_data_list <- lapply(seq_along(data),function(data_tab) {
+#    table_name <- names(data)[data_tab]
+#    df <- data[[data_tab]]
+#    if (table_name %in% param[,1]) {
+#      param_sub <- param[which(param[,1] == table_name),]
+#      event_data_list_sub <- apply(param_sub,1,function(row) {
+#        data_to_event(df, table_name, event_name = row[[3]], col_defined_event = row[[4]],
+#                      event_category = row[[5]], event_start_col = row[[6]], event_end_col = row[[7]],
+#                      event_start_units = row[[10]], event_end_units = row[[11]])
+#        
+#      })
+#      event_data_list_tab <- unique(as.data.frame(data.table::rbindlist(event_data_list_sub)))
+#      event_data_list_tab <- event_data_list_tab[complete.cases(event_data_list_tab),]
+#      event_data_list_tab <- event_data_list_tab[order(event_data_list_tab[,1]),]
+#      return(event_data_list_tab)
+#    }
+#  })
+#  
+#  event_data <- unique(as.data.frame(data.table::rbindlist(event_data_list)))
+#  event_data <- event_data[complete.cases(event_data),]
+#  event_data <- event_data[order(event_data[,1]),]
+#  
+#  if (!summary) {
+#    return(event_data)
+#  } else {
+#    if (verbose) message("Summarizing Event Data")
+#    
+#    treatment_events <- unique(param[which(param$Treatment == TRUE),])
+#    treatment_events <- ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
+#                               paste0(treatment_events$`Event Category`,": "))
+#    response_events <- unique(param[which(param$Response == TRUE),])
+#    response_events <- ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
+#                              paste0(response_events$`Event Category`,": "))
+#    event_data_tr <- event_data[grepl(paste(treatment_events,collapse = "|"),event_data$Event),]
+#    event_data_re <- event_data[grepl(paste(response_events,collapse = "|"),event_data$Event),]
+#    
+#    if (verbose) message("Summarizing Treatment Event Data")
+#    event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = verbose, cluster_window = cluster_window)
+#    if (verbose) message("Summarizing Response Event Data")
+#    event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = verbose, cluster_window = cluster_window)
+#    event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+#    
+#    event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+#    event_data_cls <- event_data_cls %>%
+#      group_by(Name) %>%
+#      arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+#    
+#    event_data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data), fill = T)
+#    event_data_cls_all <- event_data_cls_all[order(event_data_cls_all[,1]),]
+#    event_data_cls_all <- as.data.frame(event_data_cls_all)
+#    
+#    return(event_data_cls_all)
+#  }
+#}
+
+
+
+getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = FALSE, cluster_window = 1, verbose = TRUE) {
   if (is.null(param)) stop("Must provide file parameter data.")
-  if (is.null(data)) stop("Must provide list of data frames.")
+  if (is.null(data) & !read_files) stop("Must provide list of data frames.")
   param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
                   "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
   if (!all(colnames(param) == param_cols)) {
@@ -696,6 +768,18 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, cluster_windo
   param[,"Event End Column"] <- ifelse(is.na(param[,"Event End Column"]),param[,"Event Start Column"],param[,"Event End Column"])
   param[,"Event Start Time Units"] <- ifelse(is.na(param[,"Event Start Time Units"]),"years",param[,"Event Start Time Units"])
   param[,"Event End Time Units"] <- ifelse(is.na(param[,"Event End Time Units"]),"years",param[,"Event End Time Units"])
+  
+  if (read_files & is.null(data)) {
+    if (verbose) message("Reading in data files")
+    data_files <- unique(param[,c(1,2)])
+    if (nrow(data_files) > 1) {
+      data <- lapply(data_files[,2], function(x) {
+        return(as.data.frame(fread(x,na.strings = c("","NA"))))
+      })
+      names(data) <- data_files[,1]
+    }
+  }
+  
   if (verbose) message("Formatting Event Data")
   
   event_data_list <- lapply(seq_along(data),function(data_tab) {
@@ -752,8 +836,4 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, cluster_windo
     return(event_data_cls_all)
   }
 }
-
-
-# remove cluster numbers from summary
-# rename treatment/response summary? 
 
