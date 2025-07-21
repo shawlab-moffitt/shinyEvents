@@ -289,11 +289,14 @@ Homepage_server <- function(id, homepage_texts, switch_main_tab, switch_main_nav
     })
     
     observeEvent(input$get_started, {
-      updateTabsetPanel(session, "navbar_id", selected = "step_1")
+      updateTabsetPanel(session, "shinyevents_tabs", selected = "data_input_tab")
     })
     
     observeEvent(input$need_tutorial, {
-      updateTabsetPanel(session, "navbar_id", selected = "tutorial")
+      updateTabsetPanel(session, "shinyevents_tabs", selected = "ShinyEvents1")
+    })
+    observeEvent(input$need_Vignette, {
+      updateTabsetPanel(session, "shinyevents_tabs", selected = "ShinyEvents1")
     })
   })
   

@@ -22,7 +22,8 @@ Homepage_UI <- function(id){
                                                          shiny::tags$a(shiny::imageOutput(NS(id, "shiny_app"), width = 180, height = 200), href="https://shawlab-moffitt.shinyapps.io/ShinyEvents/", target = "_blank",
                                                                        style="display: block; margin-left: auto; margin-right: auto;")),
                                                        shiny::actionButton(NS(id, "get_started"), "Get Started"),
-                                                       shiny::actionButton(NS(id, "need_tutorial"), "Need Tutorial?")
+                                                       shiny::actionButton(NS(id, "need_tutorial"), "Need Tutorial?"),
+                                                       shiny::actionButton(NS(id, "need_Vignette"), "Vignette")
                                            ),
                                            bslib::card(bslib::card_header(shiny::HTML("ShinyEvents Github")),
                                            #bslib::card(bslib::card_header(shiny::HTML("ShinyEvents<br/>Shiny Github")),

@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250710")
+version_id <- paste0("v1.0.20250721")
 
 
 # User File Input ---------------------------------------------------------
@@ -27,8 +27,7 @@ Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_Even
 Example_wkbk_file <- "Example_Data/AACR_GENIE_NSCLC_Adenocarcinoma_Example.xlsx"
 
 example_eventdata_format_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventDataFormatting.txt"
-#example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
-example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData_v3.txt"
+example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
 
 # Homepage files
 homepage_filepath <- "ShinyEvents_Homepage/text_files/"
@@ -50,7 +49,7 @@ set.seed(42)
 
 wkbk_pre <- NULL
 if (file.exists(Event_Param_File)) {
-#if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
+  #if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
   param_pre <- as.data.frame(fread(Event_Param_File,na.strings = c("","NA")))
   wkbk_files <- unique(param_pre[,c(1,2)])
   if (nrow(wkbk_files) > 1) {
@@ -64,7 +63,7 @@ if (file.exists(Event_Param_File)) {
 }
 
 if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & isTruthy(wkbk_pre)) {
-#if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & (file.exists(Workbook_file) | isTruthy(wkbk_pre))) {
+  #if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & (file.exists(Workbook_file) | isTruthy(wkbk_pre))) {
   AllFilesReady <- TRUE
   start_trigger <- 1
 } else {
@@ -217,6 +216,12 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                         #example_table table.dataTable th {
                                                           font-size: 12px !important;
                                                         }
+                                                        .html-embed img {
+                                                        max-width: 100%;
+                                                        height: auto;
+                                                        display: block;
+                                                        margin: 0 auto;
+                                                        }
                                                         "))
                                       ),
                                       shiny::sidebarLayout(
@@ -228,64 +233,64 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                             id = "dataInput_SideTab",
                                             tabPanel("Data Input",
                                                      div(tags$b(tags$u(h3("Step 1:"))), style = "margin-top:10px;margin-bottom:-10px"),
-                                                                      div(fileInput("EventDataFileInput",
-                                                                                    label = tooltip(
-                                                                                      trigger = list(
-                                                                                        "Event Data Upload",
-                                                                                        bsicons::bs_icon("info-circle")
-                                                                                      ),
-                                                                                      "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
-                                                                                    ),
-                                                                                    accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px"),
-                                                                      conditionalPanel(condition = "output.EventDataFileIn_found",
-                                                                                       div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                                       shinyWidgets::radioGroupButtons(
-                                                                                         inputId = "SuppDataInput1",
-                                                                                         label = tooltip(
-                                                                                           trigger = list(
-                                                                                             "Would you like to upload supplementary data?",
-                                                                                             bsicons::bs_icon("info-circle")
-                                                                                           ),
-                                                                                           "Tabular Excel file with further details aligning with the event data. First column of all sheets must be the patient identifier. Sheet names must correlate to annotated column in event data."
-                                                                                         ),
-                                                                                         choices = c("Yes",
-                                                                                                     "No"),
-                                                                                         selected = "No",
-                                                                                         justified = TRUE
-                                                                                       ),
-                                                                                       conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
-                                                                                                        div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
-                                                                                                            style = "margin-top:-15px;margin-bottom:-15px"),
-                                                                                                        #conditionalPanel(condition = "output.SuppDataFileInput1_found",
-                                                                                                                         fluidRow(
-                                                                                                                           column(7, style = "margin-bottom:-25px",
-                                                                                                                                  selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
-                                                                                                                                                 choices = NULL, selected = 1,
-                                                                                                                                                 options = list(
-                                                                                                                                                   placeholder = 'Please select an option below',
-                                                                                                                                                   onInitialize = I('function() { this.setValue(""); }')
-                                                                                                                                                 ))
-                                                                                                                                  
-                                                                                                                           ),
-                                                                                                                           column(5, style = "margin-bottom:-25px",
-                                                                                                                                  radioButtons("InputBiomarkerData","Does input data contain biomarker information?",
-                                                                                                                                               choices = c("Yes","No"), selected = "No", inline = T)
-                                                                                                                           )
-                                                                                                                         )
-                                                                                                        #)
-                                                                                       )
+                                                     div(fileInput("EventDataFileInput",
+                                                                   label = tooltip(
+                                                                     trigger = list(
+                                                                       "Event Data Upload",
+                                                                       bsicons::bs_icon("info-circle")
+                                                                     ),
+                                                                     "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
+                                                                   ),
+                                                                   accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px"),
+                                                     conditionalPanel(condition = "output.EventDataFileIn_found",
+                                                                      div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                                                      shinyWidgets::radioGroupButtons(
+                                                                        inputId = "SuppDataInput1",
+                                                                        label = tooltip(
+                                                                          trigger = list(
+                                                                            "Would you like to upload supplementary data?",
+                                                                            bsicons::bs_icon("info-circle")
+                                                                          ),
+                                                                          "Tabular Excel file with further details aligning with the event data. First column of all sheets must be the patient identifier. Sheet names must correlate to annotated column in event data."
+                                                                        ),
+                                                                        choices = c("Yes",
+                                                                                    "No"),
+                                                                        selected = "No",
+                                                                        justified = TRUE
                                                                       ),
+                                                                      conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
+                                                                                       div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
+                                                                                           style = "margin-top:-15px;margin-bottom:-15px"),
+                                                                                       #conditionalPanel(condition = "output.SuppDataFileInput1_found",
+                                                                                       fluidRow(
+                                                                                         column(7, style = "margin-bottom:-25px",
+                                                                                                selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
+                                                                                                               choices = NULL, selected = 1,
+                                                                                                               options = list(
+                                                                                                                 placeholder = 'Please select an option below',
+                                                                                                                 onInitialize = I('function() { this.setValue(""); }')
+                                                                                                               ))
+                                                                                                
+                                                                                         ),
+                                                                                         column(5, style = "margin-bottom:-25px",
+                                                                                                radioButtons("InputBiomarkerData","Does input data contain biomarker information?",
+                                                                                                             choices = c("Yes","No"), selected = "No", inline = T)
+                                                                                         )
+                                                                                       )
+                                                                                       #)
+                                                                      )
+                                                     ),
                                                      p(),
                                                      conditionalPanel(condition = "output.InputDataReady",
                                                                       div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
                                                                       fluidRow(
                                                                         column(4,
                                                                                div(tags$b(tags$u(h3("Step 4:"))), style = "margin-top:10px;margin-bottom:-15px")
-                                                                               ),
+                                                                        ),
                                                                         column(8,
                                                                                actionButton("ProcessInputData","Click Here Finalize and Process Input Data!", icon = icon("rotate-right"), width = "100%",
                                                                                             style = "background-color: #18bc9c; border-color: #2c3e50")
-                                                                               )
+                                                                        )
                                                                       )
                                                      ),
                                                      actionButton("LoadExampleData","Load Example Data"),
@@ -378,9 +383,9 @@ PatientLevel_tab <- bslib::nav_panel("Patient Visual Analytics",
                                                                            )
                                                                          ),
                                                                          div(virtualSelectInput(inputId = "SwimmerHoverSelect",label = "Hover-text Information:",
-                                                                                            choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+                                                                                                choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
                                                                          div(virtualSelectInput(inputId = "HighlightEventSelect",label = "Highlight Event:",
-                                                                                            choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+                                                                                                choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
                                                         ),
                                                         conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
                                                                          selectInput("LinePlotTable","Data Table:",choices = NULL,
@@ -921,11 +926,11 @@ tte_tab <- bslib::nav_panel("Time-To-Event Analysis",
                                                                           conditionalPanel(condition = "input.ttetabs == '2'",
                                                                                            div(h4("Data Selection"), style = "margin-bottom:-15px"),
                                                                                            virtualSelectInput(inputId = "TTEstartEvent",label = "Select Start Point:",
-                                                                                             choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
                                                                                            div(radioButtons("StartAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
                                                                                                style = "margin-top:-40px;margin-bottom:-20px"),
                                                                                            virtualSelectInput(inputId = "TTEstopEvent",label = "Select End Point - Progression Event:",
-                                                                                             choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
                                                                                            div(radioButtons("StopAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
                                                                                                style = "margin-top:-40px"),
                                                                                            conditionalPanel(condition = "input.ttetabs == '2'",
@@ -1000,7 +1005,7 @@ tte_tab <- bslib::nav_panel("Time-To-Event Analysis",
                                                                                    numericInput("TTESwimmerWidth","Width (px)",value = 1000)
                                                                             )
                                                                           )
-                                                                          ),
+                                                         ),
                                                          value = 2
                                                 )
                                     )
@@ -1018,10 +1023,10 @@ tte_tab <- bslib::nav_panel("Time-To-Event Analysis",
                                                            column(4,
                                                                   conditionalPanel(condition = "input.KPstrataCol != ''",
                                                                                    selectizeInput("KPplotHRtab_RefSelect","Reference Characteristic:", choices = NULL, selected = 1)
-                                                                                   ),
+                                                                  ),
                                                                   div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
                                                                   div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
-                                                                  )
+                                                           )
                                                          ),
                                                          fluidRow(
                                                            column(3,
@@ -1154,18 +1159,18 @@ CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
                                                                  style = "margin-top:-30px"),
                                                              conditionalPanel(condition = "output.EOIEventSelect_gt1",
                                                                               textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
-                                                                              ),
+                                                             ),
                                                              hr(),
                                                              fluidRow(
                                                                column(6,
                                                                       materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event",
                                                                                      value = FALSE, status = "success", inline = T)
-                                                                      ),
+                                                               ),
                                                                column(6,
                                                                       conditionalPanel(condition = "input.AddAnnoWindow == true",
                                                                                        numericInput("AddAnnoWindowNum","Time Window (days)", value = 30, min = 0, step = 1)
-                                                                                       )
                                                                       )
+                                                               )
                                                              ),
                                                              hr(),
                                                              #textInput("NewColName","New Column Name", placeholder = "ReferenceEvent_RelativeTo_NewEvent"),
@@ -1221,7 +1226,7 @@ CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
                                                                               )
                                                                             ),
                                                                             value = 1
-                                                                            ),
+                                                                   ),
                                                                    tabPanel("Event of Interest Data",
                                                                             div(DT::dataTableOutput("EOIEventTableOut"), style = "font-size:14px"),
                                                                             fluidRow(
@@ -1230,7 +1235,7 @@ CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
                                                                               )
                                                                             ),
                                                                             value = 2
-                                                                            ),
+                                                                   ),
                                                                    tabPanel("Merged Annotated Event Data",
                                                                             div(DT::dataTableOutput("MergeEventTableOut"), style = "font-size:14px"),
                                                                             fluidRow(
@@ -1401,7 +1406,7 @@ server <- function(input, output, session) {
       PatientAnno_file_react <- reactiveVal(Patient_Annotation_File)
       PatientEvent_File_react <- reactiveVal(Patient_Event_Data_File)
       
-
+      
       wkbk_raw_react <- reactiveVal()
       wkbk_react <- reactiveVal()
       wkbk_react_anno <- reactiveVal()
@@ -1503,14 +1508,14 @@ server <- function(input, output, session) {
         pat_react <- pat_react()
         event_data_summ <- event_data_summ()
         paramEvent_data <- paramEvent_data()
-
+        
         if (isTruthy(wkbk_react_anno) & isTruthy(wkbk_react_anno_sub) & isTruthy(Clin_Supp_Cols_List_react) & isTruthy(pat_react) & isTruthy(event_data_summ) & isTruthy(paramEvent_data)) {
           AllFilesReady_react(TRUE)
         } else { AllFilesReady_react(FALSE) }
         
       })
       observeEvent(AllFilesReady_react(), {
-        #if (!AllFilesReady) {
+        if (!AllFilesReady) {
           if (input$LoadExampleData == 0) {
             shinyalert::shinyalert(
               title = "Data Processing Complete",
@@ -1531,91 +1536,91 @@ server <- function(input, output, session) {
           } else {
             showNotification("Data Processing Complete!", type = "message")
           }
-        #}
+        }
       }, ignoreInit = TRUE)
       
       observeEvent(input$LoadExampleData, {
         
         withProgress(message = "Loading Example Data", value = 0, {
           incProgress(0.2, detail = "Loading file")
-        event_data <- as.data.frame(fread(Example_event_file, na.strings = c("","NA")))
-        eventDataInput_raw(event_data)
-        
-        eventDataInput_raw <- event_data
-        EventDataPatientIDcol <- "Name"
-        EventDataEventcol <- "Event"
-        EventDataEventTypecol <- "EventType"
-        EventDataEventStartcol <- "EventStart"
-        EventDataEventEndcol <- "EventEnd"
-        #EventDataEventSummary <- "EventSummary"
-        EventDataEventStartUnits <- "Years"
-        EventDataEventEndUnits <- "Years"
-        
-        treat_resp_df <- unique(eventDataInput_raw[,c(EventDataEventTypecol,EventDataEventcol)])
-        treat_resp_choices <- split(treat_resp_df[,EventDataEventcol], treat_resp_df[,EventDataEventTypecol])
-        EventDataTreatmentEvents <- treat_resp_choices[["Treatment"]]
-        EventDataResponseEvents <- c(treat_resp_choices[["Clinical Note"]],treat_resp_choices[["Metastasis"]],
-                                     c("Enrolled in Hospice","Last Known Alive","Additional Diagnosis"))
-        input_file <- "AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
-        eventtype_in <- EventDataEventcol
-        cluster_window <- 1
-        
-        #save(list = ls(), file = "example_loading.RData", envir = environment())
-        incProgress(0.2, detail = "Formatting event data")
-        
-        event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
-                                           Event = eventDataInput_raw[,EventDataEventcol],
-                                           EventType = eventDataInput_raw[,EventDataEventTypecol],
-                                           EventTab = "InputData",
-                                           EventStart = eventDataInput_raw[,EventDataEventStartcol],
-                                           EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
-                                           #EventSummary = eventDataInput_raw[,EventDataEventSummary]
-                                           )
-        #event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
-        
-        event_wkbk_link <- "EventTab"
-        uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
-        event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
-        
-        incProgress(0.2, detail = "Formatting parameter file")
-        param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
-                        "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
-        
-        treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
-        respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
-        
-        event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
-        event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
-        
-        event_params <- data.frame(data_table_name = event_params_base$EventTab,
-                                   data_file = basename(input_file),
-                                   event_name = event_params_base$EventType,
-                                   column_defined_event = TRUE,
-                                   event_category = event_params_base$EventType,
-                                   event_start_col = EventDataEventStartcol,
-                                   event_end_col = EventDataEventEndcol,
-                                   treatment = FALSE,
-                                   response = FALSE,
-                                   start_time_units = EventDataEventStartUnits,
-                                   end_time_units = EventDataEventEndUnits)
-        colnames(event_params) <- param_cols
-        event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
-        event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
-        
-        
-        wkbk <- read_excel_allsheets(Example_wkbk_file)
-        wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
-        
-        incProgress(0.2, detail = "Formatting patient selection table")
-        pat_anno <- event_count_df(event_data_processed)
-        
-        if (!is.na(eventtype_in)) {
-          event_new <- apply(event_data_processed,1,function(x) {
-            event <- x[["Event"]]
-            eventtype <- x[["EventType"]]
-            #eventsumm <- x[["EventSummary"]]
-            #if (is.na(eventsumm)) {
+          event_data <- as.data.frame(fread(Example_event_file, na.strings = c("","NA")))
+          eventDataInput_raw(event_data)
+          
+          eventDataInput_raw <- event_data
+          EventDataPatientIDcol <- "Name"
+          EventDataEventcol <- "Event"
+          EventDataEventTypecol <- "EventType"
+          EventDataEventStartcol <- "EventStart"
+          EventDataEventEndcol <- "EventEnd"
+          #EventDataEventSummary <- "EventSummary"
+          EventDataEventStartUnits <- "Years"
+          EventDataEventEndUnits <- "Years"
+          
+          treat_resp_df <- unique(eventDataInput_raw[,c(EventDataEventTypecol,EventDataEventcol)])
+          treat_resp_choices <- split(treat_resp_df[,EventDataEventcol], treat_resp_df[,EventDataEventTypecol])
+          EventDataTreatmentEvents <- treat_resp_choices[["Treatment"]]
+          EventDataResponseEvents <- c(treat_resp_choices[["Clinical Note"]],treat_resp_choices[["Metastasis"]],
+                                       c("Enrolled in Hospice","Last Known Alive","Additional Diagnosis"))
+          input_file <- "AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
+          eventtype_in <- EventDataEventcol
+          cluster_window <- 1
+          
+          #save(list = ls(), file = "example_loading.RData", envir = environment())
+          incProgress(0.2, detail = "Formatting event data")
+          
+          event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
+                                             Event = eventDataInput_raw[,EventDataEventcol],
+                                             EventType = eventDataInput_raw[,EventDataEventTypecol],
+                                             EventTab = "InputData",
+                                             EventStart = eventDataInput_raw[,EventDataEventStartcol],
+                                             EventEnd = eventDataInput_raw[,EventDataEventEndcol],
+                                             EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
+                                             #EventSummary = eventDataInput_raw[,EventDataEventSummary]
+          )
+          #event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
+          
+          event_wkbk_link <- "EventTab"
+          uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+          event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          
+          incProgress(0.2, detail = "Formatting parameter file")
+          param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
+                          "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
+          
+          treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
+          respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
+          
+          event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
+          event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
+          
+          event_params <- data.frame(data_table_name = event_params_base$EventTab,
+                                     data_file = basename(input_file),
+                                     event_name = event_params_base$EventType,
+                                     column_defined_event = TRUE,
+                                     event_category = event_params_base$EventType,
+                                     event_start_col = EventDataEventStartcol,
+                                     event_end_col = EventDataEventEndcol,
+                                     treatment = FALSE,
+                                     response = FALSE,
+                                     start_time_units = EventDataEventStartUnits,
+                                     end_time_units = EventDataEventEndUnits)
+          colnames(event_params) <- param_cols
+          event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
+          event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
+          
+          
+          wkbk <- read_excel_allsheets(Example_wkbk_file)
+          wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
+          
+          incProgress(0.2, detail = "Formatting patient selection table")
+          pat_anno <- event_count_df(event_data_processed)
+          
+          if (!is.na(eventtype_in)) {
+            event_new <- apply(event_data_processed,1,function(x) {
+              event <- x[["Event"]]
+              eventtype <- x[["EventType"]]
+              #eventsumm <- x[["EventSummary"]]
+              #if (is.na(eventsumm)) {
               if (event == eventtype) {
                 return(event)
               } else {
@@ -1625,39 +1630,39 @@ server <- function(input, output, session) {
                   return(paste0(eventtype,": ",event))
                 }
               }
-            #} else {
-            #  return(event)
-            #}
-          })
-          event_data_processed$Event <- event_new
-        }
-        
-        incProgress(0.2, detail = "Summarizing event clusters")
-        if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
-          #if (all(is.na(event_data_processed$EventSummary))) {
-          if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
-            treatment_events <- EventDataTreatmentEvents
-            response_events <- EventDataResponseEvents
-            if (isTruthy(treatment_events)) {
-              event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
-              event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
-            } else { event_data_tr_cls <- NULL }
-            if (isTruthy(response_events)) {
-              event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
-              event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
-            } else { event_data_re_cls <- NULL }
-            
-            event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-            event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-            event_data_cls <- event_data_cls %>%
-              group_by(Name) %>%
-              arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-            Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
-            Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
-            Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
-            event_data_processed <- Patient_Event_Data_cls_all
+              #} else {
+              #  return(event)
+              #}
+            })
+            event_data_processed$Event <- event_new
           }
-        }
+          
+          incProgress(0.2, detail = "Summarizing event clusters")
+          if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
+            #if (all(is.na(event_data_processed$EventSummary))) {
+            if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
+              treatment_events <- EventDataTreatmentEvents
+              response_events <- EventDataResponseEvents
+              if (isTruthy(treatment_events)) {
+                event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
+                event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+              } else { event_data_tr_cls <- NULL }
+              if (isTruthy(response_events)) {
+                event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
+                event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+              } else { event_data_re_cls <- NULL }
+              
+              event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+              event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+              event_data_cls <- event_data_cls %>%
+                group_by(Name) %>%
+                arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+              Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
+              Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+              Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+              event_data_processed <- Patient_Event_Data_cls_all
+            }
+          }
         })
         
         ProjectName_react(input$UserProjectName)
@@ -1702,7 +1707,7 @@ server <- function(input, output, session) {
       output$SuppDataInput1_found <- reactive({
         SuppDataInput1 <- input$SuppDataInput1
         if (SuppDataInput1 == "Yes") {
-        #if (isTruthy(SuppDataInput1)) {
+          #if (isTruthy(SuppDataInput1)) {
           TRUE
         } else {
           FALSE
@@ -1813,114 +1818,114 @@ server <- function(input, output, session) {
         req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
         withProgress(message = "Processing Input Data", value = 0, {
           
-        eventDataInput_raw <- eventDataInput_raw()
-        EventDataPatientIDcol <- input$EventDataPatientIDcol
-        EventDataEventcol <- input$EventDataEventcol
-        EventDataEventTypecol <- input$EventDataEventTypecol
-        EventDataEventStartcol <- input$EventDataEventStartcol
-        EventDataEventEndcol <- input$EventDataEventEndcol
-        #EventDataEventSummary <- input$EventDataEventSummary
-        EventDataEventStartUnits <- input$EventDataEventStartUnits
-        EventDataEventEndUnits <- input$EventDataEventEndUnits
-        EventDataTreatmentEvents <- input$EventDataTreatmentEvents
-        EventDataResponseEvents <- input$EventDataResponseEvents
-        
-        SuppEventColumnLink <- input$SuppEventColumnLink
-        SuppDataFileInput1 <- input$SuppDataFileInput1
-        
-        input_file <- input$EventDataFileInput$datapath
-        if (!isTruthy(input_file)) {
-          input_file <- "InputDataFile.txt"
-        }
-        if (!isTruthy(EventDataEventTypecol)) {
-          EventDataEventTypecol <- EventDataEventcol
-          eventtype_in <- NA
-        } else { eventtype_in <- EventDataEventcol }
-        cluster_window <- input$MainClusterWindowSet
-        updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
-        
-        
-        #save(list = ls(), file = "eventdata_make.RData", envir = environment())
-        
-        incProgress(0.2, detail = "Formatting event data")
-        
-        event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
-                                           Event = eventDataInput_raw[,EventDataEventcol],
-                                           EventType = eventDataInput_raw[,EventDataEventTypecol],
-                                           EventTab = "InputData",
-                                           EventStart = eventDataInput_raw[,EventDataEventStartcol],
-                                           EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                           EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
-                                           #EventSummary = NA
-                                           )
-        #if (isTruthy(EventDataEventSummary)) {
-        #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
-        #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
-        #}
-        if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
-          event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
-                                                      event_data_processed[,"EventStart"],
-                                                      event_data_processed[,"EventEnd"])
-          event_data_processed[,"EventStart"] <- ifelse(is.na(event_data_processed[,"EventStart"]),
-                                                        event_data_processed[,"EventEnd"],
-                                                        event_data_processed[,"EventStart"])
-        }
-        
-        event_data_processed <- event_data_processed[which(!is.na(event_data_processed$Event)),]
-        
-        if (isTruthy(input$SuppDataFileInput1)) {
-          if (isTruthy(input$SuppEventColumnLink)) {
-            event_wkbk_link <- input$SuppEventColumnLink
-            uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
-            event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          eventDataInput_raw <- eventDataInput_raw()
+          EventDataPatientIDcol <- input$EventDataPatientIDcol
+          EventDataEventcol <- input$EventDataEventcol
+          EventDataEventTypecol <- input$EventDataEventTypecol
+          EventDataEventStartcol <- input$EventDataEventStartcol
+          EventDataEventEndcol <- input$EventDataEventEndcol
+          #EventDataEventSummary <- input$EventDataEventSummary
+          EventDataEventStartUnits <- input$EventDataEventStartUnits
+          EventDataEventEndUnits <- input$EventDataEventEndUnits
+          EventDataTreatmentEvents <- input$EventDataTreatmentEvents
+          EventDataResponseEvents <- input$EventDataResponseEvents
+          
+          SuppEventColumnLink <- input$SuppEventColumnLink
+          SuppDataFileInput1 <- input$SuppDataFileInput1
+          
+          input_file <- input$EventDataFileInput$datapath
+          if (!isTruthy(input_file)) {
+            input_file <- "InputDataFile.txt"
           }
-        }
-        
-        
-        incProgress(0.2, detail = "Formatting parameter file")
-        param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
-                        "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
-        
-        
-        treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
-        respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
-        
-        
-        event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
-        event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
-        
-        event_params <- data.frame(data_table_name = event_params_base$EventTab,
-                                   data_file = basename(input_file),
-                                   event_name = event_params_base$EventType,
-                                   column_defined_event = TRUE,
-                                   event_category = event_params_base$EventType,
-                                   event_start_col = EventDataEventStartcol,
-                                   event_end_col = EventDataEventEndcol,
-                                   treatment = FALSE,
-                                   response = FALSE,
-                                   start_time_units = EventDataEventStartUnits,
-                                   end_time_units = EventDataEventEndUnits)
-        colnames(event_params) <- param_cols
-        event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
-        event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
-        
-        
-        #save(list = ls(), file = "eventdataparams_make.RData", envir = environment())
-        
-        wkbk <- list(InputData = eventDataInput_raw)
-        
-        #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
-        
-        incProgress(0.2, detail = "Formatting patient selection table")
-        pat_anno <- event_count_df(event_data_processed)
-        
-        
-        if (!is.na(eventtype_in)) {
-          event_new <- apply(event_data_processed,1,function(x) {
-            event <- x[["Event"]]
-            eventtype <- x[["EventType"]]
-            #eventsumm <- x[["EventSummary"]]
-            #if (is.na(eventsumm)) {
+          if (!isTruthy(EventDataEventTypecol)) {
+            EventDataEventTypecol <- EventDataEventcol
+            eventtype_in <- NA
+          } else { eventtype_in <- EventDataEventcol }
+          cluster_window <- input$MainClusterWindowSet
+          updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
+          
+          
+          #save(list = ls(), file = "eventdata_make.RData", envir = environment())
+          
+          incProgress(0.2, detail = "Formatting event data")
+          
+          event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
+                                             Event = eventDataInput_raw[,EventDataEventcol],
+                                             EventType = eventDataInput_raw[,EventDataEventTypecol],
+                                             EventTab = "InputData",
+                                             EventStart = eventDataInput_raw[,EventDataEventStartcol],
+                                             EventEnd = eventDataInput_raw[,EventDataEventEndcol],
+                                             EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
+                                             #EventSummary = NA
+          )
+          #if (isTruthy(EventDataEventSummary)) {
+          #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
+          #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
+          #}
+          if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
+            event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
+                                                        event_data_processed[,"EventStart"],
+                                                        event_data_processed[,"EventEnd"])
+            event_data_processed[,"EventStart"] <- ifelse(is.na(event_data_processed[,"EventStart"]),
+                                                          event_data_processed[,"EventEnd"],
+                                                          event_data_processed[,"EventStart"])
+          }
+          
+          event_data_processed <- event_data_processed[which(!is.na(event_data_processed$Event)),]
+          
+          if (isTruthy(input$SuppDataFileInput1)) {
+            if (isTruthy(input$SuppEventColumnLink)) {
+              event_wkbk_link <- input$SuppEventColumnLink
+              uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+              event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+            }
+          }
+          
+          
+          incProgress(0.2, detail = "Formatting parameter file")
+          param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
+                          "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
+          
+          
+          treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
+          respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
+          
+          
+          event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
+          event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
+          
+          event_params <- data.frame(data_table_name = event_params_base$EventTab,
+                                     data_file = basename(input_file),
+                                     event_name = event_params_base$EventType,
+                                     column_defined_event = TRUE,
+                                     event_category = event_params_base$EventType,
+                                     event_start_col = EventDataEventStartcol,
+                                     event_end_col = EventDataEventEndcol,
+                                     treatment = FALSE,
+                                     response = FALSE,
+                                     start_time_units = EventDataEventStartUnits,
+                                     end_time_units = EventDataEventEndUnits)
+          colnames(event_params) <- param_cols
+          event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
+          event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
+          
+          
+          #save(list = ls(), file = "eventdataparams_make.RData", envir = environment())
+          
+          wkbk <- list(InputData = eventDataInput_raw)
+          
+          #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
+          
+          incProgress(0.2, detail = "Formatting patient selection table")
+          pat_anno <- event_count_df(event_data_processed)
+          
+          
+          if (!is.na(eventtype_in)) {
+            event_new <- apply(event_data_processed,1,function(x) {
+              event <- x[["Event"]]
+              eventtype <- x[["EventType"]]
+              #eventsumm <- x[["EventSummary"]]
+              #if (is.na(eventsumm)) {
               if (event == eventtype) {
                 return(event)
               } else {
@@ -1930,42 +1935,42 @@ server <- function(input, output, session) {
                   return(paste0(eventtype,": ",event))
                 }
               }
-            #} else {
-            #  return(event)
-            #}
-            
-          })
-          event_data_processed$Event <- event_new
-        }
-        
-        incProgress(0.2, detail = "Summarizing event clusters")
-        if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
-        #if (all(is.na(event_data_processed$EventSummary))) {
-          if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
-            treatment_events <- EventDataTreatmentEvents
-            response_events <- EventDataResponseEvents
-            if (isTruthy(treatment_events)) {
-              event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
-              event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
-            } else { event_data_tr_cls <- NULL }
-            if (isTruthy(response_events)) {
-              event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
-              event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
-            } else { event_data_re_cls <- NULL }
-            
-            event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-            event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-            event_data_cls <- event_data_cls %>%
-              group_by(Name) %>%
-              arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-            Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
-            Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
-            Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
-            event_data_processed <- Patient_Event_Data_cls_all
+              #} else {
+              #  return(event)
+              #}
+              
+            })
+            event_data_processed$Event <- event_new
           }
-        }
-        
-        incProgress(0.5, detail = "Complete!")
+          
+          incProgress(0.2, detail = "Summarizing event clusters")
+          if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
+            #if (all(is.na(event_data_processed$EventSummary))) {
+            if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
+              treatment_events <- EventDataTreatmentEvents
+              response_events <- EventDataResponseEvents
+              if (isTruthy(treatment_events)) {
+                event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
+                event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+              } else { event_data_tr_cls <- NULL }
+              if (isTruthy(response_events)) {
+                event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
+                event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+              } else { event_data_re_cls <- NULL }
+              
+              event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+              event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+              event_data_cls <- event_data_cls %>%
+                group_by(Name) %>%
+                arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+              Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
+              Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+              Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+              event_data_processed <- Patient_Event_Data_cls_all
+            }
+          }
+          
+          incProgress(0.5, detail = "Complete!")
         })
         
         #save(list = ls(), file = "eventdataparamswkbksumm_make.RData", envir = environment())
@@ -1993,7 +1998,7 @@ server <- function(input, output, session) {
         param_data(event_params)
         paramEvent <- event_params[which(!is.na(event_params[,3])),]
         paramEvent_data(paramEvent)
-
+        
         tabs_trigger(tabs_trigger()+1)
         
       })
@@ -2042,36 +2047,36 @@ server <- function(input, output, session) {
         file_df <- input$SuppDataFileInput1
         
         #if (nrow(file_df) == 1) {
-          if (tools::file_ext(file_df$datapath[1]) %in% c("xlsx","xls")) {
-            withProgress(message = "Loading Supplementary Data", value = 0, {
-              incProgress(0.5, detail = "Loading input file")
-              wkbk <- read_excel_allsheets(file_df$datapath[1])
-              incProgress(0.5, detail = "Complete!")
-            })
-            wkbk_raw_react(c(wkbk_raw_react(),wkbk))
-          } else {
-            withProgress(message = "Loading Supplementary Data", value = 0, {
-              incProgress(0.5, detail = "Loading input file")
-              df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
-              tabName <- tools::file_path_sans_ext(file_df[row,"name"])
-              wkbk[[tabName]] <- df
-              incProgress(0.5, detail = "Complete!")
-            })
-            wkbk_raw_react(c(wkbk_raw_react(),wkbk))
-          }
-          # Multiple files loaded to be made to wkbk
+        if (tools::file_ext(file_df$datapath[1]) %in% c("xlsx","xls")) {
+          withProgress(message = "Loading Supplementary Data", value = 0, {
+            incProgress(0.5, detail = "Loading input file")
+            wkbk <- read_excel_allsheets(file_df$datapath[1])
+            incProgress(0.5, detail = "Complete!")
+          })
+          wkbk_raw_react(c(wkbk_raw_react(),wkbk))
+        } else {
+          withProgress(message = "Loading Supplementary Data", value = 0, {
+            incProgress(0.5, detail = "Loading input file")
+            df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
+            tabName <- tools::file_path_sans_ext(file_df[row,"name"])
+            wkbk[[tabName]] <- df
+            incProgress(0.5, detail = "Complete!")
+          })
+          wkbk_raw_react(c(wkbk_raw_react(),wkbk))
+        }
+        # Multiple files loaded to be made to wkbk
         #} #else if (nrow(file_df) > 1) {
-          #withProgress(message = "Loading Supplementary Data", value = 0, {
-          #  incProgress(0.5, detail = "Loading input file")
-          #  incProgress(0.5, detail = "Complete!")
-          #})
-          #wkbk <- list()
-          #for (row in seq(nrow(file_df))) {
-          #  df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
-          #  tabName <- tools::file_path_sans_ext(file_df[row,"name"])
-          #  wkbk[[tabName]] <- df
-          #}
-          #wkbk_raw_react(c(wkbk_raw_react(),wkbk))
+        #withProgress(message = "Loading Supplementary Data", value = 0, {
+        #  incProgress(0.5, detail = "Loading input file")
+        #  incProgress(0.5, detail = "Complete!")
+        #})
+        #wkbk <- list()
+        #for (row in seq(nrow(file_df))) {
+        #  df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
+        #  tabName <- tools::file_path_sans_ext(file_df[row,"name"])
+        #  wkbk[[tabName]] <- df
+        #}
+        #wkbk_raw_react(c(wkbk_raw_react(),wkbk))
         #}
         
         
@@ -2335,7 +2340,7 @@ server <- function(input, output, session) {
           wkbk_react_anno(wkbk_adj)
           wkbk_react_anno_sub(wkbk_adj)
           wkbk_react_sub(wkbk_adj)
-
+          
           Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
         }
         
@@ -2410,7 +2415,7 @@ server <- function(input, output, session) {
         pat_react(pat_react_subset)
         wkbk_react_anno_sub(wkbk_anno_subset)
         wkbk_react_sub(wkbk_react_subset)
-
+        
       })
       
       
@@ -2633,7 +2638,7 @@ server <- function(input, output, session) {
         })
         showNotification("Event Re-Clustering Complete!", type = "message")
         
-
+        
         event_data_summ(Patient_Event_Data_cls_all)
         event_data_tr_clusters_clean(event_data_clusters_clean)
         sankey_added_events(sankey_added)
@@ -2775,69 +2780,69 @@ server <- function(input, output, session) {
           appendTab(inputId = "PreProcessingTabs",
                     tab = tabPanel("Input Data Formatting",
                                    # Event data input
-                                                    conditionalPanel(condition = "output.EventDataFileIn_found",
-                                                                     wellPanel(
-                                                                       fluidRow(
-                                                                         column(4,
-                                                                                tags$b(tags$u(h3("Step 2:"))),
-                                                                                h3("Select Required Event Data Columns:")
-                                                                         ),
-                                                                         column(3,
-                                                                                selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
-                                                                                selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
-                                                                         ),
-                                                                         column(3,
-                                                                                selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
-                                                                                selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
-                                                                         ),
-                                                                         column(2,
-                                                                                selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
-                                                                                selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
-                                                                         )
-                                                                       ),
-                                                                       hr(),
-                                                                       tags$b(tags$u(h3("Step 3:"))),
-                                                                       h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
-                                                                       fluidRow(
-                                                                         column(4,
-                                                                                selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
-                                                                                               options = list(
-                                                                                                 placeholder = 'Please select',
-                                                                                                 onInitialize = I('function() { this.setValue(""); }')
-                                                                                               ))#,
-                                                                                #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
-                                                                                #               options = list(
-                                                                                #                 placeholder = 'Please select',
-                                                                                #                 onInitialize = I('function() { this.setValue(""); }')
-                                                                                #               ))
-                                                                         ),
-                                                                         column(4,
-                                                                                virtualSelectInput(
-                                                                                  inputId = "EventDataTreatmentEvents",
-                                                                                  label = "Select Treatment Defining Events:",
-                                                                                  choices = NULL,
-                                                                                  showValueAsTags = TRUE,
-                                                                                  search = TRUE,
-                                                                                  multiple = TRUE
-                                                                                )
-                                                                         ),
-                                                                         column(4,
-                                                                                virtualSelectInput(
-                                                                                  inputId = "EventDataResponseEvents",
-                                                                                  label = "Select Response Defining Events:",
-                                                                                  choices = NULL,
-                                                                                  showValueAsTags = TRUE,
-                                                                                  search = TRUE,
-                                                                                  multiple = TRUE
-                                                                                )
-                                                                         )
-                                                                       )
-                                                                     ),
-                                                                     p(),
-                                                                     h3("Input Data Preivew"),
-                                                                     #h3("Event Data Preivew"),
-                                                                     div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
+                                   conditionalPanel(condition = "output.EventDataFileIn_found",
+                                                    wellPanel(
+                                                      fluidRow(
+                                                        column(4,
+                                                               tags$b(tags$u(h3("Step 2:"))),
+                                                               h3("Select Required Event Data Columns:")
+                                                        ),
+                                                        column(3,
+                                                               selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
+                                                               selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
+                                                        ),
+                                                        column(3,
+                                                               selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
+                                                               selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
+                                                        ),
+                                                        column(2,
+                                                               selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
+                                                               selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
+                                                        )
+                                                      ),
+                                                      hr(),
+                                                      tags$b(tags$u(h3("Step 3:"))),
+                                                      h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
+                                                      fluidRow(
+                                                        column(4,
+                                                               selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
+                                                                              options = list(
+                                                                                placeholder = 'Please select',
+                                                                                onInitialize = I('function() { this.setValue(""); }')
+                                                                              ))#,
+                                                               #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
+                                                               #               options = list(
+                                                               #                 placeholder = 'Please select',
+                                                               #                 onInitialize = I('function() { this.setValue(""); }')
+                                                               #               ))
+                                                        ),
+                                                        column(4,
+                                                               virtualSelectInput(
+                                                                 inputId = "EventDataTreatmentEvents",
+                                                                 label = "Select Treatment Defining Events:",
+                                                                 choices = NULL,
+                                                                 showValueAsTags = TRUE,
+                                                                 search = TRUE,
+                                                                 multiple = TRUE
+                                                               )
+                                                        ),
+                                                        column(4,
+                                                               virtualSelectInput(
+                                                                 inputId = "EventDataResponseEvents",
+                                                                 label = "Select Response Defining Events:",
+                                                                 choices = NULL,
+                                                                 showValueAsTags = TRUE,
+                                                                 search = TRUE,
+                                                                 multiple = TRUE
+                                                               )
+                                                        )
+                                                      )
                                                     ),
+                                                    p(),
+                                                    h3("Input Data Preivew"),
+                                                    #h3("Event Data Preivew"),
+                                                    div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
+                                   ),
                                    value = "Input Data Formatting"
                     ),
                     select = TRUE,
@@ -3029,7 +3034,7 @@ server <- function(input, output, session) {
         names(Clin_Supp_Cols_List_3) <- names(Clin_Supp_Cols_List_2)
         swimmer_hover_opts(Clin_Supp_Cols_List_3)
       })
-
+      
       shiny::observe({
         req(swimmer_hover_opts())
         swimmer_hover_opts <- swimmer_hover_opts()
@@ -3212,7 +3217,8 @@ server <- function(input, output, session) {
               colAnno_dfName <- strsplit(col,": ")[[1]][1]
               colAnno <- strsplit(col,": ")[[1]][2]
               
-              anno_df <- wkbk[[grep(colAnno_dfName,names(wkbk),ignore.case = T)]]
+              anno_df <- wkbk[[colAnno_dfName]]
+              #anno_df <- wkbk[[grep(colAnno_dfName,names(wkbk),ignore.case = T)]]
               anno_df <- anno_df[which(anno_df[,1] == Patient),]
               startCol <- param[which(param[,1] == colAnno_dfName),6]
               startCol <- startCol[!is.na(startCol)]
@@ -3676,8 +3682,8 @@ server <- function(input, output, session) {
         dataTab <- input$LinePlotTable
         Clin_Supp_List <- wkbk_react_sub()
         xChoices <- colnames(Clin_Supp_List[[dataTab]])[-1]
-        if (grepl("lab",dataTab, ignore.case = T)) {
-          PreSelect <- "LabTest"
+        if (any(grepl("LabTest",xChoices, ignore.case = T))) {
+          PreSelect <- grep("LabTest",xChoices,ignore.case = T,value = T)[1]
         } else {
           PreSelect <- "Select all data"
         }
@@ -3719,8 +3725,10 @@ server <- function(input, output, session) {
           Choices <- Choices[which(Choices!=input$LinePlotSub)]
         }
         unitColPred <- ifelse(any(grepl("unit",Choices,ignore.case = T)),grep("unit",Choices,ignore.case = T, value = T)[1],NA)
-        updateSelectizeInput(session,"LinePlotX", choices = Choices, selected = "AgeAtLabResults")
-        updateSelectizeInput(session,"LinePlotY", choices = Choices, selected = "LabResults")
+        LinePlotXPred <- ifelse(any(grepl("^AgeAtLabResults",Choices,ignore.case = T)),grep("^AgeAtLabResults",Choices,ignore.case = T, value = T)[1],NA)
+        LinePlotYPred <- ifelse(any(grepl("^LabResults",Choices,ignore.case = T)),grep("^LabResults",Choices,ignore.case = T, value = T)[1],NA)
+        updateSelectizeInput(session,"LinePlotX", choices = Choices, selected = LinePlotXPred)
+        updateSelectizeInput(session,"LinePlotY", choices = Choices, selected = LinePlotYPred)
         updateSelectizeInput(session,"LinePunitCol", choices = Choices, selected = unitColPred)
         
       })
@@ -3904,7 +3912,7 @@ server <- function(input, output, session) {
         updateSelectInput(session,"sankeyEvent", choices = sankey_event_choices, selected = sankey_event_select)
       })
       observe({
-      #observeEvent(input$sankeyEvent,{
+        #observeEvent(input$sankeyEvent,{
         req(event_data_tr_clusters_clean())
         req(input$sankeyEvent)
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
@@ -4584,7 +4592,7 @@ server <- function(input, output, session) {
         border_op <- input$border_opDist
         row_font <- input$heatmapDistFontRow
         col_font <- input$heatmapDistFontCol
-
+        
         color_lo <- input$HeatColorLowDist
         color_hi <- input$HeatColorHighDist
         
@@ -4592,7 +4600,7 @@ server <- function(input, output, session) {
         
         plot_df <- as.matrix(plot_df_in[which(rownames(plot_df_in) %in% y_vars),which(colnames(plot_df_in) %in% x_vars),drop = F])
         
-
+        
         if (isTruthy(plot_df)) {
           if (capYN) {
             if (!is.na(capN)) {
@@ -4993,7 +5001,8 @@ server <- function(input, output, session) {
         }
         tteSelected_terms_start <- treat_resp_choices[[tteSelected]]
         
-        tteEndSelected <- grep("Treatment|Response",names(treat_resp_choices_summ),ignore.case = T, value = T)
+        tteEndSelected <- grep("Treatment",names(treat_resp_choices_summ),ignore.case = T, value = T)
+        #tteEndSelected <- grep("Treatment|Response",names(treat_resp_choices_summ),ignore.case = T, value = T)
         if (length(tteEndSelected) > 0) {
           tteSelected_terms_end <- tteEndSelected
         } else {
@@ -5012,16 +5021,14 @@ server <- function(input, output, session) {
       
       output$BiomarkerData <- reactive({
         biomarkerUIinput <- input$InputBiomarkerData
-        if (isTruthy(biomarkerUIinput)) {
-          if (biomarkerUIinput == "Yes") {
+        if (biomarkerUIinput == "Yes") {
+          TRUE
+        } else {
+          if (Data_Contains_Longitudinal_Biomarkers) {
             TRUE
           } else {
             FALSE
           }
-        } else if (Data_Contains_Longitudinal_Biomarkers) {
-          TRUE
-        } else {
-          FALSE
         }
       })
       outputOptions(output, "BiomarkerData", suspendWhenHidden = FALSE)
@@ -5189,7 +5196,7 @@ server <- function(input, output, session) {
                  p(),
                  p(HTML("A real-world end point or progressesion was calculated with the occurence of",AndOrstop_text)),
                  div(id = "ttepanel2", wellPanel(class = "scrolling-well",p(HTML(stop_events_text))))
-                 )
+          )
         )
         
       })
@@ -6504,7 +6511,7 @@ server <- function(input, output, session) {
       )
       
       observeEvent(input$SaveAnnotation, {
-      #ref_eoi_merge_df_cast_list <- reactive({
+        #ref_eoi_merge_df_cast_list <- reactive({
         req(ref_eoi_merge_df())
         wkbk <- wkbk_react_anno_sub()
         ref_eoi_event_data2 <- ref_eoi_merge_df()
