@@ -35,12 +35,24 @@ Tutorial_server <- function(id, homepage_texts){
                           })
                           #output$tutorial_text <- renderText(homepage_tutorial_text_list[["load_example_data"]]$text)
                         })
-                        observeEvent(input$input_data_formatting | input$need_Vignette, {
+                        observeEvent(input$input_data_formatting, {
+                          output$video <- renderUI({
+                            div(class = "html-embed", includeHTML("www/ShinyEvents_GettingStarted_body.html"))
+                            #includeHTML("www/ShinyEvents_GettingStarted_body.html")
+                          })
+                        })
+                        observeEvent(input$need_Vignette, {
                           output$video <- renderUI({
                             div(class = "html-embed", includeHTML("www/ShinyEvents_GettingStarted_body.html"))
                             #includeHTML("www/ShinyEvents_GettingStarted_body.html")
                           })
                         }, ignoreInit = TRUE)
+                        observeEvent(input$TimeToEvent_Tutorial, {
+                          output$video <- renderUI({
+                            HTML('<iframe width="100%" height="100%" src="//www.youtube.com/embed/k1HcDm12ZzM?playlist=k1HcDm12ZzM&&loop=1;rel=0&autoplay=1&mute=1&controls=0&showinfo=0" frameborder="0" allowfullscreen></iframe>')
+                          })
+                          #output$tutorial_text <- renderText(homepage_tutorial_text_list[["load_example_data"]]$text)
+                        })
                         #observeEvent(input$set_up_parameter_data, {
                         #  output$video <- renderUI({
                         #    HTML('<iframe width="100%" height="100%" src="//www.youtube.com/embed/24ZZKPyzVas?playlist=24ZZKPyzVas&&loop=1;rel=0&autoplay=1&mute=1&controls=0&showinfo=0" frameborder="0" allowfullscreen></iframe>')

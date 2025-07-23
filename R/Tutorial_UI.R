@@ -17,7 +17,9 @@ Tutorial_UI <- function(id){
                                                      shiny::column(12,
                                                                    actionButton(NS(id, "load_app_overview"), "App Overview")),
                                                      shiny::column(12,
-                                                                   actionButton(NS(id, "load_cohort_overview"), "Cohort Overview"))
+                                                                   actionButton(NS(id, "load_cohort_overview"), "Cohort Overview")),
+                                                     shiny::column(12,
+                                                                   actionButton(NS(id, "TimeToEvent_Tutorial"), "Time-To-Event Analysis"))
                                                    )
                             )#,
                             #bslib::accordion_panel("Pre Processing",
@@ -112,7 +114,7 @@ Tutorial_UI <- function(id){
                           ),
                           bslib::layout_column_wrap(
                             bslib::layout_columns(
-                              bslib::card(bslib::card_header("Tutorial Video"),
+                              bslib::card(#bslib::card_header("Tutorial Video"),
                                           bslib::card_body(uiOutput(NS(id, "video"), fill = TRUE)),
                                           full_screen = TRUE
                               )#,
