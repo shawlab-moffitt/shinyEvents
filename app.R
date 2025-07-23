@@ -21,7 +21,19 @@ Password_Protected <- FALSE
 PasswordSet <- ''
 
 
-# app.R processing - DO NOT EDIT
+
+
+
+
+
+
+
+
+
+
+
+
+# app.R processing - DO NOT EDIT ###############################################
 
 app_lite <- FALSE
 
@@ -171,7 +183,10 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                ),
                                "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
                              ),
-                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px"),
+                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px;margin-bottom:-15px"),
+               actionButton("LoadExampleData","Load Example Data"),
+               actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
+                            style = "background-color: #2c3e50; border-color: #2c3e50"),
                conditionalPanel(condition = "output.EventDataFileIn_found",
                                 div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
                                 shinyWidgets::radioGroupButtons(
@@ -208,7 +223,8 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                                    )
                                                  )
                                                  #)
-                                )
+                                ),
+                                actionButton("LoadExSuppData","Load Example Supplementary Data"),
                ),
                p(),
                conditionalPanel(condition = "output.InputDataReady",
@@ -223,9 +239,6 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                   )
                                 )
                ),
-               actionButton("LoadExampleData","Load Example Data"),
-               actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
-                            style = "background-color: #2c3e50; border-color: #2c3e50"),
                value = 1
       ),
       tabPanel("Data Adjustment",
@@ -1801,7 +1814,7 @@ server <- function(input, output, session) {
         updateSelectInput(session,"GlobalAppTimeUnit", selected = "Years")
         updateTextInput(session,"UserProjectName", value = "AACR Genie NSCLC Adenocarcinoma")
         updateTabsetPanel(session,"shinyevents_tabs",selected = "patient_visual_analytics")
-        updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
+        #updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
       })
       AllFilesReady_react <- reactiveVal(FALSE)
       observe({
@@ -1912,8 +1925,9 @@ server <- function(input, output, session) {
           event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
           
           
-          wkbk <- read_excel_allsheets(Example_wkbk_file)
-          wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
+          #wkbk <- read_excel_allsheets(Example_wkbk_file)
+          #wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
+          wkbk <- list(InputData = eventDataInput_raw)
           
           incProgress(0.2, detail = "Formatting patient selection table")
           pat_anno <- event_count_df(event_data_processed)
@@ -1994,6 +2008,22 @@ server <- function(input, output, session) {
         
         tabs_trigger(tabs_trigger()+1)
         
+      })
+      
+      observeEvent(input$LoadExSuppData, {
+        req(eventDataInput_raw)
+        wkbk <- read_excel_allsheets(Example_wkbk_file)
+        wkbk <- c(list(InputData = eventDataInput_raw()),wkbk)
+        wkbk_raw_react(wkbk)
+        wkbk_react(wkbk)
+        wkbk_react_anno(wkbk)
+        wkbk_react_anno_sub(wkbk)
+        wkbk_react_sub(wkbk)
+        Clin_Supp_Cols_List <- lapply(wkbk,function(x){
+          return(colnames(x)[-1])
+        })
+        Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
+        updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
       })
       
       
@@ -3421,6 +3451,7 @@ server <- function(input, output, session) {
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
+        #save(list = ls(), file = "pat_wkbk_react_sub.RData", envir = environment())
         pat_wkbk <- lapply(wkbk,function(x) {
           return(x[which(x[,1] == Patient),])
         })
