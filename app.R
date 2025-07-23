@@ -1,5 +1,6 @@
-version_id <- paste0("v1.0.20250721")
+version_id <- paste0("v1.0.20250722")
 
+# lite swap able
 
 # User File Input ---------------------------------------------------------
 
@@ -22,6 +23,8 @@ PasswordSet <- ''
 
 # app.R processing - DO NOT EDIT
 
+app_lite <- FALSE
+
 # Back-end data required for app
 Example_event_file <- "Example_Data/AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
 Example_wkbk_file <- "Example_Data/AACR_GENIE_NSCLC_Adenocarcinoma_Example.xlsx"
@@ -30,14 +33,17 @@ example_eventdata_format_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventD
 example_mini_eventdata_file <- "Example_Data/ShinyEvent_Vignette_ExampleEventData.txt"
 
 # Homepage files
-homepage_filepath <- "ShinyEvents_Homepage/text_files/"
-homepage_tutorial_list <- list.files(homepage_filepath)
-
-# Read text file
-homepage_tutorial_text_list <- list()
-for (file in homepage_tutorial_list){
-  filename <- gsub("\\..*", "", file)
-  homepage_tutorial_text_list[[filename]] <- readtext::readtext(paste0(homepage_filepath,file))
+if (!app_lite) {
+  homepage_filepath <- "ShinyEvents_Homepage/text_files/"
+  homepage_tutorial_list <- list.files(homepage_filepath)
+  
+  # Read text file
+  homepage_tutorial_text_list <- list()
+  for (file in homepage_tutorial_list){
+    filename <- gsub("\\..*", "", file)
+    homepage_tutorial_text_list[[filename]] <- readtext::readtext(paste0(homepage_filepath,file))
+  }
+  
 }
 
 
@@ -71,6 +77,10 @@ if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & isTru
   start_trigger <- 0
 }
 
+if (!exists("app_lite")) {
+  app_lite <- FALSE
+}
+
 if (exists("Project_Name")) {
   if (!isTruthy(Project_Name)) {
     Project_Name <- "ShinyEvents"
@@ -98,19 +108,6 @@ if ("InteractiveComplexHeatmap" %in% pacakges) {
 } else {
   heat_hover_avail <- FALSE
 }
-
-#if (!isTruthy(TTE_Start_Event_Col)) {
-#  TTE_Start_Event_Col <- NULL
-#}
-#if (!isTruthy(TTE_Start_Event_Crit)) {
-#  TTE_Start_Event_Crit <- NULL
-#}
-#if (!isTruthy(TTE_End_Event_Col)) {
-#  TTE_End_Event_Col <- NULL
-#}
-#if (!isTruthy(TTE_End_Event_Crit)) {
-#  TTE_End_Event_Crit <- NULL
-#}
 
 if (!exists("Data_Contains_Longitudinal_Biomarkers")) {
   Data_Contains_Longitudinal_Biomarkers <- FALSE
@@ -146,7 +143,9 @@ login_tab <- tabPanel(
 )
 
 # Homepage Tab ----------------------------------------------------------------
-Homepage_tab <- Homepage_UI("ShinyEvents1")
+if (!app_lite) {
+  Homepage_tab <- Homepage_UI("ShinyEvents1")
+}
 
 # Data Input Tab --------------------------------------------------------------
 if (AllFilesReady) {
@@ -154,12 +153,122 @@ if (AllFilesReady) {
 } else {
   proc_side_tab_sel <- 1
 }
-DataInput_tab <- bslib::nav_panel("Pre-Processing",
-                                  value = "data_input_tab",
-                                  p(
-                                    bslib::page_fillable(
-                                      tags$head(
-                                        tags$style(HTML("
+
+DataInput_tab_contents <- shiny::sidebarLayout(
+  sidebarPanel(
+    width = 3,
+    id = "DataInputPanel",
+    textInput("UserProjectName","Project Name:", value = ifelse(isTruthy(Project_Name),Project_Name,"Event Analysis")),
+    tabsetPanel(
+      id = "dataInput_SideTab",
+      tabPanel("Data Input",
+               div(tags$b(tags$u(h3("Step 1:"))), style = "margin-top:10px;margin-bottom:-10px"),
+               div(fileInput("EventDataFileInput",
+                             label = tooltip(
+                               trigger = list(
+                                 "Event Data Upload",
+                                 bsicons::bs_icon("info-circle")
+                               ),
+                               "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
+                             ),
+                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px"),
+               conditionalPanel(condition = "output.EventDataFileIn_found",
+                                div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                shinyWidgets::radioGroupButtons(
+                                  inputId = "SuppDataInput1",
+                                  label = tooltip(
+                                    trigger = list(
+                                      "Would you like to upload supplementary data?",
+                                      bsicons::bs_icon("info-circle")
+                                    ),
+                                    "Tabular Excel file with further details aligning with the event data. First column of all sheets must be the patient identifier. Sheet names must correlate to annotated column in event data."
+                                  ),
+                                  choices = c("Yes",
+                                              "No"),
+                                  selected = "No",
+                                  justified = TRUE
+                                ),
+                                conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
+                                                 div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
+                                                     style = "margin-top:-15px;margin-bottom:-15px"),
+                                                 #conditionalPanel(condition = "output.SuppDataFileInput1_found",
+                                                 fluidRow(
+                                                   column(7, style = "margin-bottom:-25px",
+                                                          selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
+                                                                         choices = NULL, selected = 1,
+                                                                         options = list(
+                                                                           placeholder = 'Please select an option below',
+                                                                           onInitialize = I('function() { this.setValue(""); }')
+                                                                         ))
+                                                          
+                                                   ),
+                                                   column(5, style = "margin-bottom:-25px",
+                                                          radioButtons("InputBiomarkerData","Does input data contain biomarker information?",
+                                                                       choices = c("Yes","No"), selected = "No", inline = T)
+                                                   )
+                                                 )
+                                                 #)
+                                )
+               ),
+               p(),
+               conditionalPanel(condition = "output.InputDataReady",
+                                div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                fluidRow(
+                                  column(4,
+                                         div(tags$b(tags$u(h3("Step 4:"))), style = "margin-top:10px;margin-bottom:-15px")
+                                  ),
+                                  column(8,
+                                         actionButton("ProcessInputData","Click Here Finalize and Process Input Data!", icon = icon("rotate-right"), width = "100%",
+                                                      style = "background-color: #18bc9c; border-color: #2c3e50")
+                                  )
+                                )
+               ),
+               actionButton("LoadExampleData","Load Example Data"),
+               actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
+                            style = "background-color: #2c3e50; border-color: #2c3e50"),
+               value = 1
+      ),
+      tabPanel("Data Adjustment",
+               p(),
+               h4("Subset Patients"),
+               selectizeInput("TableToFilterMain", label = "Select Data Table to Subset:", choices = NULL,
+                              multiple = F, selected = 1, width = "100%",
+                              options = list(
+                                placeholder = 'Please select an option below',
+                                onInitialize = I('function() { this.setValue(""); }')
+                              )),
+               conditionalPanel(condition = "input.TableToFilterMain != ''",
+                                h4("Filter Data Table"),
+                                wellPanel(id = "tPanelMain",style = "overflow-y:scroll; max-height: 300px",
+                                          uiOutput("rendTableFilterMainInput")
+                                ),
+                                actionButton("ApplyDataFilter","Apply Filters",width = "100%")
+               ),
+               hr(),
+               h4("Adjust Summary Cluster Window"),
+               numericInput("MainClusterWindowSet","Event Cluster Window (Months)", value = 1, min = 0, step = 0.5),
+               actionButton("UpdateSummaryClusters","Update Event Clusters",width = "100%"),
+               hr(),
+               h4("Set Unit of Time"),
+               selectInput("GlobalAppTimeUnit","Set Applications Interval Time Unit",
+                           choices = c("Days","Months","Years","Hours"), selected = "Years"),
+               value = 2
+      ),
+      selected = proc_side_tab_sel
+    ),
+  ),
+  mainPanel(
+    tabsetPanel(id = "PreProcessingTabs")
+  )
+)
+
+if (!app_lite) {
+  DataInput_tab <- bslib::nav_panel("Pre-Processing",
+                                    value = "data_input_tab",
+                                    p(
+                                      bslib::page_fillable(
+                                        tags$head(
+                                          tags$style(HTML("
                                                         .nav-tabs {
                                                         overflow-x: auto;
                                                         overflow-y: hidden;
@@ -168,9 +277,9 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                         display: flex;
                                                         }
                                                         "))
-                                      ),
-                                      tags$head(
-                                        tags$style(HTML("
+                                        ),
+                                        tags$head(
+                                          tags$style(HTML("
                                                         .selectize-input {
                                                         max-height: 82px;
                                                         overflow-y: auto;
@@ -223,1045 +332,104 @@ DataInput_tab <- bslib::nav_panel("Pre-Processing",
                                                         margin: 0 auto;
                                                         }
                                                         "))
-                                      ),
-                                      shiny::sidebarLayout(
-                                        sidebarPanel(
-                                          width = 3,
-                                          id = "DataInputPanel",
-                                          textInput("UserProjectName","Project Name:", value = ifelse(isTruthy(Project_Name),Project_Name,"Event Analysis")),
-                                          tabsetPanel(
-                                            id = "dataInput_SideTab",
-                                            tabPanel("Data Input",
-                                                     div(tags$b(tags$u(h3("Step 1:"))), style = "margin-top:10px;margin-bottom:-10px"),
-                                                     div(fileInput("EventDataFileInput",
-                                                                   label = tooltip(
-                                                                     trigger = list(
-                                                                       "Event Data Upload",
-                                                                       bsicons::bs_icon("info-circle")
-                                                                     ),
-                                                                     "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
-                                                                   ),
-                                                                   accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px"),
-                                                     conditionalPanel(condition = "output.EventDataFileIn_found",
-                                                                      div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                      shinyWidgets::radioGroupButtons(
-                                                                        inputId = "SuppDataInput1",
-                                                                        label = tooltip(
-                                                                          trigger = list(
-                                                                            "Would you like to upload supplementary data?",
-                                                                            bsicons::bs_icon("info-circle")
-                                                                          ),
-                                                                          "Tabular Excel file with further details aligning with the event data. First column of all sheets must be the patient identifier. Sheet names must correlate to annotated column in event data."
-                                                                        ),
-                                                                        choices = c("Yes",
-                                                                                    "No"),
-                                                                        selected = "No",
-                                                                        justified = TRUE
-                                                                      ),
-                                                                      conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
-                                                                                       div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
-                                                                                           style = "margin-top:-15px;margin-bottom:-15px"),
-                                                                                       #conditionalPanel(condition = "output.SuppDataFileInput1_found",
-                                                                                       fluidRow(
-                                                                                         column(7, style = "margin-bottom:-25px",
-                                                                                                selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
-                                                                                                               choices = NULL, selected = 1,
-                                                                                                               options = list(
-                                                                                                                 placeholder = 'Please select an option below',
-                                                                                                                 onInitialize = I('function() { this.setValue(""); }')
-                                                                                                               ))
-                                                                                                
-                                                                                         ),
-                                                                                         column(5, style = "margin-bottom:-25px",
-                                                                                                radioButtons("InputBiomarkerData","Does input data contain biomarker information?",
-                                                                                                             choices = c("Yes","No"), selected = "No", inline = T)
-                                                                                         )
-                                                                                       )
-                                                                                       #)
-                                                                      )
-                                                     ),
-                                                     p(),
-                                                     conditionalPanel(condition = "output.InputDataReady",
-                                                                      div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                      fluidRow(
-                                                                        column(4,
-                                                                               div(tags$b(tags$u(h3("Step 4:"))), style = "margin-top:10px;margin-bottom:-15px")
-                                                                        ),
-                                                                        column(8,
-                                                                               actionButton("ProcessInputData","Click Here Finalize and Process Input Data!", icon = icon("rotate-right"), width = "100%",
-                                                                                            style = "background-color: #18bc9c; border-color: #2c3e50")
-                                                                        )
-                                                                      )
-                                                     ),
-                                                     actionButton("LoadExampleData","Load Example Data"),
-                                                     actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
-                                                                  style = "background-color: #2c3e50; border-color: #2c3e50"),
-                                                     uiOutput("EventDataHelp_modal"),
-                                                     value = 1
-                                            ),
-                                            tabPanel("Data Adjustment",
-                                                     p(),
-                                                     h4("Subset Patients"),
-                                                     selectizeInput("TableToFilterMain", label = "Select Data Table to Subset:", choices = NULL,
-                                                                    multiple = F, selected = 1, width = "100%",
-                                                                    options = list(
-                                                                      placeholder = 'Please select an option below',
-                                                                      onInitialize = I('function() { this.setValue(""); }')
-                                                                    )),
-                                                     conditionalPanel(condition = "input.TableToFilterMain != ''",
-                                                                      h4("Filter Data Table"),
-                                                                      wellPanel(id = "tPanelMain",style = "overflow-y:scroll; max-height: 300px",
-                                                                                uiOutput("rendTableFilterMainInput")
-                                                                      ),
-                                                                      actionButton("ApplyDataFilter","Apply Filters",width = "100%")
-                                                     ),
-                                                     hr(),
-                                                     h4("Adjust Summary Cluster Window"),
-                                                     numericInput("MainClusterWindowSet","Event Cluster Window (Months)", value = 1, min = 0, step = 0.5),
-                                                     actionButton("UpdateSummaryClusters","Update Event Clusters",width = "100%"),
-                                                     hr(),
-                                                     h4("Set Unit of Time"),
-                                                     selectInput("GlobalAppTimeUnit","Set Applications Interval Time Unit",
-                                                                 choices = c("Days","Months","Years","Hours"), selected = "Years"),
-                                                     value = 2
-                                            ),
-                                            selected = proc_side_tab_sel
-                                          ),
                                         ),
-                                        mainPanel(
-                                          tabsetPanel(id = "PreProcessingTabs")
+                                        DataInput_tab_contents,
+                                        tagList(
+                                          tags$head(
+                                            tags$style(
+                                              HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                   glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                              )
+                                            )
+                                          ),
+                                          div(id = "AppVersion", class = "info_box", version_id)
                                         )
-                                      ),
-                                      tagList(
+                                      )))
+} else {
+  DataInput_tab <- tabPanel("Pre-Processing",
+                                    value = "data_input_tab",
+                                    #p(
+                            fluidPage(
                                         tags$head(
-                                          tags$style(
-                                            HTML("
-                                     .info_box {
-                                     width: auto;
-                                     height: auto;
-                                     color: #000000;
-                                     background-color: #f5f5f5;
-                                     padding: 3px 8px;
-                                     font-size: 12px;
-                                     z-index : 9999;
-                                     }",
-                                                 glue::glue("#{'AppVersion'} {{
-                                                position: {'fixed'};
-                                                top: 0;
-                                                right: 0;
-                                                }}")
-                                            )
-                                          )
+                                          tags$style(HTML("
+                                                        .nav-tabs {
+                                                        overflow-x: auto;
+                                                        overflow-y: hidden;
+                                                        white-space: nowrap;
+                                                        flex-wrap: nowrap !important;
+                                                        display: flex;
+                                                        }
+                                                        "))
                                         ),
-                                        div(id = "AppVersion", class = "info_box", version_id)
-                                      )
-                                    )
-                                  )
-                                  
-)
-
-# Patient Tab ------------------------------------------------------------------
-PatientLevel_tab <- bslib::nav_panel("Patient Visual Analytics",
-                                     value = "patient_visual_analytics",
-                                     p(
-                                       bslib::page_fillable(
-                                         sidebarLayout(
-                                           sidebarPanel(
-                                             width = 3,
-                                             tabsetPanel(
-                                               id = "PatientTimeline",
-                                               tabPanel("Data Input",
-                                                        p(),
-                                                        conditionalPanel(condition = "input.PatientMainPanel == '1'",
-                                                                         fluidRow(
-                                                                           column(9,
-                                                                                  virtualSelectInput(inputId = "SwimmerYlinesSelect",label = "Timeline Row Filter:",
-                                                                                                     choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE)
-                                                                           ),
-                                                                           column(3, style = "margin-top:25px",
-                                                                                  checkboxInput("displaySummaryRows","Display Summary Rows", value = FALSE)
-                                                                           )
-                                                                         ),
-                                                                         div(virtualSelectInput(inputId = "SwimmerHoverSelect",label = "Hover-text Information:",
-                                                                                                choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
-                                                                         div(virtualSelectInput(inputId = "HighlightEventSelect",label = "Highlight Event:",
-                                                                                                choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
-                                                        ),
-                                                        conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
-                                                                         selectInput("LinePlotTable","Data Table:",choices = NULL,
-                                                                                     selected = 1),
-                                                                         div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = "margin-top:-15px"),
-                                                                         conditionalPanel(condition = "input.LinePlotSub != 'Select all data'",
-                                                                                          div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = "margin-top:-15px")
-                                                                         ),
-                                                                         fluidRow(
-                                                                           column(6,
-                                                                                  selectizeInput("LinePlotX","X-Axis", choice = NULL, selected = 1),
-                                                                                  selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1)
-                                                                           ),
-                                                                           column(6,
-                                                                                  selectizeInput("LinePlotY","Y-Axis", choice = NULL, selected = 1),
-                                                                                  selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1)
-                                                                           )
-                                                                         ),
-                                                                         fluidRow(
-                                                                           column(6,
-                                                                                  numericInput("linePlotCutP","User defined cut-point:",
-                                                                                               value = NULL)
-                                                                           ),
-                                                                           column(6,
-                                                                                  textInput("linePlotCutPAnno","Cut-Point Annotation:", placeholder = "i.e. Adverse Event Name")
-                                                                           )
-                                                                         ),
-                                                                         fluidRow(
-                                                                           column(3, style = "margin-top:-10px",
-                                                                                  h4("Save Annotation:")
-                                                                           ),
-                                                                           column(4,
-                                                                                  actionButton("saveLinePlotAbvCutP","Above Cut-Point")
-                                                                           ),
-                                                                           column(4,
-                                                                                  actionButton("saveLinePlotBelCutP","Below Cut-Point")
-                                                                           )
-                                                                         )
-                                                        ),
-                                                        h4("Patient Selection"),
-                                                        div(DT::dataTableOutput("PatientSelectionTab"), style = "font-size:10px"),
-                                                        p(),
-                                                        fluidRow(
-                                                          column(6,
-                                                                 checkboxInput("RemoveUnknownNA","Remove Unknown/NA",value = T)
-                                                          ),
-                                                          column(6,
-                                                                 downloadButton("dnldCohortEventTab","Cohort Event Table")
-                                                          )
-                                                        )
-                                               ),
-                                               tabPanel("Figure Settings",
-                                                        p(),
-                                                        conditionalPanel(condition = "input.PatientMainPanel == '1'",
-                                                                         uiOutput("rendTimeLineTitle"),
-                                                                         h4("Font Sizes"),
-                                                                         fluidRow(
-                                                                           column(4,
-                                                                                  numericInput("TimeLineTitleSize","Title:",
-                                                                                               value = 18, step = 1)
-                                                                           ),
-                                                                           column(4,
-                                                                                  numericInput("TimeLineXAxisSize","X-Axis:",
-                                                                                               value = 14, step = 1)
-                                                                           ),
-                                                                           column(4,
-                                                                                  numericInput("TimeLineYAxisSize","Y-Axis:",
-                                                                                               value = 12, step = 1)
-                                                                           )
-                                                                         ),
-                                                                         h4("Figure Download Parameters"),
-                                                                         fluidRow(
-                                                                           column(6,
-                                                                                  numericInput("TimeLineHeight","Height (px)",value = 800)
-                                                                           ),
-                                                                           column(6,
-                                                                                  numericInput("TimeLineWidth","Width (px)",value = 1000)
-                                                                           )
-                                                                         )
-                                                        ),
-                                                        conditionalPanel(condition = "input.PatientMainPanel == '2'",
-                                                                         conditionalPanel(condition = "output.BiomarkerData",
-                                                                                          selectInput("LinePlotTheme","Select Theme:",
-                                                                                                      choices = c("Void" = "theme_void","BW" = "theme_bw","Minimal" = "theme_minimal",
-                                                                                                                  "Grey" = "theme_grey","Linedraw" = "theme_linedraw","Light" = "theme_light",
-                                                                                                                  "Dark" = "theme_dark","Classic" = "theme_classic","Test" = "theme_test")),
-                                                                                          h4("Font Sizes"),
-                                                                                          fluidRow(
-                                                                                            column(4,
-                                                                                                   numericInput("LinePlotTitleSize","Title:",
-                                                                                                                value = 20, step = 1)
-                                                                                            ),
-                                                                                            column(4,
-                                                                                                   numericInput("LinePlotXAxisSize","X-Axis:",
-                                                                                                                value = 14, step = 1)
-                                                                                            ),
-                                                                                            column(4,
-                                                                                                   numericInput("LinePlotYAxisSize","Y-Axis:",
-                                                                                                                value = 14, step = 1)
-                                                                                            )
-                                                                                          )
-                                                                         ),
-                                                                         h4("Figure Download Parameters"),
-                                                                         fluidRow(
-                                                                           column(6,
-                                                                                  numericInput("LinePlotHeight","Height (in)",value = 8)
-                                                                           ),
-                                                                           column(6,
-                                                                                  numericInput("LinePlotWidth","Width (in)",value = 10)
-                                                                           )
-                                                                         )
-                                                        )
-                                               )
-                                             )
-                                           ),
-                                           mainPanel(
-                                             tabsetPanel(
-                                               id = "PatientMainPanel",
-                                               tabPanel("Patient Timeline",
-                                                        p(),
-                                                        shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelinePlot",height = "800px", width = "100%")), type = 6),
-                                                        fluidRow(
-                                                          column(3,
-                                                                 downloadButton("dnldPatientEventTab","Patient Event Table")
-                                                          )
-                                                        ),
-                                                        p(),
-                                                        uiOutput("rendTimelineTableTabs"),
-                                                        value = 1
-                                               ),
-                                               tabPanel(newTabName,
-                                                        p(),
-                                                        uiOutput("rendSummaryLinePlots"),
-                                                        value = 2
-                                               )
-                                             ),
-                                             value = 1
-                                           )
-                                         ),
-                                         tagList(
-                                           tags$head(
-                                             tags$style(
-                                               HTML("
-                                     .info_box {
-                                     width: auto;
-                                     height: auto;
-                                     color: #000000;
-                                     background-color: #f5f5f5;
-                                     padding: 3px 8px;
-                                     font-size: 12px;
-                                     z-index : 9999;
-                                     }",
-                                                    glue::glue("#{'AppVersion'} {{
-                                                position: {'fixed'};
-                                                top: 0;
-                                                right: 0;
-                                                }}")
-                                               )
-                                             )
-                                           ),
-                                           div(id = "AppVersion", class = "info_box", version_id)
-                                         )
-                                       )
-                                     )
-                                     
-)
-
-# Treatment Analytics Tab ------------------------------------------------------
-TreatmentAnalytics_tab <- bslib::nav_panel("Treatment Associated Analytics",
-                                           value = "treatment_associated_analytics",
-                                           p(
-                                             bslib::page_fillable(
-                                               sidebarLayout(
-                                                 sidebarPanel(
-                                                   width = 3,
-                                                   tabsetPanel(id = "treatAnalyticsSide",
-                                                               tabPanel("Data Input",
-                                                                        p(),
-                                                                        conditionalPanel(condition = "input.treatAnalytics == '1'",
-                                                                                         selectInput("sankeyEvent","Event Category:",choices = NULL,
-                                                                                                     selected = 1),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsCls == '1'",
-                                                                                                          div(selectizeInput("sankeyXaxis","X-Axis Clusters:",
-                                                                                                                             choices = NULL, selected = 1, multiple = TRUE), style = "margin-top:-15px"),
-                                                                                                          checkboxInput("SankeyNAs","View NA's as category", value = F)
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
-                                                                                                          fluidRow(
-                                                                                                            column(4,
-                                                                                                                   radioButtons("heatView","View by",choices = c("Clusters","Patients"))
-                                                                                                            ),
-                                                                                                            column(4, style = "margin-top:10px",
-                                                                                                                   checkboxInput("HeatFlip","Flip Axes",value = FALSE)
-                                                                                                            ),
-                                                                                                            column(4, style = "margin-top:10px",
-                                                                                                                   checkboxInput("border_op","Cell Borders",value = TRUE)
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          fluidRow(
-                                                                                                            column(4,
-                                                                                                                   checkboxGroupInput("HeatClusterRC","Cluster:",choices = c("Rows","Columns"), selected = "Rows")
-                                                                                                            ),
-                                                                                                            column(8,
-                                                                                                                   conditionalPanel(condition = "input.HeatClusterRC.includes('Rows') || input.HeatClusterRC.includes('Columns')",
-                                                                                                                                    selectInput("HeatClusterMethod","Cluster Method:",
-                                                                                                                                                choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
-                                                                                                                   )
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
-                                                                                                          div(selectizeInput("HeatYchoices","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
-                                                                                                          fluidRow(
-                                                                                                            column(6, style = "margin-top:15px",
-                                                                                                                   checkboxInput("HeatEventCapYN","Cap Number of Events",value = T)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   conditionalPanel(condition = "input.HeatEventCapYN == true",
-                                                                                                                                    numericInput("HeatEventCapN","Number of Events Cap:", value = 20, min = 1, step = 1)
-                                                                                                                   )
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          uiOutput("HeatHoverInfo")
-                                                                                         )
-                                                                        ),
-                                                                        conditionalPanel(condition = "input.treatAnalytics == '2'",
-                                                                                         selectizeInput("durationHeatEventType","Event Type:", choices = NULL, selected = 1),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '1' | input.treatAnalyticsDur == '3'",
-                                                                                                          selectizeInput("BoxplotXaxis","Event:",choices = NULL, selected = 1)
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
-                                                                                                          fluidRow(
-                                                                                                            column(8,
-                                                                                                                   radioButtons("EventDurMaxSum","Reduce duplicate patient events by:",
-                                                                                                                                choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max"))
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   radioButtons("ViolinOrBoxP","View As:",choices = c("Box Plot","Violin Plot"))
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          fluidRow(
-                                                                                                            column(4,
-                                                                                                                   checkboxInput("BPplotsampledots","Include Dot Annotation", value = T),
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   numericInput("BPplotDotSize","Dot Size:", value = 1, step = 0.25, width = "80%")
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   checkboxInput("BPflipBP","Flip Axis", value = T),
-                                                                                                            )
-                                                                                                          )
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '2'",
-                                                                                                          fluidRow(
-                                                                                                            column(8,
-                                                                                                                   radioButtons("EventDurMaxSumHeat","Reduce duplicate patient events by:",
-                                                                                                                                choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max"))
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   checkboxInput("HeatFlipDist","Flip Axes",value = FALSE),
-                                                                                                                   checkboxInput("border_opDist","Cell Borders",value = TRUE)
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          fluidRow(
-                                                                                                            column(4,
-                                                                                                                   checkboxGroupInput("HeatClusterRCDist","Cluster:",choices = c("Rows","Columns"), selected = c("Rows","Columns"))
-                                                                                                            ),
-                                                                                                            column(8,
-                                                                                                                   conditionalPanel(condition = "input.HeatClusterRCDist.includes('Rows') || input.HeatClusterRCDist.includes('Columns')",
-                                                                                                                                    selectInput("HeatClusterMethodDist","Cluster Method:",
-                                                                                                                                                choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
-                                                                                                                   )
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
-                                                                                                          div(selectizeInput("HeatYchoicesDist","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
-                                                                                                          fluidRow(
-                                                                                                            column(6, style = "margin-top:15px",
-                                                                                                                   checkboxInput("HeatEventCapYNDist","Cap Duration",value = T),
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   conditionalPanel(condition = "input.HeatEventCapYNDist == true",
-                                                                                                                                    numericInput("HeatEventCapNDist","Duration Cap (Days):", value = 365, min = 1, step = 1)
-                                                                                                                   )
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          uiOutput("HeatHoverInfoDist")
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '3'",
-                                                                                                          fluidRow(
-                                                                                                            column(6,
-                                                                                                                   numericInput("maxpatviewDist","Max Number of Patients", value = 60, min = 1, step = 1)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   selectInput("swimmerSortDist","Sort Swimmer Plot By:",
-                                                                                                                               choices = c("Duration - Descending","Duration - Ascending",
-                                                                                                                                           "Overall Time - Descending","Overall Time - Ascending",
-                                                                                                                                           "Alphabetical - Ascending","Alphabetical - Descending"))
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          fluidRow(
-                                                                                                            column(9,
-                                                                                                                   selectizeInput("swimmerPatSpecDist","Specify Patients to Include:",
-                                                                                                                                  choices = NULL, selected = 1, multiple = TRUE)
-                                                                                                            ),
-                                                                                                            column(3, style = "margin-top:25px",
-                                                                                                                   checkboxInput("swimmerShowAllDist","Show All",value = FALSE)
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          numericInput("SwimmPlotHeightDist","Plot Height (px)",value = 800, step = 25, min = 0)
-                                                                                         )
-                                                                        )
-                                                               ),
-                                                               tabPanel("Figure Settings",
-                                                                        p(),
-                                                                        conditionalPanel(condition = "input.treatAnalytics == '1'",
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
-                                                                                                          h4("Heatmap Color Scheme"),
-                                                                                                          textInput("HeatColorLow","Low:", value = "white"),
-                                                                                                          textInput("HeatColorHigh","High:", value = "red"),
-                                                                                                          fluidRow(
-                                                                                                            column(6,
-                                                                                                                   numericInput("heatmapFontCol", "Column Font Size:",
-                                                                                                                                min = 5, max = 75,
-                                                                                                                                value = 14, step = 1),
-                                                                                                                   numericInput("heatmapHeight1","Download Height (in)",value = 10)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   numericInput("heatmapFontRow", "Row Font Size:",
-                                                                                                                                min = 5, max = 75,
-                                                                                                                                value = 14, step = 1),
-                                                                                                                   numericInput("heatmapWidth1","Download Width (in)",value = 15)
-                                                                                                            )
-                                                                                                          )
-                                                                                         )
-                                                                        ),
-                                                                        conditionalPanel(condition = "input.treatAnalytics == '2'",
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
-                                                                                                          selectInput("BPTheme","Theme:",
-                                                                                                                      choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
-                                                                                                                                  "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
-                                                                                                                                  "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
-                                                                                                          h4("Font Sizes"),
-                                                                                                          fluidRow(
-                                                                                                            column(4,
-                                                                                                                   numericInput("BPplot1TitleSize","Title:",
-                                                                                                                                value = 20, step = 1)
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   numericInput("BPplot1XAxisSize","X-Axis:",
-                                                                                                                                value = 12, step = 1)
-                                                                                                            ),
-                                                                                                            column(4,
-                                                                                                                   numericInput("BPplot1YAxisSize","Y-Axis:",
-                                                                                                                                value = 14, step = 1)
-                                                                                                            )
-                                                                                                          ),
-                                                                                                          h4("Figure Download Parameters"),
-                                                                                                          fluidRow(
-                                                                                                            column(6,
-                                                                                                                   numericInput("BPHeight","Height (px)",value = 800)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   numericInput("BPWidth","Width (px)",value = 1000)
-                                                                                                            )
-                                                                                                          )
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '2'",
-                                                                                                          h4("Heatmap Color Scheme"),
-                                                                                                          textInput("HeatColorLowDist","Low:", value = "white"),
-                                                                                                          textInput("HeatColorHighDist","High:", value = "red"),
-                                                                                                          fluidRow(
-                                                                                                            column(6,
-                                                                                                                   numericInput("heatmapDistFontCol", "Column Font Size:",
-                                                                                                                                min = 5, max = 75,
-                                                                                                                                value = 14, step = 1),
-                                                                                                                   numericInput("heatmapDistHeight1","Download Height (in)",value = 10)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   numericInput("heatmapDistFontRow", "Row Font Size:",
-                                                                                                                                min = 5, max = 75,
-                                                                                                                                value = 14, step = 1),
-                                                                                                                   numericInput("heatmapDistWidth1","Download Width (in)",value = 15)
-                                                                                                            )
-                                                                                                          )
-                                                                                         ),
-                                                                                         conditionalPanel(condition = "input.treatAnalyticsDur == '3'",
-                                                                                                          h4("Figure Download Parameters"),
-                                                                                                          fluidRow(
-                                                                                                            column(6,
-                                                                                                                   numericInput("DistSwimmerHeight","Height (px)",value = 800)
-                                                                                                            ),
-                                                                                                            column(6,
-                                                                                                                   numericInput("DistSwimmerWidth","Width (px)",value = 1000)
-                                                                                                            )
-                                                                                                          )
-                                                                                         )
-                                                                        )
-                                                               )
-                                                   )
-                                                   
-                                                 ),
-                                                 mainPanel(
-                                                   tabsetPanel(id = "treatAnalytics",
-                                                               tabPanel("Treatment Clustering",
-                                                                        p(),
-                                                                        tabsetPanel(id = "treatAnalyticsCls",
-                                                                                    tabPanel("Sankey",
-                                                                                             p(),
-                                                                                             shinyjqui::jqui_resizable(plotOutput("SankeyPlot",height = "700px", width = "100%")),
-                                                                                             p(),
-                                                                                             fluidRow(
-                                                                                               column(1,
-                                                                                                      downloadButton("dnldSankeyPlot","SVG")
-                                                                                               ),
-                                                                                               column(2,
-                                                                                                      downloadButton("dnldSankeyTable","Sankey Plot Data")
-                                                                                               ),
-                                                                                               column(3,
-                                                                                                      downloadButton("dnldSankeyTableFiltered","Sankey Plot Data Filtered")
-                                                                                               )
-                                                                                             ),
-                                                                                             p(),
-                                                                                             div(DT::dataTableOutput("SankeyPlotTable"), style = "font-size:14px"),
-                                                                                             value = 1
-                                                                                    ),
-                                                                                    tabPanel("Heatmap",
-                                                                                             p(),
-                                                                                             shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmap",height = "800px", width = "100%", hover = "heatmap_hover")),
-                                                                                             p(),
-                                                                                             fluidRow(column(3,
-                                                                                                             downloadButton("dnldTreatClusterHeatmap","SVG")
-                                                                                             )
-                                                                                             ),
-                                                                                             value = 2
-                                                                                    )
-                                                                        ),
-                                                                        value = 1
-                                                               ),
-                                                               tabPanel("Event Duration",
-                                                                        p(),
-                                                                        tabsetPanel(id = "treatAnalyticsDur",
-                                                                                    tabPanel("Swimmers Plot",
-                                                                                             p(),
-                                                                                             uiOutput("rendDurationSwimmers"),
-                                                                                             value = 3
-                                                                                    ),
-                                                                                    tabPanel("Box Plot",
-                                                                                             p(),
-                                                                                             shinyjqui::jqui_resizable(plotlyOutput("EventBoxPlot",height = "600px", width = "100%")),
-                                                                                             div(DT::dataTableOutput("EventBoxPlotTable"), style = "font-size:14px"),
-                                                                                             fluidRow(
-                                                                                               column(3,
-                                                                                                      downloadButton("dnldEventBoxPlotTable", "Download Table")
-                                                                                               )
-                                                                                             ),
-                                                                                             value = 1
-                                                                                    ),
-                                                                                    tabPanel("Heatmap",
-                                                                                             p(),
-                                                                                             shinyjqui::jqui_resizable(plotOutput("TreatDistHeatmap",height = "800px", width = "100%", hover = "heatmapDist_hover")),
-                                                                                             p(),
-                                                                                             fluidRow(
-                                                                                               column(3,
-                                                                                                      downloadButton("dnldTreatDistHeatmap", "SVG")
-                                                                                               )
-                                                                                             ),
-                                                                                             value = 2
-                                                                                    )
-                                                                        ),
-                                                                        value = 2
-                                                               )
-                                                   )
-                                                 )
-                                               ),
-                                               tagList(
-                                                 tags$head(
-                                                   tags$style(
-                                                     HTML("
-                                     .info_box {
-                                     width: auto;
-                                     height: auto;
-                                     color: #000000;
-                                     background-color: #f5f5f5;
-                                     padding: 3px 8px;
-                                     font-size: 12px;
-                                     z-index : 9999;
-                                     }",
-                                                          glue::glue("#{'AppVersion'} {{
-                                                position: {'fixed'};
-                                                top: 0;
-                                                right: 0;
-                                                }}")
-                                                     )
-                                                   )
-                                                 ),
-                                                 div(id = "AppVersion", class = "info_box", version_id)
-                                               )
-                                             )
-                                           )
-                                           
-)
-
-
-# Time-to-event Tab ------------------------------------------------------
-
-tte_tab <- bslib::nav_panel("Time-To-Event Analysis",
-                            value = "time_to_event_analysis",
-                            p(
-                              bslib::page_fillable(
-                                sidebarLayout(
-                                  sidebarPanel(
-                                    width = 3,
-                                    tabsetPanel(id = "ttetabsside",
-                                                tabPanel("Data Input",
-                                                         p(),
-                                                         conditionalPanel(condition = "input.ttetabs == '1' | input.ttetabs == '2'",
-                                                                          conditionalPanel(condition = "input.ttetabs == '1'",
-                                                                                           fluidRow(
-                                                                                             column(6,
-                                                                                                    numericInput("maxpatview","Max Number of Patients", value = 60, min = 1, step = 1)
-                                                                                             ),
-                                                                                             column(6,
-                                                                                                    selectInput("swimmerSort","Sort Swimmer Plot By:",
-                                                                                                                choices = c("Time - Descending","Time - Ascending",
-                                                                                                                            "Alphabetical - Ascending","Alphabetical - Descending"))
-                                                                                             )
-                                                                                           ),
-                                                                                           fluidRow(
-                                                                                             column(9,
-                                                                                                    selectizeInput("swimmerPatSpec","Specify Patients to Include:",
-                                                                                                                   choices = NULL, selected = 1, multiple = TRUE)
-                                                                                             ),
-                                                                                             column(3, style = "margin-top:25px",
-                                                                                                    checkboxInput("swimmerShowAll","Show All",value = FALSE)
-                                                                                             )
-                                                                                           ),
-                                                                          ),
-                                                                          conditionalPanel(condition = "input.ttetabs == '2'",
-                                                                                           div(h4("Data Selection"), style = "margin-bottom:-15px"),
-                                                                                           virtualSelectInput(inputId = "TTEstartEvent",label = "Select Start Point:",
-                                                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
-                                                                                           div(radioButtons("StartAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                                                                                               style = "margin-top:-40px;margin-bottom:-20px"),
-                                                                                           virtualSelectInput(inputId = "TTEstopEvent",label = "Select End Point - Progression Event:",
-                                                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
-                                                                                           div(radioButtons("StopAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                                                                                               style = "margin-top:-40px"),
-                                                                                           conditionalPanel(condition = "input.ttetabs == '2'",
-                                                                                                            div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                                                            div(h4("Strata Selection"), style = "margin-bottom:-15px"),
-                                                                                                            selectizeInput("KPstrataDataTable","Data Table:",choices = NULL,
-                                                                                                                           options = list(
-                                                                                                                             placeholder = 'Please select an option below',
-                                                                                                                             onInitialize = I('function() { this.setValue(""); }')
-                                                                                                                           )),
-                                                                                                            conditionalPanel(condition = "input.KPstrataDataTable > '0' && input.KPstrataDataTable != 'No Strata'",
-                                                                                                                             div(selectizeInput("KPstrataCol","Strata Column:",choices = NULL, selected = 1),
-                                                                                                                                 style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                                                                             fluidRow(
-                                                                                                                               column(8, style = "margin-top:-15px",
-                                                                                                                                      selectizeInput("KPstrataColGroups","X-Axis Groups:",choices = NULL,
-                                                                                                                                                     selected = 1, multiple = T)
-                                                                                                                               ),
-                                                                                                                               column(4,
-                                                                                                                                      checkboxInput("KPshowOtherGroup","Group Unselected Variables", value = T)
-                                                                                                                               )
-                                                                                                                             ),
-                                                                                                                             conditionalPanel(condition = "input.KPshowOtherGroup == true",
-                                                                                                                                              div(textInput("KPotherGroupName","Unselected Variables Group Name:"), style = "margin-top:-30px")
-                                                                                                                             )
-                                                                                                            )
-                                                                                           ),
-                                                                                           uiOutput("rendTTEexplHeader"),
-                                                                                           uiOutput("rendTTEexpl")
-                                                                          )
-                                                         ),
-                                                         value = 1
-                                                ),
-                                                tabPanel("Figure Settings",
-                                                         p(),
-                                                         conditionalPanel(condition = "input.ttetabs == '2'",
-                                                                          p(),
-                                                                          h4("Survival Plot Parameters"),
-                                                                          fluidRow(
-                                                                            column(6,
-                                                                                   numericInput("SurvXaxis","X-Axis Limit (years)", value = NA),
-                                                                                   numericInput("SurvXaxisBreaks","X-Axis Breaks (Years):",value = 1, min = 0, step = 0.25),
-                                                                                   selectInput("SurvLegendPos","Legend Position",choices = c("right","left","top","bottom","none"))
-                                                                            ),
-                                                                            column(6, style = "margin-top:15px",
-                                                                                   radioButtons("SurvYearOrMonth","Survival X-Axis Units:",choices = c("Days","Years","Months"), inline = T, selected = "Years"),
-                                                                                   checkboxInput("ShowPval","Show P.Value",value = T),
-                                                                                   checkboxInput("ShowConfInt","Show Confidence Interval",value = F),
-                                                                                   checkboxInput("ShowMedSurvLine","Show Median Survival Line",value = F)
-                                                                            )
-                                                                          ),
-                                                                          h4("Kaplan Meier Plot Download Parameters"),
-                                                                          fluidRow(
-                                                                            column(4,
-                                                                                   numericInput("PlotDnldHight","Plot Height",value = 8, min = 0, step = 1)
-                                                                            ),
-                                                                            column(4,
-                                                                                   numericInput("PlotDnldWidth","Plot Width",value = 8, min = 0, step = 1)
-                                                                            ),
-                                                                            column(4,
-                                                                                   selectInput("PlotDnldUnits","Units",choices = c("in","cm","mm","px"))
-                                                                            )
-                                                                          )
-                                                         ),
-                                                         conditionalPanel(condition = "input.ttetabs == '1'",
-                                                                          h4("Swimmers Plot Download Parameters"),
-                                                                          fluidRow(
-                                                                            column(6,
-                                                                                   numericInput("TTESwimmerHeight","Height (px)",value = 800)
-                                                                            ),
-                                                                            column(6,
-                                                                                   numericInput("TTESwimmerWidth","Width (px)",value = 1000)
-                                                                            )
-                                                                          )
-                                                         ),
-                                                         value = 2
-                                                )
-                                    )
-                                  ),
-                                  mainPanel(
-                                    p(),
-                                    span(textOutput("NoPatientsMatchError"), style="color:red"),
-                                    tabsetPanel(id = "ttetabs",
-                                                tabPanel("Kaplan Meier",
-                                                         p(),
-                                                         fluidRow(
-                                                           column(8,
-                                                                  shinyjqui::jqui_resizable(plotOutput("KPplot",height = "500",width = "100%"))
-                                                           ),
-                                                           column(4,
-                                                                  conditionalPanel(condition = "input.KPstrataCol != ''",
-                                                                                   selectizeInput("KPplotHRtab_RefSelect","Reference Characteristic:", choices = NULL, selected = 1)
-                                                                  ),
-                                                                  div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
-                                                                  div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
-                                                           )
-                                                         ),
-                                                         fluidRow(
-                                                           column(3,
-                                                                  downloadButton("dnldKPplot", "SVG")
-                                                           )
-                                                         ),
-                                                         p(),
-                                                         div(DT::dataTableOutput("KPplotTable"), style = "font-size:14px"),
-                                                         fluidRow(
-                                                           column(3,
-                                                                  downloadButton("dnldKPplotTable", "Download Table")
-                                                           )
-                                                         ),
-                                                         value = 2
-                                                ),
-                                                tabPanel("Swimmers Plot",
-                                                         p(),
-                                                         shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("swimmer_plot",height = "600px", width = "100%")), type = 6),
-                                                         p(),
-                                                         div(DT::dataTableOutput("swimmer_plotTable"), style = "font-size:14px"),
-                                                         fluidRow(
-                                                           column(3,
-                                                                  downloadButton("dnldswimmer_plotTable", "Download Table")
-                                                           )
-                                                         ),
-                                                         value = 1
-                                                )
-                                    )
-                                  )
-                                ),
-                                tagList(
-                                  tags$head(
-                                    tags$style(
-                                      HTML("
-                                     .info_box {
-                                     width: auto;
-                                     height: auto;
-                                     color: #000000;
-                                     background-color: #f5f5f5;
-                                     padding: 3px 8px;
-                                     font-size: 12px;
-                                     z-index : 9999;
-                                     }",
-                                           glue::glue("#{'AppVersion'} {{
-                                                position: {'fixed'};
-                                                top: 0;
-                                                right: 0;
-                                                }}")
-                                      )
-                                    )
-                                  ),
-                                  div(id = "AppVersion", class = "info_box", version_id)
-                                )
-                              )
-                            )
-                            
-)
-
-
-# Cohort Level Tab -------------------------------------------------------------
-CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
-                                    value = "cohort_overview",
-                                    p(
-                                      bslib::page_fillable(
-                                        sidebarLayout(
-                                          sidebarPanel(
-                                            width = 3,
-                                            conditionalPanel(condition = "input.SummaryMain == '1' | input.SummaryMain == '4'",
-                                                             selectizeInput("SummaryOptions","Select Event Summaries to Include:", choices = NULL, selected = 1, multiple = TRUE)
-                                            ),
-                                            conditionalPanel(condition = "input.SummaryMain == '4'",
-                                                             fluidRow(
-                                                               column(6,
-                                                                      numericInput("maxpatviewSumm","Max Number of Patients", value = 60, min = 1, step = 1)
-                                                               ),
-                                                               column(6,
-                                                                      selectInput("swimmerSortSumm","Sort Swimmer Plot By:",
-                                                                                  choices = c("Time - Descending","Time - Ascending",
-                                                                                              "Alphabetical - Ascending","Alphabetical - Descending"))
-                                                               )
-                                                             ),
-                                                             fluidRow(
-                                                               column(9,
-                                                                      selectizeInput("swimmerPatSpecSumm","Specify Patients to Include:",
-                                                                                     choices = NULL, selected = 1, multiple = TRUE)
-                                                               ),
-                                                               column(3, style = "margin-top:25px",
-                                                                      checkboxInput("swimmerShowAllSumm","Show All",value = FALSE)
-                                                               )
-                                                             ),
-                                                             numericInput("SwimmPlotHeight","Plot Height (px)",value = 800, step = 25, min = 0),
-                                                             h4("Download Parameters"),
-                                                             fluidRow(
-                                                               column(6,
-                                                                      numericInput("SummSwimmerHeight","Height (px)",value = 800)
-                                                               ),
-                                                               column(6,
-                                                                      numericInput("SummSwimmerWidth","Width (px)",value = 1000)
-                                                               )
-                                                             )
-                                            ),
-                                            conditionalPanel(condition = "input.SummaryMain == '2'",
-                                                             p(),
-                                                             h4("Reference Event (Ref)"),
-                                                             virtualSelectInput(
-                                                               inputId = "RefEventSelect",
-                                                               label = "Select Reference Event(s):",
-                                                               choices = NULL,
-                                                               showValueAsTags = TRUE,
-                                                               search = TRUE,
-                                                               multiple = TRUE
-                                                             ),
-                                                             materialSwitch(inputId = "GroupRefEventSelect", label = "Group selected reference events by event type",
-                                                                            value = FALSE, status = "success"),
-                                                             #selectizeInput("RefDataTable","Reference Data Table:", choices = NULL, selected = NULL),
-                                                             #selectizeInput("RefEvent","Reference Event(s):", choices = NULL, selected = NULL, multiple = T),
-                                                             hr(),
-                                                             h4("Event of Interest (EOI)"),
-                                                             virtualSelectInput(
-                                                               inputId = "EOIEventSelect",
-                                                               label = "Select Event(s) of Interest:",
-                                                               choices = NULL,
-                                                               showValueAsTags = TRUE,
-                                                               search = TRUE,
-                                                               multiple = TRUE
-                                                             ),
-                                                             #selectizeInput("EOIDataTable","Event of Interest Data Table:", choices = NULL, selected = NULL),
-                                                             #selectizeInput("EOIEvent","Event(s) of Interest:", choices = NULL, selected = NULL, multiple = T),
-                                                             div(radioButtons("EOIEventAndOr","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                                                                 style = "margin-top:-30px"),
-                                                             conditionalPanel(condition = "output.EOIEventSelect_gt1",
-                                                                              textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
-                                                             ),
-                                                             hr(),
-                                                             fluidRow(
-                                                               column(6,
-                                                                      materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event",
-                                                                                     value = FALSE, status = "success", inline = T)
-                                                               ),
-                                                               column(6,
-                                                                      conditionalPanel(condition = "input.AddAnnoWindow == true",
-                                                                                       numericInput("AddAnnoWindowNum","Time Window (days)", value = 30, min = 0, step = 1)
-                                                                      )
-                                                               )
-                                                             ),
-                                                             hr(),
-                                                             #textInput("NewColName","New Column Name", placeholder = "ReferenceEvent_RelativeTo_NewEvent"),
-                                                             actionButton("SaveAnnotation","Save Annotation", width = "100%")
-                                            ),
-                                            conditionalPanel(condition = "input.SummaryMain == '3'",
-                                                             p(),
-                                                             selectizeInput("TableToFilter","Data Table:", choices = NULL, selected = 1),
-                                                             h4("Filter Data Table"),
-                                                             wellPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 300px",
-                                                                       uiOutput("rendTableFilterInput")
-                                                             ),
-                                                             div(selectizeInput("FilterTableIDcol","Sample/Patient ID Column:", choices = NULL, selected = 1), style="margin-top:15px"),
-                                                             selectizeInput("FilterTabRefFeature","Reference Feature:", choices = NULL, selected = 1),
-                                                             selectizeInput("FilterTabCountFeatures","Features of Interest:", choices = NULL, selected = 1, multiple = TRUE),
-                                                             conditionalPanel(condition = "input.FilterTabRefFeature != 'No Reference' && input.FilterTabRefFeature != '' && input.FilterTabCountFeatures.length > 0",
-                                                                              fluidRow(
-                                                                                column(8,
-                                                                                       selectizeInput("OddsRatioColumn","Select Reference for Odds Ratio:", choices = NULL, selected = 1)
-                                                                                ),
-                                                                                column(4,
-                                                                                       checkboxInput("ORtest","Test for Over-Representation (Enrichment)", value = FALSE)
-                                                                                )
-                                                                              )
-                                                             )
-                                            )
-                                          ),
-                                          mainPanel(
-                                            tabsetPanel(id = "SummaryMain",
-                                                        tabPanel("Event Summary",
-                                                                 p(),
-                                                                 div(DT::dataTableOutput("CohortEventSummaryTable"), style = "font-size:14px"),
-                                                                 fluidRow(
-                                                                   column(3,
-                                                                          downloadButton("dlndCohortEventSummaryTable", "Download Table"))
-                                                                 ),
-                                                                 value = 1
-                                                        ),
-                                                        tabPanel("Swimmers Plot",
-                                                                 p(),
-                                                                 uiOutput("rendsumm_swimmer_plot"),
-                                                                 value = 4
-                                                        ),
-                                                        tabPanel("Event Annotation",
-                                                                 p(),
-                                                                 tabsetPanel(
-                                                                   id = "EventAnnoTabs",
-                                                                   tabPanel("Reference Event Data",
-                                                                            div(DT::dataTableOutput("RefEventTableOut"), style = "font-size:14px"),
-                                                                            fluidRow(
-                                                                              column(3,
-                                                                                     downloadButton("dlndRefEventTableOut", "Download Table")
-                                                                              )
-                                                                            ),
-                                                                            value = 1
-                                                                   ),
-                                                                   tabPanel("Event of Interest Data",
-                                                                            div(DT::dataTableOutput("EOIEventTableOut"), style = "font-size:14px"),
-                                                                            fluidRow(
-                                                                              column(3,
-                                                                                     downloadButton("dlndEOIEventTableOut", "Download Table")
-                                                                              )
-                                                                            ),
-                                                                            value = 2
-                                                                   ),
-                                                                   tabPanel("Merged Annotated Event Data",
-                                                                            div(DT::dataTableOutput("MergeEventTableOut"), style = "font-size:14px"),
-                                                                            fluidRow(
-                                                                              column(3,
-                                                                                     downloadButton("dlndMergeEventTableOut", "Download Table")
-                                                                              )
-                                                                            ),
-                                                                            value = 3
-                                                                   )
-                                                                 ),
-                                                                 #div(DT::dataTableOutput("MolecularAnnoTable"), style = "font-size:14px"),
-                                                                 #fluidRow(
-                                                                 #  column(3,
-                                                                 #         downloadButton("dlndMolecularAnnoTable", "Download Table")
-                                                                 #  )
-                                                                 #),
-                                                                 value = 2
-                                                        ),
-                                                        tabPanel("Cohort Break-Down",
-                                                                 p(),
-                                                                 uiOutput("rendMolecularBreakdownTabs"),
-                                                                 value = 3
-                                                        )
-                                            )
-                                          )
+                                        tags$head(
+                                          tags$style(HTML("
+                                                        .selectize-input {
+                                                        max-height: 82px;
+                                                        overflow-y: auto;
+                                                        }
+                                                        #EventDataTreatmentEvents .vscomp-value {
+                                                        max-height: 122px !important;
+                                                        overflow-y: auto !important;
+                                                        }
+                                                        #EventDataResponseEvents .vscomp-value {
+                                                        max-height: 122px !important;
+                                                        overflow-y: auto !important;
+                                                        }
+                                                        #TTEstartEvent .vscomp-value {
+                                                        max-height: 82px !important;
+                                                        overflow-y: auto !important;
+                                                        }
+                                                        #TTEstopEvent .vscomp-value {
+                                                        max-height: 82px !important;
+                                                        overflow-y: auto !important;
+                                                        }
+                                                        .vscomp-value {
+                                                        max-height: 82px;
+                                                        overflow-y: auto;
+                                                        }
+                                                        .selectize-dropdown {
+                                                        width: 500px !important;
+                                                        }
+                                                        #ttepanel1 .scrolling-well {
+                                                        max-height: 102px;
+                                                        overflow: auto !important;
+                                                        border: 1px solid #ddd;
+                                                        padding: 10px;
+                                                        }
+                                                        #ttepanel2 .scrolling-well {
+                                                        max-height: 102px;
+                                                        overflow: auto !important;
+                                                        border: 1px solid #ddd;
+                                                        padding: 10px;
+                                                        }
+                                                        #desc_table table.dataTable td, 
+                                                        #desc_table table.dataTable th,
+                                                        #example_table table.dataTable td, 
+                                                        #example_table table.dataTable th {
+                                                          font-size: 12px !important;
+                                                        }
+                                                        .html-embed img {
+                                                        max-width: 100%;
+                                                        height: auto;
+                                                        display: block;
+                                                        margin: 0 auto;
+                                                        }
+                                                        "))
                                         ),
+                                        DataInput_tab_contents,
                                         tagList(
                                           tags$head(
                                             tags$style(
@@ -1286,51 +454,1182 @@ CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
                                           div(id = "AppVersion", class = "info_box", version_id)
                                         )
                                       )
-                                    )
-                                    
+                            #)
+  )
+}
+
+
+# Patient Tab ------------------------------------------------------------------
+
+PatientLevel_tab_contents <- sidebarLayout(
+  sidebarPanel(
+    width = 3,
+    tabsetPanel(
+      id = "PatientTimeline",
+      tabPanel("Data Input",
+               p(),
+               conditionalPanel(condition = "input.PatientMainPanel == '1'",
+                                fluidRow(
+                                  column(9,
+                                         virtualSelectInput(inputId = "SwimmerYlinesSelect",label = "Timeline Row Filter:",
+                                                            choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE)
+                                  ),
+                                  column(3, style = "margin-top:25px",
+                                         checkboxInput("displaySummaryRows","Display Summary Rows", value = FALSE)
+                                  )
+                                ),
+                                div(virtualSelectInput(inputId = "SwimmerHoverSelect",label = "Hover-text Information:",
+                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+                                div(virtualSelectInput(inputId = "HighlightEventSelect",label = "Highlight Event:",
+                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+               ),
+               conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
+                                selectInput("LinePlotTable","Data Table:",choices = NULL,
+                                            selected = 1),
+                                div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = "margin-top:-15px"),
+                                conditionalPanel(condition = "input.LinePlotSub != 'Select all data'",
+                                                 div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = "margin-top:-15px")
+                                ),
+                                fluidRow(
+                                  column(6,
+                                         selectizeInput("LinePlotX","X-Axis", choice = NULL, selected = 1),
+                                         selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1)
+                                  ),
+                                  column(6,
+                                         selectizeInput("LinePlotY","Y-Axis", choice = NULL, selected = 1),
+                                         selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1)
+                                  )
+                                ),
+                                fluidRow(
+                                  column(6,
+                                         numericInput("linePlotCutP","User defined cut-point:",
+                                                      value = NULL)
+                                  ),
+                                  column(6,
+                                         textInput("linePlotCutPAnno","Cut-Point Annotation:", placeholder = "i.e. Adverse Event Name")
+                                  )
+                                ),
+                                fluidRow(
+                                  column(3, style = "margin-top:-10px",
+                                         h4("Save Annotation:")
+                                  ),
+                                  column(4,
+                                         actionButton("saveLinePlotAbvCutP","Above Cut-Point")
+                                  ),
+                                  column(4,
+                                         actionButton("saveLinePlotBelCutP","Below Cut-Point")
+                                  )
+                                )
+               ),
+               h4("Patient Selection"),
+               div(DT::dataTableOutput("PatientSelectionTab"), style = "font-size:10px"),
+               p(),
+               fluidRow(
+                 column(6,
+                        checkboxInput("RemoveUnknownNA","Remove Unknown/NA",value = T)
+                 ),
+                 column(6,
+                        downloadButton("dnldCohortEventTab","Cohort Event Table")
+                 )
+               )
+      ),
+      tabPanel("Figure Settings",
+               p(),
+               conditionalPanel(condition = "input.PatientMainPanel == '1'",
+                                uiOutput("rendTimeLineTitle"),
+                                h4("Font Sizes"),
+                                fluidRow(
+                                  column(4,
+                                         numericInput("TimeLineTitleSize","Title:",
+                                                      value = 18, step = 1)
+                                  ),
+                                  column(4,
+                                         numericInput("TimeLineXAxisSize","X-Axis:",
+                                                      value = 14, step = 1)
+                                  ),
+                                  column(4,
+                                         numericInput("TimeLineYAxisSize","Y-Axis:",
+                                                      value = 12, step = 1)
+                                  )
+                                ),
+                                h4("Figure Download Parameters"),
+                                fluidRow(
+                                  column(6,
+                                         numericInput("TimeLineHeight","Height (px)",value = 800)
+                                  ),
+                                  column(6,
+                                         numericInput("TimeLineWidth","Width (px)",value = 1000)
+                                  )
+                                )
+               ),
+               conditionalPanel(condition = "input.PatientMainPanel == '2'",
+                                conditionalPanel(condition = "output.BiomarkerData",
+                                                 selectInput("LinePlotTheme","Select Theme:",
+                                                             choices = c("Void" = "theme_void","BW" = "theme_bw","Minimal" = "theme_minimal",
+                                                                         "Grey" = "theme_grey","Linedraw" = "theme_linedraw","Light" = "theme_light",
+                                                                         "Dark" = "theme_dark","Classic" = "theme_classic","Test" = "theme_test")),
+                                                 h4("Font Sizes"),
+                                                 fluidRow(
+                                                   column(4,
+                                                          numericInput("LinePlotTitleSize","Title:",
+                                                                       value = 20, step = 1)
+                                                   ),
+                                                   column(4,
+                                                          numericInput("LinePlotXAxisSize","X-Axis:",
+                                                                       value = 14, step = 1)
+                                                   ),
+                                                   column(4,
+                                                          numericInput("LinePlotYAxisSize","Y-Axis:",
+                                                                       value = 14, step = 1)
+                                                   )
+                                                 )
+                                ),
+                                h4("Figure Download Parameters"),
+                                fluidRow(
+                                  column(6,
+                                         numericInput("LinePlotHeight","Height (in)",value = 8)
+                                  ),
+                                  column(6,
+                                         numericInput("LinePlotWidth","Width (in)",value = 10)
+                                  )
+                                )
+               )
+      )
+    )
+  ),
+  mainPanel(
+    tabsetPanel(
+      id = "PatientMainPanel",
+      tabPanel("Patient Timeline",
+               p(),
+               shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelinePlot",height = "800px", width = "100%")), type = 6),
+               fluidRow(
+                 column(3,
+                        downloadButton("dnldPatientEventTab","Patient Event Table")
+                 )
+               ),
+               p(),
+               uiOutput("rendTimelineTableTabs"),
+               value = 1
+      ),
+      tabPanel(newTabName,
+               p(),
+               uiOutput("rendSummaryLinePlots"),
+               value = 2
+      )
+    ),
+    value = 1
+  )
 )
 
-Tutorial_Tab <- Tutorial_UI("ShinyEvents1")
-
-
-if (Password_Protected) {
-  ui <- bslib::page_navbar(
-    title = paste("{ ",Project_Name," }",sep = ""),
-    id = "shinyevents_tabs",
-    navbar_options = bslib::navbar_options(collapsible = TRUE),
-    theme = bslib::bs_theme(bootswatch = "flatly"),
-    login_tab)
+if (!app_lite) {
+  PatientLevel_tab <- bslib::nav_panel("Patient Visual Analytics",
+                                       value = "patient_visual_analytics",
+                                       p(
+                                         bslib::page_fillable(
+                                           PatientLevel_tab_contents
+                                           ,
+                                           tagList(
+                                             tags$head(
+                                               tags$style(
+                                                 HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                      glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                 )
+                                               )
+                                             ),
+                                             div(id = "AppVersion", class = "info_box", version_id)
+                                           )
+                                         )
+                                       )
+                                       
+  )
 } else {
-  if (AllFilesReady) {
+  PatientLevel_tab <- tabPanel("Patient Visual Analytics",
+                                       value = "patient_visual_analytics",
+                                       #p(
+                               fluidPage(
+                                           PatientLevel_tab_contents
+                                           ,
+                                           tagList(
+                                             tags$head(
+                                               tags$style(
+                                                 HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                      glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                 )
+                                               )
+                                             ),
+                                             div(id = "AppVersion", class = "info_box", version_id)
+                                           )
+                                         )
+                                       #)
+                                       
+  )
+}
+
+
+
+# Treatment Analytics Tab ------------------------------------------------------
+TreatmentAnalytics_tab_contents <- sidebarLayout(
+  sidebarPanel(
+    width = 3,
+    tabsetPanel(id = "treatAnalyticsSide",
+                tabPanel("Data Input",
+                         p(),
+                         conditionalPanel(condition = "input.treatAnalytics == '1'",
+                                          selectInput("sankeyEvent","Event Category:",choices = NULL,
+                                                      selected = 1),
+                                          conditionalPanel(condition = "input.treatAnalyticsCls == '1'",
+                                                           div(selectizeInput("sankeyXaxis","X-Axis Clusters:",
+                                                                              choices = NULL, selected = 1, multiple = TRUE), style = "margin-top:-15px"),
+                                                           checkboxInput("SankeyNAs","View NA's as category", value = F)
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
+                                                           fluidRow(
+                                                             column(4,
+                                                                    radioButtons("heatView","View by",choices = c("Clusters","Patients"))
+                                                             ),
+                                                             column(4, style = "margin-top:10px",
+                                                                    checkboxInput("HeatFlip","Flip Axes",value = FALSE)
+                                                             ),
+                                                             column(4, style = "margin-top:10px",
+                                                                    checkboxInput("border_op","Cell Borders",value = TRUE)
+                                                             )
+                                                           ),
+                                                           fluidRow(
+                                                             column(4,
+                                                                    checkboxGroupInput("HeatClusterRC","Cluster:",choices = c("Rows","Columns"), selected = "Rows")
+                                                             ),
+                                                             column(8,
+                                                                    conditionalPanel(condition = "input.HeatClusterRC.includes('Rows') || input.HeatClusterRC.includes('Columns')",
+                                                                                     selectInput("HeatClusterMethod","Cluster Method:",
+                                                                                                 choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
+                                                                    )
+                                                             )
+                                                           ),
+                                                           selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
+                                                           div(selectizeInput("HeatYchoices","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
+                                                           fluidRow(
+                                                             column(6, style = "margin-top:15px",
+                                                                    checkboxInput("HeatEventCapYN","Cap Number of Events",value = T)
+                                                             ),
+                                                             column(6,
+                                                                    conditionalPanel(condition = "input.HeatEventCapYN == true",
+                                                                                     numericInput("HeatEventCapN","Number of Events Cap:", value = 20, min = 1, step = 1)
+                                                                    )
+                                                             )
+                                                           ),
+                                                           uiOutput("HeatHoverInfo")
+                                          )
+                         ),
+                         conditionalPanel(condition = "input.treatAnalytics == '2'",
+                                          selectizeInput("durationHeatEventType","Event Type:", choices = NULL, selected = 1),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '1' | input.treatAnalyticsDur == '3'",
+                                                           selectizeInput("BoxplotXaxis","Event:",choices = NULL, selected = 1)
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
+                                                           fluidRow(
+                                                             column(8,
+                                                                    radioButtons("EventDurMaxSum","Reduce duplicate patient events by:",
+                                                                                 choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max"))
+                                                             ),
+                                                             column(4,
+                                                                    radioButtons("ViolinOrBoxP","View As:",choices = c("Box Plot","Violin Plot"))
+                                                             )
+                                                           ),
+                                                           fluidRow(
+                                                             column(4,
+                                                                    checkboxInput("BPplotsampledots","Include Dot Annotation", value = T),
+                                                             ),
+                                                             column(4,
+                                                                    numericInput("BPplotDotSize","Dot Size:", value = 1, step = 0.25, width = "80%")
+                                                             ),
+                                                             column(4,
+                                                                    checkboxInput("BPflipBP","Flip Axis", value = T),
+                                                             )
+                                                           )
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '2'",
+                                                           fluidRow(
+                                                             column(8,
+                                                                    radioButtons("EventDurMaxSumHeat","Reduce duplicate patient events by:",
+                                                                                 choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max"))
+                                                             ),
+                                                             column(4,
+                                                                    checkboxInput("HeatFlipDist","Flip Axes",value = FALSE),
+                                                                    checkboxInput("border_opDist","Cell Borders",value = TRUE)
+                                                             )
+                                                           ),
+                                                           fluidRow(
+                                                             column(4,
+                                                                    checkboxGroupInput("HeatClusterRCDist","Cluster:",choices = c("Rows","Columns"), selected = c("Rows","Columns"))
+                                                             ),
+                                                             column(8,
+                                                                    conditionalPanel(condition = "input.HeatClusterRCDist.includes('Rows') || input.HeatClusterRCDist.includes('Columns')",
+                                                                                     selectInput("HeatClusterMethodDist","Cluster Method:",
+                                                                                                 choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
+                                                                    )
+                                                             )
+                                                           ),
+                                                           selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
+                                                           div(selectizeInput("HeatYchoicesDist","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
+                                                           fluidRow(
+                                                             column(6, style = "margin-top:15px",
+                                                                    checkboxInput("HeatEventCapYNDist","Cap Duration",value = T),
+                                                             ),
+                                                             column(6,
+                                                                    conditionalPanel(condition = "input.HeatEventCapYNDist == true",
+                                                                                     numericInput("HeatEventCapNDist","Duration Cap (Days):", value = 365, min = 1, step = 1)
+                                                                    )
+                                                             )
+                                                           ),
+                                                           uiOutput("HeatHoverInfoDist")
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '3'",
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("maxpatviewDist","Max Number of Patients", value = 60, min = 1, step = 1)
+                                                             ),
+                                                             column(6,
+                                                                    selectInput("swimmerSortDist","Sort Swimmer Plot By:",
+                                                                                choices = c("Duration - Descending","Duration - Ascending",
+                                                                                            "Overall Time - Descending","Overall Time - Ascending",
+                                                                                            "Alphabetical - Ascending","Alphabetical - Descending"))
+                                                             )
+                                                           ),
+                                                           fluidRow(
+                                                             column(9,
+                                                                    selectizeInput("swimmerPatSpecDist","Specify Patients to Include:",
+                                                                                   choices = NULL, selected = 1, multiple = TRUE)
+                                                             ),
+                                                             column(3, style = "margin-top:25px",
+                                                                    checkboxInput("swimmerShowAllDist","Show All",value = FALSE)
+                                                             )
+                                                           ),
+                                                           numericInput("SwimmPlotHeightDist","Plot Height (px)",value = 800, step = 25, min = 0)
+                                          )
+                         )
+                ),
+                tabPanel("Figure Settings",
+                         p(),
+                         conditionalPanel(condition = "input.treatAnalytics == '1'",
+                                          conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
+                                                           h4("Heatmap Color Scheme"),
+                                                           textInput("HeatColorLow","Low:", value = "white"),
+                                                           textInput("HeatColorHigh","High:", value = "red"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("heatmapFontCol", "Column Font Size:",
+                                                                                 min = 5, max = 75,
+                                                                                 value = 14, step = 1),
+                                                                    numericInput("heatmapHeight1","Download Height (in)",value = 10)
+                                                             ),
+                                                             column(6,
+                                                                    numericInput("heatmapFontRow", "Row Font Size:",
+                                                                                 min = 5, max = 75,
+                                                                                 value = 14, step = 1),
+                                                                    numericInput("heatmapWidth1","Download Width (in)",value = 15)
+                                                             )
+                                                           )
+                                          )
+                         ),
+                         conditionalPanel(condition = "input.treatAnalytics == '2'",
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
+                                                           selectInput("BPTheme","Theme:",
+                                                                       choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
+                                                                                   "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
+                                                                                   "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
+                                                           h4("Font Sizes"),
+                                                           fluidRow(
+                                                             column(4,
+                                                                    numericInput("BPplot1TitleSize","Title:",
+                                                                                 value = 20, step = 1)
+                                                             ),
+                                                             column(4,
+                                                                    numericInput("BPplot1XAxisSize","X-Axis:",
+                                                                                 value = 12, step = 1)
+                                                             ),
+                                                             column(4,
+                                                                    numericInput("BPplot1YAxisSize","Y-Axis:",
+                                                                                 value = 14, step = 1)
+                                                             )
+                                                           ),
+                                                           h4("Figure Download Parameters"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("BPHeight","Height (px)",value = 800)
+                                                             ),
+                                                             column(6,
+                                                                    numericInput("BPWidth","Width (px)",value = 1000)
+                                                             )
+                                                           )
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '2'",
+                                                           h4("Heatmap Color Scheme"),
+                                                           textInput("HeatColorLowDist","Low:", value = "white"),
+                                                           textInput("HeatColorHighDist","High:", value = "red"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("heatmapDistFontCol", "Column Font Size:",
+                                                                                 min = 5, max = 75,
+                                                                                 value = 14, step = 1),
+                                                                    numericInput("heatmapDistHeight1","Download Height (in)",value = 10)
+                                                             ),
+                                                             column(6,
+                                                                    numericInput("heatmapDistFontRow", "Row Font Size:",
+                                                                                 min = 5, max = 75,
+                                                                                 value = 14, step = 1),
+                                                                    numericInput("heatmapDistWidth1","Download Width (in)",value = 15)
+                                                             )
+                                                           )
+                                          ),
+                                          conditionalPanel(condition = "input.treatAnalyticsDur == '3'",
+                                                           h4("Figure Download Parameters"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("DistSwimmerHeight","Height (px)",value = 800)
+                                                             ),
+                                                             column(6,
+                                                                    numericInput("DistSwimmerWidth","Width (px)",value = 1000)
+                                                             )
+                                                           )
+                                          )
+                         )
+                )
+    )
+    
+  ),
+  mainPanel(
+    tabsetPanel(id = "treatAnalytics",
+                tabPanel("Treatment Clustering",
+                         p(),
+                         tabsetPanel(id = "treatAnalyticsCls",
+                                     tabPanel("Sankey",
+                                              p(),
+                                              shinyjqui::jqui_resizable(plotOutput("SankeyPlot",height = "700px", width = "100%")),
+                                              p(),
+                                              fluidRow(
+                                                column(1,
+                                                       downloadButton("dnldSankeyPlot","SVG")
+                                                ),
+                                                column(2,
+                                                       downloadButton("dnldSankeyTable","Sankey Plot Data")
+                                                ),
+                                                column(3,
+                                                       downloadButton("dnldSankeyTableFiltered","Sankey Plot Data Filtered")
+                                                )
+                                              ),
+                                              p(),
+                                              div(DT::dataTableOutput("SankeyPlotTable"), style = "font-size:14px"),
+                                              value = 1
+                                     ),
+                                     tabPanel("Heatmap",
+                                              p(),
+                                              shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmap",height = "800px", width = "100%", hover = "heatmap_hover")),
+                                              p(),
+                                              fluidRow(column(3,
+                                                              downloadButton("dnldTreatClusterHeatmap","SVG")
+                                              )
+                                              ),
+                                              value = 2
+                                     )
+                         ),
+                         value = 1
+                ),
+                tabPanel("Event Duration",
+                         p(),
+                         tabsetPanel(id = "treatAnalyticsDur",
+                                     tabPanel("Swimmers Plot",
+                                              p(),
+                                              uiOutput("rendDurationSwimmers"),
+                                              value = 3
+                                     ),
+                                     tabPanel("Box Plot",
+                                              p(),
+                                              shinyjqui::jqui_resizable(plotlyOutput("EventBoxPlot",height = "600px", width = "100%")),
+                                              div(DT::dataTableOutput("EventBoxPlotTable"), style = "font-size:14px"),
+                                              fluidRow(
+                                                column(3,
+                                                       downloadButton("dnldEventBoxPlotTable", "Download Table")
+                                                )
+                                              ),
+                                              value = 1
+                                     ),
+                                     tabPanel("Heatmap",
+                                              p(),
+                                              shinyjqui::jqui_resizable(plotOutput("TreatDistHeatmap",height = "800px", width = "100%", hover = "heatmapDist_hover")),
+                                              p(),
+                                              fluidRow(
+                                                column(3,
+                                                       downloadButton("dnldTreatDistHeatmap", "SVG")
+                                                )
+                                              ),
+                                              value = 2
+                                     )
+                         ),
+                         value = 2
+                )
+    )
+  )
+)
+
+if (!app_lite) {
+  TreatmentAnalytics_tab <- bslib::nav_panel("Treatment Associated Analytics",
+                                             value = "treatment_associated_analytics",
+                                             p(
+                                               bslib::page_fillable(
+                                                 TreatmentAnalytics_tab_contents
+                                                 ,
+                                                 tagList(
+                                                   tags$head(
+                                                     tags$style(
+                                                       HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                            glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                       )
+                                                     )
+                                                   ),
+                                                   div(id = "AppVersion", class = "info_box", version_id)
+                                                 )
+                                               )
+                                             )
+                                             
+  )
+} else {
+  TreatmentAnalytics_tab <- tabPanel("Treatment Associated Analytics",
+                                             value = "treatment_associated_analytics",
+                                             #p(
+                                     fluidPage(
+                                                 TreatmentAnalytics_tab_contents
+                                                 ,
+                                                 tagList(
+                                                   tags$head(
+                                                     tags$style(
+                                                       HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                            glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                       )
+                                                     )
+                                                   ),
+                                                   div(id = "AppVersion", class = "info_box", version_id)
+                                                 )
+                                               )
+                                             #)
+                                             
+  )
+}
+
+
+
+# Time-to-event Tab ------------------------------------------------------
+tte_tab_contents <- sidebarLayout(
+  sidebarPanel(
+    width = 3,
+    tabsetPanel(id = "ttetabsside",
+                tabPanel("Data Input",
+                         p(),
+                         conditionalPanel(condition = "input.ttetabs == '1' | input.ttetabs == '2'",
+                                          conditionalPanel(condition = "input.ttetabs == '1'",
+                                                           fluidRow(
+                                                             column(6,
+                                                                    numericInput("maxpatview","Max Number of Patients", value = 60, min = 1, step = 1)
+                                                             ),
+                                                             column(6,
+                                                                    selectInput("swimmerSort","Sort Swimmer Plot By:",
+                                                                                choices = c("Time - Descending","Time - Ascending",
+                                                                                            "Alphabetical - Ascending","Alphabetical - Descending"))
+                                                             )
+                                                           ),
+                                                           fluidRow(
+                                                             column(9,
+                                                                    selectizeInput("swimmerPatSpec","Specify Patients to Include:",
+                                                                                   choices = NULL, selected = 1, multiple = TRUE)
+                                                             ),
+                                                             column(3, style = "margin-top:25px",
+                                                                    checkboxInput("swimmerShowAll","Show All",value = FALSE)
+                                                             )
+                                                           ),
+                                          ),
+                                          conditionalPanel(condition = "input.ttetabs == '2'",
+                                                           div(h4("Data Selection"), style = "margin-bottom:-15px"),
+                                                           virtualSelectInput(inputId = "TTEstartEvent",label = "Select Start Point:",
+                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                                           div(radioButtons("StartAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
+                                                               style = "margin-top:-40px;margin-bottom:-20px"),
+                                                           virtualSelectInput(inputId = "TTEstopEvent",label = "Select End Point - Progression Event:",
+                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                                           div(radioButtons("StopAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
+                                                               style = "margin-top:-40px"),
+                                                           conditionalPanel(condition = "input.ttetabs == '2'",
+                                                                            div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                                                            div(h4("Strata Selection"), style = "margin-bottom:-15px"),
+                                                                            selectizeInput("KPstrataDataTable","Data Table:",choices = NULL,
+                                                                                           options = list(
+                                                                                             placeholder = 'Please select an option below',
+                                                                                             onInitialize = I('function() { this.setValue(""); }')
+                                                                                           )),
+                                                                            conditionalPanel(condition = "input.KPstrataDataTable > '0' && input.KPstrataDataTable != 'No Strata'",
+                                                                                             div(selectizeInput("KPstrataCol","Strata Column:",choices = NULL, selected = 1),
+                                                                                                 style = "margin-top:-25px;margin-bottom:-15px"),
+                                                                                             fluidRow(
+                                                                                               column(8, style = "margin-top:-15px",
+                                                                                                      selectizeInput("KPstrataColGroups","X-Axis Groups:",choices = NULL,
+                                                                                                                     selected = 1, multiple = T)
+                                                                                               ),
+                                                                                               column(4,
+                                                                                                      checkboxInput("KPshowOtherGroup","Group Unselected Variables", value = T)
+                                                                                               )
+                                                                                             ),
+                                                                                             conditionalPanel(condition = "input.KPshowOtherGroup == true",
+                                                                                                              div(textInput("KPotherGroupName","Unselected Variables Group Name:"), style = "margin-top:-30px")
+                                                                                             )
+                                                                            )
+                                                           ),
+                                                           uiOutput("rendTTEexplHeader"),
+                                                           uiOutput("rendTTEexpl")
+                                          )
+                         ),
+                         value = 1
+                ),
+                tabPanel("Figure Settings",
+                         p(),
+                         conditionalPanel(condition = "input.ttetabs == '2'",
+                                          p(),
+                                          h4("Survival Plot Parameters"),
+                                          fluidRow(
+                                            column(6,
+                                                   numericInput("SurvXaxis","X-Axis Limit (years)", value = NA),
+                                                   numericInput("SurvXaxisBreaks","X-Axis Breaks (Years):",value = 1, min = 0, step = 0.25),
+                                                   selectInput("SurvLegendPos","Legend Position",choices = c("right","left","top","bottom","none"))
+                                            ),
+                                            column(6, style = "margin-top:15px",
+                                                   radioButtons("SurvYearOrMonth","Survival X-Axis Units:",choices = c("Days","Years","Months"), inline = T, selected = "Years"),
+                                                   checkboxInput("ShowPval","Show P.Value",value = T),
+                                                   checkboxInput("ShowConfInt","Show Confidence Interval",value = F),
+                                                   checkboxInput("ShowMedSurvLine","Show Median Survival Line",value = F)
+                                            )
+                                          ),
+                                          h4("Kaplan Meier Plot Download Parameters"),
+                                          fluidRow(
+                                            column(4,
+                                                   numericInput("PlotDnldHight","Plot Height",value = 8, min = 0, step = 1)
+                                            ),
+                                            column(4,
+                                                   numericInput("PlotDnldWidth","Plot Width",value = 8, min = 0, step = 1)
+                                            ),
+                                            column(4,
+                                                   selectInput("PlotDnldUnits","Units",choices = c("in","cm","mm","px"))
+                                            )
+                                          )
+                         ),
+                         conditionalPanel(condition = "input.ttetabs == '1'",
+                                          h4("Swimmers Plot Download Parameters"),
+                                          fluidRow(
+                                            column(6,
+                                                   numericInput("TTESwimmerHeight","Height (px)",value = 800)
+                                            ),
+                                            column(6,
+                                                   numericInput("TTESwimmerWidth","Width (px)",value = 1000)
+                                            )
+                                          )
+                         ),
+                         value = 2
+                )
+    )
+  ),
+  mainPanel(
+    p(),
+    span(textOutput("NoPatientsMatchError"), style="color:red"),
+    tabsetPanel(id = "ttetabs",
+                tabPanel("Kaplan Meier",
+                         p(),
+                         fluidRow(
+                           column(8,
+                                  shinyjqui::jqui_resizable(plotOutput("KPplot",height = "500",width = "100%"))
+                           ),
+                           column(4,
+                                  conditionalPanel(condition = "input.KPstrataCol != ''",
+                                                   selectizeInput("KPplotHRtab_RefSelect","Reference Characteristic:", choices = NULL, selected = 1)
+                                  ),
+                                  div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
+                                  div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
+                           )
+                         ),
+                         fluidRow(
+                           column(3,
+                                  downloadButton("dnldKPplot", "SVG")
+                           )
+                         ),
+                         p(),
+                         div(DT::dataTableOutput("KPplotTable"), style = "font-size:14px"),
+                         fluidRow(
+                           column(3,
+                                  downloadButton("dnldKPplotTable", "Download Table")
+                           )
+                         ),
+                         value = 2
+                ),
+                tabPanel("Swimmers Plot",
+                         p(),
+                         shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("swimmer_plot",height = "600px", width = "100%")), type = 6),
+                         p(),
+                         div(DT::dataTableOutput("swimmer_plotTable"), style = "font-size:14px"),
+                         fluidRow(
+                           column(3,
+                                  downloadButton("dnldswimmer_plotTable", "Download Table")
+                           )
+                         ),
+                         value = 1
+                )
+    )
+  )
+)
+if (!app_lite) {
+  tte_tab <- bslib::nav_panel("Time-To-Event Analysis",
+                              value = "time_to_event_analysis",
+                              p(
+                                bslib::page_fillable(
+                                  tte_tab_contents
+                                  ,
+                                  tagList(
+                                    tags$head(
+                                      tags$style(
+                                        HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                             glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                        )
+                                      )
+                                    ),
+                                    div(id = "AppVersion", class = "info_box", version_id)
+                                  )
+                                )
+                              )
+                              
+  )
+} else {
+  tte_tab <- tabPanel("Time-To-Event Analysis",
+                              value = "time_to_event_analysis",
+                              #p(
+                      fluidPage(
+                                  tte_tab_contents
+                                  ,
+                                  tagList(
+                                    tags$head(
+                                      tags$style(
+                                        HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                             glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                        )
+                                      )
+                                    ),
+                                    div(id = "AppVersion", class = "info_box", version_id)
+                                  )
+                                )
+                              #)
+                              
+  )
+}
+
+
+
+# Cohort Level Tab -------------------------------------------------------------
+CohortLevel_tab_contents <- sidebarLayout(
+  sidebarPanel(
+    width = 3,
+    conditionalPanel(condition = "input.SummaryMain == '1' | input.SummaryMain == '4'",
+                     selectizeInput("SummaryOptions","Select Event Summaries to Include:", choices = NULL, selected = 1, multiple = TRUE)
+    ),
+    conditionalPanel(condition = "input.SummaryMain == '4'",
+                     fluidRow(
+                       column(6,
+                              numericInput("maxpatviewSumm","Max Number of Patients", value = 60, min = 1, step = 1)
+                       ),
+                       column(6,
+                              selectInput("swimmerSortSumm","Sort Swimmer Plot By:",
+                                          choices = c("Time - Descending","Time - Ascending",
+                                                      "Alphabetical - Ascending","Alphabetical - Descending"))
+                       )
+                     ),
+                     fluidRow(
+                       column(9,
+                              selectizeInput("swimmerPatSpecSumm","Specify Patients to Include:",
+                                             choices = NULL, selected = 1, multiple = TRUE)
+                       ),
+                       column(3, style = "margin-top:25px",
+                              checkboxInput("swimmerShowAllSumm","Show All",value = FALSE)
+                       )
+                     ),
+                     numericInput("SwimmPlotHeight","Plot Height (px)",value = 800, step = 25, min = 0),
+                     h4("Download Parameters"),
+                     fluidRow(
+                       column(6,
+                              numericInput("SummSwimmerHeight","Height (px)",value = 800)
+                       ),
+                       column(6,
+                              numericInput("SummSwimmerWidth","Width (px)",value = 1000)
+                       )
+                     )
+    ),
+    conditionalPanel(condition = "input.SummaryMain == '2'",
+                     p(),
+                     h4("Reference Event (Ref)"),
+                     virtualSelectInput(
+                       inputId = "RefEventSelect",
+                       label = "Select Reference Event(s):",
+                       choices = NULL,
+                       showValueAsTags = TRUE,
+                       search = TRUE,
+                       multiple = TRUE
+                     ),
+                     materialSwitch(inputId = "GroupRefEventSelect", label = "Group selected reference events by event type",
+                                    value = FALSE, status = "success"),
+                     hr(),
+                     h4("Event of Interest (EOI)"),
+                     virtualSelectInput(
+                       inputId = "EOIEventSelect",
+                       label = "Select Event(s) of Interest:",
+                       choices = NULL,
+                       showValueAsTags = TRUE,
+                       search = TRUE,
+                       multiple = TRUE
+                     ),
+                     div(radioButtons("EOIEventAndOr","",choices = c("'Or' Statement","'And' Statement"), inline = T),
+                         style = "margin-top:-30px"),
+                     conditionalPanel(condition = "output.EOIEventSelect_gt1",
+                                      textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
+                     ),
+                     hr(),
+                     materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event start",
+                                    value = FALSE, status = "success", inline = T),
+                     conditionalPanel(condition = "input.AddAnnoWindow == true",
+                                      h5("Time Window (Days)"),
+                                      fluidRow(
+                                        column(6,
+                                               numericInput("AddAnnoWindowNumBefore","Before Reference Event", value = 30, min = 0, step = 1)
+                                               ),
+                                        column(6,
+                                               numericInput("AddAnnoWindowNumAfter","After Reference Event", value = 30, min = 0, step = 1)
+                                               )
+                                        )
+                     ),
+                     hr(),
+                     actionButton("SaveAnnotation","Save Annotation", width = "100%"),
+                     p(),
+                     tags$h4("Annotation Log"),
+                     wellPanel(
+                       style = "max-height: 300px; overflow-y: auto; border: 1px solid #ccc;",
+                       uiOutput("annotation_log")
+                     )
+    ),
+    conditionalPanel(condition = "input.SummaryMain == '3'",
+                     p(),
+                     selectizeInput("TableToFilter","Data Table:", choices = NULL, selected = 1),
+                     h4("Filter Data Table"),
+                     wellPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 300px",
+                               uiOutput("rendTableFilterInput")
+                     ),
+                     div(selectizeInput("FilterTableIDcol","Sample/Patient ID Column:", choices = NULL, selected = 1), style="margin-top:15px"),
+                     selectizeInput("FilterTabRefFeature","Reference Feature:", choices = NULL, selected = 1),
+                     selectizeInput("FilterTabCountFeatures","Features of Interest:", choices = NULL, selected = 1, multiple = TRUE),
+                     conditionalPanel(condition = "input.FilterTabRefFeature != 'No Reference' && input.FilterTabRefFeature != '' && input.FilterTabCountFeatures.length > 0",
+                                      checkboxInput("ORtest","Test for Over-Representation (Enrichment)", value = FALSE),
+                                      conditionalPanel(condition = "input.ORtest == true",
+                                                       selectizeInput("OddsRatioColumn","Select Reference for Odds Ratio:", choices = NULL, selected = 1,
+                                                                      options = list(
+                                                                        placeholder = 'Please select an option below',
+                                                                        onInitialize = I('function() { this.setValue(""); }')
+                                                                      ))
+                                      )
+                     )
+    )
+  ),
+  mainPanel(
+    tabsetPanel(id = "SummaryMain",
+                tabPanel("Event Summary",
+                         p(),
+                         div(DT::dataTableOutput("CohortEventSummaryTable"), style = "font-size:14px"),
+                         fluidRow(
+                           column(3,
+                                  downloadButton("dlndCohortEventSummaryTable", "Download Table"))
+                         ),
+                         value = 1
+                ),
+                tabPanel("Swimmers Plot",
+                         p(),
+                         uiOutput("rendsumm_swimmer_plot"),
+                         value = 4
+                ),
+                tabPanel("Event Annotation",
+                         p(),
+                         tabsetPanel(
+                           id = "EventAnnoTabs",
+                           tabPanel("Reference Event Data",
+                                    div(DT::dataTableOutput("RefEventTableOut"), style = "font-size:14px"),
+                                    fluidRow(
+                                      column(3,
+                                             downloadButton("dlndRefEventTableOut", "Download Table")
+                                      )
+                                    ),
+                                    value = 1
+                           ),
+                           tabPanel("Event of Interest Data",
+                                    div(DT::dataTableOutput("EOIEventTableOut"), style = "font-size:14px"),
+                                    fluidRow(
+                                      column(3,
+                                             downloadButton("dlndEOIEventTableOut", "Download Table")
+                                      )
+                                    ),
+                                    value = 2
+                           ),
+                           tabPanel("Merged Annotated Event Data",
+                                    div(DT::dataTableOutput("MergeEventTableOut"), style = "font-size:14px"),
+                                    fluidRow(
+                                      column(3,
+                                             downloadButton("dlndMergeEventTableOut", "Download Table")
+                                      )
+                                    ),
+                                    value = 3
+                           )
+                         ),
+                         #div(DT::dataTableOutput("MolecularAnnoTable"), style = "font-size:14px"),
+                         #fluidRow(
+                         #  column(3,
+                         #         downloadButton("dlndMolecularAnnoTable", "Download Table")
+                         #  )
+                         #),
+                         value = 2
+                ),
+                tabPanel("Cohort Break-Down",
+                         p(),
+                         uiOutput("rendMolecularBreakdownTabs"),
+                         value = 3
+                )
+    )
+  )
+)
+
+if (!app_lite) {
+  CohortLevel_tab <- bslib::nav_panel("Cohort Overview",
+                                      value = "cohort_overview",
+                                      p(
+                                        bslib::page_fillable(
+                                          CohortLevel_tab_contents
+                                          ,
+                                          tagList(
+                                            tags$head(
+                                              tags$style(
+                                                HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                     glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                )
+                                              )
+                                            ),
+                                            div(id = "AppVersion", class = "info_box", version_id)
+                                          )
+                                        )
+                                      )
+                                      
+  )
+} else {
+  CohortLevel_tab <- tabPanel("Cohort Overview",
+                                      value = "cohort_overview",
+                                      #p(
+                              fluidPage(
+                                          CohortLevel_tab_contents
+                                          ,
+                                          tagList(
+                                            tags$head(
+                                              tags$style(
+                                                HTML("
+                                     .info_box {
+                                     width: auto;
+                                     height: auto;
+                                     color: #000000;
+                                     background-color: #f5f5f5;
+                                     padding: 3px 8px;
+                                     font-size: 12px;
+                                     z-index : 9999;
+                                     }",
+                                                     glue::glue("#{'AppVersion'} {{
+                                                position: {'fixed'};
+                                                top: 0;
+                                                right: 0;
+                                                }}")
+                                                )
+                                              )
+                                            ),
+                                            div(id = "AppVersion", class = "info_box", version_id)
+                                          )
+                                        )
+                                      #)
+                                      
+  )
+}
+
+
+if (!app_lite) {
+  Tutorial_Tab <- Tutorial_UI("ShinyEvents1")
+}
+
+
+if (!app_lite) {
+  if (Password_Protected) {
     ui <- bslib::page_navbar(
       title = paste("{ ",Project_Name," }",sep = ""),
       id = "shinyevents_tabs",
       navbar_options = bslib::navbar_options(collapsible = TRUE),
       theme = bslib::bs_theme(bootswatch = "flatly"),
-      Homepage_tab,
-      DataInput_tab,
-      PatientLevel_tab,
-      TreatmentAnalytics_tab,
-      tte_tab,
-      CohortLevel_tab,
-      Tutorial_Tab,
-      selected = "patient_visual_analytics")
+      login_tab)
   } else {
-    ui <- bslib::page_navbar(
+    if (AllFilesReady) {
+      ui <- bslib::page_navbar(
+        title = paste("{ ",Project_Name," }",sep = ""),
+        id = "shinyevents_tabs",
+        navbar_options = bslib::navbar_options(collapsible = TRUE),
+        theme = bslib::bs_theme(bootswatch = "flatly"),
+        Homepage_tab,
+        DataInput_tab,
+        PatientLevel_tab,
+        TreatmentAnalytics_tab,
+        tte_tab,
+        CohortLevel_tab,
+        Tutorial_Tab,
+        selected = "patient_visual_analytics")
+    } else {
+      ui <- bslib::page_navbar(
+        title = paste("{ ",Project_Name," }",sep = ""),
+        id = "shinyevents_tabs",
+        navbar_options = bslib::navbar_options(collapsible = TRUE),
+        theme = bslib::bs_theme(bootswatch = "flatly"),
+        Homepage_tab,
+        DataInput_tab,
+        PatientLevel_tab,
+        TreatmentAnalytics_tab,
+        tte_tab,
+        CohortLevel_tab,
+        Tutorial_Tab,
+        selected = "data_input_tab")
+    }
+  }
+} else {
+  if (Password_Protected) {
+    ui <- navbarPage(
       title = paste("{ ",Project_Name," }",sep = ""),
       id = "shinyevents_tabs",
-      navbar_options = bslib::navbar_options(collapsible = TRUE),
-      theme = bslib::bs_theme(bootswatch = "flatly"),
-      Homepage_tab,
-      DataInput_tab,
-      PatientLevel_tab,
-      TreatmentAnalytics_tab,
-      tte_tab,
-      CohortLevel_tab,
-      Tutorial_Tab,
-      selected = "data_input_tab")
+      theme = shinytheme("flatly"),
+      login_tab)
+  } else {
+    if (AllFilesReady) {
+      ui <- navbarPage(
+        title = paste("{ ",Project_Name," }",sep = ""),
+        id = "shinyevents_tabs",
+        theme = shinytheme("flatly"),
+        DataInput_tab,
+        PatientLevel_tab,
+        TreatmentAnalytics_tab,
+        tte_tab,
+        CohortLevel_tab,
+        selected = "patient_visual_analytics")
+    } else {
+      ui <- navbarPage(
+        title = paste("{ ",Project_Name," }",sep = ""),
+        id = "shinyevents_tabs",
+        theme = shinytheme("flatly"),
+        DataInput_tab,
+        PatientLevel_tab,
+        TreatmentAnalytics_tab,
+        tte_tab,
+        CohortLevel_tab,
+        selected = "data_input_tab")
+    }
   }
 }
+
 
 
 # Define server logic required to draw a histogram
@@ -1384,13 +1683,20 @@ server <- function(input, output, session) {
     if (Password_Protected) {
       if (credentials()$user_auth) {
         # remove the login tab
-        removeTab("tabs", "login")
+        removeTab("shinyevents_tabs", "login")
         # add home tab
-        appendTab("tabs", DataInput_tab, select = ifelse(AllFilesReady,FALSE,TRUE))
-        appendTab("tabs", PatientLevel_tab, select = ifelse(AllFilesReady,TRUE,FALSE))
-        appendTab("tabs", TreatmentAnalytics_tab, select = FALSE)
-        appendTab("tabs", tte_tab, select = FALSE)
-        appendTab("tabs", CohortLevel_tab, select = FALSE)
+        
+        if (!app_lite) {
+          appendTab("shinyevents_tabs", Homepage_tab, select = FALSE)
+        }
+        appendTab("shinyevents_tabs", DataInput_tab, select = ifelse(AllFilesReady,FALSE,TRUE))
+        appendTab("shinyevents_tabs", PatientLevel_tab, select = ifelse(AllFilesReady,TRUE,FALSE))
+        appendTab("shinyevents_tabs", TreatmentAnalytics_tab, select = FALSE)
+        appendTab("shinyevents_tabs", tte_tab, select = FALSE)
+        appendTab("shinyevents_tabs", CohortLevel_tab, select = FALSE)
+        if (!app_lite) {
+          appendTab("shinyevents_tabs", Tutorial_Tab, select = FALSE)
+        }
       }
     }
     
@@ -1477,9 +1783,6 @@ server <- function(input, output, session) {
           size = "l",
           easyClose = TRUE,
           tagList(
-            #tags$p("The event data file can be tab or comma delimited and has a minimum requirement of four columns: patient ID, event name, event start time, and event end time. Each row should annotate an event for a single patient, so a patient would typically have multiple rows of events for different clinical time points, such as diagnosis, medications, radiation event, metastases or progressions, as well as death or last contact, among numerous other events a patient may experience during their clinical journey."),
-            #tags$p("A recommended, but not required, column is the event type or category column that can be used to group the events of similar nature. For instance, there may be separate events for different drugs administered. In this case you would add a column (e.g. EventType) to the event data and place the text 'Medication' in that column for each drug event row, and perform this similar annotation for different event groups."),
-            #tags$p("Additional columns of event details or other further supplementary patient information may be added with the utility of being used in data filtering, timeline plot hover text, or as stratification variables for the Kaplan-Meier plot in the time-to-event analysis."),
             tags$p("The event data file must include at least four columns: patient ID, event name, event start time, and event end time."),
             tags$p("Optional columns can include event type, event details, or patient details to aid in filtering and grouping."),
             tags$h5("Event Data Column Descriptions"),
@@ -1695,22 +1998,26 @@ server <- function(input, output, session) {
       
       
       output$EventDataFileIn_found <- reactive({
+        if (!AllFilesReady) {
         EventDataFileInput <- input$EventDataFileInput
         if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
           TRUE
         } else {
           FALSE
         }
+        }
       })
       outputOptions(output, "EventDataFileIn_found", suspendWhenHidden = FALSE)
       
       output$SuppDataInput1_found <- reactive({
+        if (!AllFilesReady) {
         SuppDataInput1 <- input$SuppDataInput1
         if (SuppDataInput1 == "Yes") {
           #if (isTruthy(SuppDataInput1)) {
           TRUE
         } else {
           FALSE
+        }
         }
       })
       outputOptions(output, "SuppDataInput1_found", suspendWhenHidden = FALSE)
@@ -2279,6 +2586,7 @@ server <- function(input, output, session) {
         
         req(param_data())
         req(wkbk_raw_react())
+        req(GlobalAppTimeUnit_react())
         param <- param_data()
         wkbk <- wkbk_raw_react()
         AppTimeUnit <- GlobalAppTimeUnit_react()
@@ -2776,80 +3084,83 @@ server <- function(input, output, session) {
       
       ## Render UI ----------------------------------------------------
       observe({
-        if (isTruthy(input$EventDataFileInput) | input$LoadExampleData > 0) {
-          appendTab(inputId = "PreProcessingTabs",
-                    tab = tabPanel("Input Data Formatting",
-                                   # Event data input
-                                   conditionalPanel(condition = "output.EventDataFileIn_found",
-                                                    wellPanel(
-                                                      fluidRow(
-                                                        column(4,
-                                                               tags$b(tags$u(h3("Step 2:"))),
-                                                               h3("Select Required Event Data Columns:")
+        if (!AllFilesReady) {
+          if (isTruthy(input$EventDataFileInput) | input$LoadExampleData > 0) {
+            appendTab(inputId = "PreProcessingTabs",
+                      tab = tabPanel("Input Data Formatting",
+                                     # Event data input
+                                     conditionalPanel(condition = "output.EventDataFileIn_found",
+                                                      wellPanel(
+                                                        fluidRow(
+                                                          column(4,
+                                                                 tags$b(tags$u(h3("Step 2:"))),
+                                                                 h3("Select Required Event Data Columns:")
+                                                          ),
+                                                          column(3,
+                                                                 selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
+                                                                 selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
+                                                          ),
+                                                          column(3,
+                                                                 selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
+                                                                 selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
+                                                          ),
+                                                          column(2,
+                                                                 selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
+                                                                 selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
+                                                          )
                                                         ),
-                                                        column(3,
-                                                               selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
-                                                               selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
-                                                        ),
-                                                        column(3,
-                                                               selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
-                                                               selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
-                                                        ),
-                                                        column(2,
-                                                               selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
-                                                               selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
+                                                        hr(),
+                                                        tags$b(tags$u(h3("Step 3:"))),
+                                                        h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
+                                                        fluidRow(
+                                                          column(4,
+                                                                 selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
+                                                                                options = list(
+                                                                                  placeholder = 'Please select',
+                                                                                  onInitialize = I('function() { this.setValue(""); }')
+                                                                                ))#,
+                                                                 #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
+                                                                 #               options = list(
+                                                                 #                 placeholder = 'Please select',
+                                                                 #                 onInitialize = I('function() { this.setValue(""); }')
+                                                                 #               ))
+                                                          ),
+                                                          column(4,
+                                                                 virtualSelectInput(
+                                                                   inputId = "EventDataTreatmentEvents",
+                                                                   label = "Select Treatment Defining Events:",
+                                                                   choices = NULL,
+                                                                   showValueAsTags = TRUE,
+                                                                   search = TRUE,
+                                                                   multiple = TRUE
+                                                                 )
+                                                          ),
+                                                          column(4,
+                                                                 virtualSelectInput(
+                                                                   inputId = "EventDataResponseEvents",
+                                                                   label = "Select Response Defining Events:",
+                                                                   choices = NULL,
+                                                                   showValueAsTags = TRUE,
+                                                                   search = TRUE,
+                                                                   multiple = TRUE
+                                                                 )
+                                                          )
                                                         )
                                                       ),
-                                                      hr(),
-                                                      tags$b(tags$u(h3("Step 3:"))),
-                                                      h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
-                                                      fluidRow(
-                                                        column(4,
-                                                               selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
-                                                                              options = list(
-                                                                                placeholder = 'Please select',
-                                                                                onInitialize = I('function() { this.setValue(""); }')
-                                                                              ))#,
-                                                               #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
-                                                               #               options = list(
-                                                               #                 placeholder = 'Please select',
-                                                               #                 onInitialize = I('function() { this.setValue(""); }')
-                                                               #               ))
-                                                        ),
-                                                        column(4,
-                                                               virtualSelectInput(
-                                                                 inputId = "EventDataTreatmentEvents",
-                                                                 label = "Select Treatment Defining Events:",
-                                                                 choices = NULL,
-                                                                 showValueAsTags = TRUE,
-                                                                 search = TRUE,
-                                                                 multiple = TRUE
-                                                               )
-                                                        ),
-                                                        column(4,
-                                                               virtualSelectInput(
-                                                                 inputId = "EventDataResponseEvents",
-                                                                 label = "Select Response Defining Events:",
-                                                                 choices = NULL,
-                                                                 showValueAsTags = TRUE,
-                                                                 search = TRUE,
-                                                                 multiple = TRUE
-                                                               )
-                                                        )
-                                                      )
-                                                    ),
-                                                    p(),
-                                                    h3("Input Data Preivew"),
-                                                    #h3("Event Data Preivew"),
-                                                    div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
-                                   ),
-                                   value = "Input Data Formatting"
-                    ),
-                    select = TRUE,
-                    session = session
-          )
-          
+                                                      p(),
+                                                      h3("Input Data Preivew"),
+                                                      #h3("Event Data Preivew"),
+                                                      div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
+                                     ),
+                                     value = "Input Data Formatting"
+                      ),
+                      select = TRUE,
+                      session = session
+            )
+            
+          }
         }
+        
       })
       
       inserted_tabs <- reactiveVal(character())
@@ -4088,6 +4399,7 @@ server <- function(input, output, session) {
       
       ## Heatmap ----------------------------------------------------------------
       observe({
+        req(input$heatView)
         if (input$heatView == "Patients") {
           updateCheckboxGroupInput(session,"HeatClusterRC", selected = c("Rows","Columns"))
         }
@@ -4336,6 +4648,7 @@ server <- function(input, output, session) {
         req(event_data())
         req(param_data())
         req(input$BoxplotXaxis)
+        #req(GlobalAppTimeUnit_react())
         param <- param_data()
         event_data_key <- event_data_key()
         event <- event_data()
@@ -4506,6 +4819,7 @@ server <- function(input, output, session) {
         req(input$durationHeatEventType)
         req(input$EventDurMaxSumHeat)
         req(param_data())
+        #req(GlobalAppTimeUnit_react())
         param <- param_data()
         event_data <- event_data()
         event_key <- event_data_key()
@@ -5018,19 +5332,54 @@ server <- function(input, output, session) {
         
       })
       
-      
       output$BiomarkerData <- reactive({
-        biomarkerUIinput <- input$InputBiomarkerData
-        if (biomarkerUIinput == "Yes") {
-          TRUE
-        } else {
+        if (AllFilesReady) {
           if (Data_Contains_Longitudinal_Biomarkers) {
             TRUE
           } else {
             FALSE
           }
+        } else {
+          biomarkerUIinput <- input$InputBiomarkerData
+          if (isTruthy(biomarkerUIinput)) {
+            if (biomarkerUIinput == "Yes") {
+              TRUE
+            } else {
+              FALSE
+            }
+          } else {
+            FALSE
+          }
         }
+        #biomarkerUIinput <- input$InputBiomarkerData
+        #if (isTruthy(biomarkerUIinput)) {
+        #  if (biomarkerUIinput == "Yes") {
+        #    TRUE
+        #  } else {
+        #    if (Data_Contains_Longitudinal_Biomarkers) {
+        #      TRUE
+        #    } else {
+        #      FALSE
+        #    }
+        #  }
+        #} else if (Data_Contains_Longitudinal_Biomarkers) {
+        #  TRUE
+        #} else {
+        #  FALSE
+        #}
       })
+      #output$BiomarkerData <- reactive({
+      #  biomarkerUIinput <- input$InputBiomarkerData
+      #  if (biomarkerUIinput == "Yes") {
+      #    TRUE
+      #  } else {
+      #    if (Data_Contains_Longitudinal_Biomarkers) {
+      #      TRUE
+      #    } else {
+      #      FALSE
+      #    }
+      #  }
+      #})
       outputOptions(output, "BiomarkerData", suspendWhenHidden = FALSE)
       
       
@@ -5208,6 +5557,7 @@ server <- function(input, output, session) {
         Patient_Event_Data_sub_ETC3 <- cohort_EventSumm_df()
         req(input$TTEstartEvent)
         req(input$TTEstopEvent)
+        #req(GlobalAppTimeUnit_react())
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
@@ -5265,6 +5615,7 @@ server <- function(input, output, session) {
         
         req(wkbk_react_anno_sub())
         req(cohort_TTE_table())
+        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
         kp_dt <- input$KPstrataDataTable
@@ -5392,6 +5743,7 @@ server <- function(input, output, session) {
       })
       
       observe({
+        req(GlobalAppTimeUnit_react())
         AppTimeUnits <- GlobalAppTimeUnit_react()
         if (AppTimeUnits == "Months") {
           updateRadioButtons(session,"SurvYearOrMonth", selected = "Months")
@@ -5417,6 +5769,7 @@ server <- function(input, output, session) {
       
       cohort_TTE_table_KP_react <- reactive({
         req(cohort_TTE_table_strata())
+        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table_strata()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
         strata_col <- input$KPstrataCol
@@ -5535,6 +5888,7 @@ server <- function(input, output, session) {
       
       KPplotTable_out <- reactive({
         req(cohort_TTE_table_wInfo())
+        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table_wInfo()
         plot_df_strat <- cohort_TTE_table_strata()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
@@ -6428,33 +6782,80 @@ server <- function(input, output, session) {
         ref_event_df <- ref_event_df()
         eoi_event_df <- eoi_event_df()
         EOIEventSelect <- input$EOIEventSelect
-        
+        EOIEventSelect <- gsub(":","_",EOIEventSelect)
+        AddAnnoWindow <- input$AddAnnoWindow
+        AddAnnoWindowNumBefore <- input$AddAnnoWindowNumBefore
+        AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
+        GlobalAppTimeUnit <- tolower(GlobalAppTimeUnit_react())
         EOIEventColName <- input$EOIEventColName
-        if (!isTruthy(EOIEventColName)) {
-          EOIEventColName <- "CustomEventOfInterest"
-        }
-        eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-        newcolname <- paste0("RelativeTo_",eoi_name)
-        newcolname2 <- paste0(newcolname,"_TimeDiff")
-        newcolname3 <- paste0(newcolname,"_EventPresent")
+        
+        #save(list = ls(), file = "ref_eoi_merge_df.RData", envir = environment())
         
         ref_eoi_event_data <- merge(ref_event_df,eoi_event_df, all = T)
-        ref_eoi_event_data2 <- ref_eoi_event_data %>%
-          mutate(!!sym(newcolname) := case_when(
-            EventStart_Ref >= EventStart_EOI & EventStart_Ref <= EventEnd_EOI ~ "During",
-            EventStart_Ref < EventStart_EOI & EventEnd_Ref < EventStart_EOI ~ "Before",
-            EventStart_Ref > EventStart_EOI & EventStart_Ref > EventEnd_EOI ~ "After",
-            EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventStart_EOI ~ "Before&During",
-            EventStart_Ref > EventStart_EOI & EventStart_Ref < EventEnd_EOI & EventEnd_Ref > EventEnd_EOI ~ "During&After",
-            EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventEnd_EOI ~ "Before&During&After"
-          )) %>%
-          mutate(!!sym(newcolname2) := case_when(
-            !!sym(newcolname) == "Before" ~ round(EventStart_Ref-EventStart_EOI,4),
-            !!sym(newcolname) == "After" ~ round(EventStart_Ref-EventEnd_EOI,4),
-            !!sym(newcolname) != "Before" & !!sym(newcolname) != "After" ~ 0
-          )) %>%
-          mutate(!!sym(newcolname3) := ifelse(is.na(!!sym(newcolname)),as.character(FALSE),as.character(TRUE)))
-        ref_eoi_event_data2
+        
+        if (AddAnnoWindow) {
+          if (!isTruthy(EOIEventColName)) {
+            EOIEventColName <- "CustomEventOfInterest"
+          }
+          eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
+          newcolname2 <- paste0(eoi_name,"_TimeDiff_RefEvent")
+          ref_eoi_event_data[,newcolname2] <- round(ref_eoi_event_data$EventStart_EOI-ref_eoi_event_data$EventStart_Ref,4)
+          if (!is.na(AddAnnoWindowNumBefore)) {
+            if (AddAnnoWindowNumBefore > 0) {
+              newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore_RefEvent")
+              AddAnnoWindowNumBefore <- convert_time_units(AddAnnoWindowNumBefore,"days",GlobalAppTimeUnit)
+              ref_eoi_event_data$BeforeEventStart_RefWindow <- ref_eoi_event_data$EventStart_Ref - AddAnnoWindowNumBefore
+              ref_eoi_event_data <- ref_eoi_event_data %>%
+                mutate(!!sym(newcolname) := case_when(
+                  abs(!!sym(newcolname2)) <= AddAnnoWindowNumBefore & EventStart_EOI <= EventStart_Ref ~ TRUE,
+                  abs(!!sym(newcolname2)) >= AddAnnoWindowNumBefore | EventStart_EOI > EventStart_Ref ~ FALSE
+                )) %>%
+                select(-BeforeEventStart_RefWindow) %>%
+                as.data.frame()
+            }
+          }
+          if (!is.na(AddAnnoWindowNumAfter)) {
+            if (AddAnnoWindowNumAfter > 0) {
+              newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter_RefEvent")
+              AddAnnoWindowNumAfter <- convert_time_units(AddAnnoWindowNumAfter,"days",GlobalAppTimeUnit)
+              ref_eoi_event_data$AfterEventStart_RefWindow <- ref_eoi_event_data$EventStart_Ref + AddAnnoWindowNumAfter
+              ref_eoi_event_data <- ref_eoi_event_data %>%
+                mutate(!!sym(newcolname) := case_when(
+                  abs(!!sym(newcolname2)) <= AddAnnoWindowNumAfter & EventStart_EOI >= EventStart_Ref ~ TRUE,
+                  abs(!!sym(newcolname2)) >= AddAnnoWindowNumAfter | EventStart_EOI < EventStart_Ref ~ FALSE
+                )) %>%
+                select(-AfterEventStart_RefWindow) %>%
+                as.data.frame()
+            }
+          }
+          ref_eoi_event_data
+        } else {
+          if (!isTruthy(EOIEventColName)) {
+            EOIEventColName <- "CustomEventOfInterest"
+          }
+          eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
+          newcolname <- paste0("RelativeTo_",eoi_name)
+          newcolname2 <- paste0(newcolname,"_TimeDiff")
+          newcolname3 <- paste0(newcolname,"_EventPresent")
+          ref_eoi_event_data2 <- ref_eoi_event_data %>%
+            mutate(!!sym(newcolname) := case_when(
+              EventStart_Ref >= EventStart_EOI & EventStart_Ref <= EventEnd_EOI ~ "During",
+              EventStart_Ref < EventStart_EOI & EventEnd_Ref < EventStart_EOI ~ "Before",
+              EventStart_Ref > EventStart_EOI & EventStart_Ref > EventEnd_EOI ~ "After",
+              EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventStart_EOI ~ "Before&During",
+              EventStart_Ref > EventStart_EOI & EventStart_Ref < EventEnd_EOI & EventEnd_Ref > EventEnd_EOI ~ "During&After",
+              EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventEnd_EOI ~ "Before&During&After"
+            )) %>%
+            mutate(!!sym(newcolname2) := case_when(
+              !!sym(newcolname) == "Before" ~ round(EventStart_Ref-EventStart_EOI,4),
+              !!sym(newcolname) == "After" ~ round(EventStart_Ref-EventEnd_EOI,4),
+              !!sym(newcolname) != "Before" & !!sym(newcolname) != "After" ~ 0
+            )) %>%
+            mutate(!!sym(newcolname3) := ifelse(is.na(!!sym(newcolname)),as.character(FALSE),as.character(TRUE))) %>%
+            as.data.frame()
+          ref_eoi_event_data2
+        }
+        
       })
       observe({
         req(ref_eoi_merge_df())
@@ -6463,20 +6864,24 @@ server <- function(input, output, session) {
       output$MergeEventTableOut <- DT::renderDataTable({
         req(ref_eoi_merge_df())
         df <- ref_eoi_merge_df()
+        AddAnnoWindow <- input$AddAnnoWindow
         df[,c("EventStart_Ref","EventEnd_Ref","EventStart_EOI","EventEnd_EOI")] <- apply(df[,c("EventStart_Ref","EventEnd_Ref","EventStart_EOI","EventEnd_EOI")],2,formatC)
-        req(input$EOIEventSelect)
-        EOIEventSelect <- input$EOIEventSelect
-        EOIEventColName <- input$EOIEventColName
-        if (!isTruthy(EOIEventColName)) {
-          EOIEventColName <- "CustomEventOfInterest"
+        if (!AddAnnoWindow) {
+          req(input$EOIEventSelect)
+          EOIEventSelect <- input$EOIEventSelect
+          EOIEventSelect <- gsub(":","_",EOIEventSelect)
+          EOIEventColName <- input$EOIEventColName
+          if (!isTruthy(EOIEventColName)) {
+            EOIEventColName <- "CustomEventOfInterest"
+          }
+          eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
+          newcolname <- paste0("RelativeTo_",eoi_name)
+          newcolname2 <- paste0(newcolname,"_TimeDiff")
+          newcolname3 <- paste0(newcolname,"_EventPresent")
+          colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
+          colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
+          colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
         }
-        eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-        newcolname <- paste0("RelativeTo_",eoi_name)
-        newcolname2 <- paste0(newcolname,"_TimeDiff")
-        newcolname3 <- paste0(newcolname,"_EventPresent")
-        colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
-        colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
-        colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
         df[is.na(df)] <- "NA"
         DT::datatable(df,
                       extensions = 'Scroller',
@@ -6492,23 +6897,29 @@ server <- function(input, output, session) {
         },
         content = function(file) {
           req(ref_eoi_merge_df())
-          req(input$EOIEventSelect)
           df <- ref_eoi_merge_df()
-          EOIEventSelect <- input$EOIEventSelect
-          EOIEventColName <- input$EOIEventColName
-          if (!isTruthy(EOIEventColName)) {
-            EOIEventColName <- "CustomEventOfInterest"
+          AddAnnoWindow <- input$AddAnnoWindow
+          if (!AddAnnoWindow) {
+            req(input$EOIEventSelect)
+            EOIEventSelect <- input$EOIEventSelect
+            EOIEventSelect <- gsub(":","_",EOIEventSelect)
+            EOIEventColName <- input$EOIEventColName
+            if (!isTruthy(EOIEventColName)) {
+              EOIEventColName <- "CustomEventOfInterest"
+            }
+            eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
+            newcolname <- paste0("RelativeTo_",eoi_name)
+            newcolname2 <- paste0(newcolname,"_TimeDiff")
+            newcolname3 <- paste0(newcolname,"_EventPresent")
+            colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
+            colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
+            colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
           }
-          eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-          newcolname <- paste0("RelativeTo_",eoi_name)
-          newcolname2 <- paste0(newcolname,"_TimeDiff")
-          newcolname3 <- paste0(newcolname,"_EventPresent")
-          colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
-          colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
-          colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
           write.table(df,file, sep = '\t', row.names = F)
         }
       )
+      
+      log_history <- reactiveVal(list())
       
       observeEvent(input$SaveAnnotation, {
         #ref_eoi_merge_df_cast_list <- reactive({
@@ -6521,12 +6932,34 @@ server <- function(input, output, session) {
           EOIEventColName <- "CustomEventOfInterest"
         }
         EOIEventSelect <- input$EOIEventSelect
+        EOIEventSelect <- gsub(":","_",EOIEventSelect)
         eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-        newcolname <- paste0("RelativeTo_",eoi_name)
-        newcolname2 <- paste0(newcolname,"_TimeDiff")
-        newcolname3 <- paste0(newcolname,"_EventPresent")
+        
+        
+        AddAnnoWindow <- input$AddAnnoWindow
+        AddAnnoWindowNumBefore <- input$AddAnnoWindowNumBefore
+        AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
+        
         #save(list = ls(), file = "SaveAnnotation.RData", envir = environment())
         
+        if (AddAnnoWindow) {
+          newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore")
+          newcolname2 <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter")
+          newcolname3 <- paste0(eoi_name,"_TimeDiff")
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname,"_RefEvent"))] <- newcolname
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname2,"_RefEvent"))] <- newcolname2
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname3,"_RefEvent"))] <- newcolname3
+          name_glue_grp <- "{.value}_{EventType}"
+          name_glue_solo <- "{.value}_{Event}"
+        } else {
+          newcolname <- paste0("RelativeTo_",eoi_name)
+          newcolname2 <- paste0(newcolname,"_TimeDiff")
+          newcolname3 <- paste0(newcolname,"_EventPresent")
+          name_glue_grp <- "{EventType}_{.value}"
+          name_glue_solo <- "{Event}_{.value}"
+        }
+        
+        # this may cause issues
         ref_eoi_event_data2$EventTab[which(is.na(ref_eoi_event_data2$EventTab))] <- "InputData"
         
         if (GroupRefEventSelect) {
@@ -6535,8 +6968,8 @@ server <- function(input, output, session) {
             df_sub2 <- df_sub %>%
               pivot_wider(id_cols = Name,
                           names_from = EventType,
-                          values_from = all_of(c(newcolname,newcolname2,newcolname3)),
-                          names_glue = "{EventType}_{.value}"
+                          values_from = any_of(c(newcolname,newcolname2,newcolname3)),
+                          names_glue = name_glue_grp
               )
             wkbk_df <- wkbk[[tab]]
             colnames(df_sub2)[1] <- colnames(wkbk_df)[1]
@@ -6552,19 +6985,19 @@ server <- function(input, output, session) {
             }
           })
           names(wkbk_edit) <- names(wkbk)
-          #wkbk_react_anno(wkbk_edit)
           wkbk_react_anno_sub(wkbk_edit)
         } else {
           updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab), function(tab) {
             df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
             updated_dfs_et <- do.call(rbind,lapply(unique(df_sub$EventType), function(event_type) {
               df_sub_et <- df_sub[which(df_sub$EventType == event_type),]
-              df_sub_et2 <- df_sub_et[,c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3)]
+              df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3))]
+              #df_sub_et2 <- df_sub_et[,c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3)]
               df_sub_et3 <- df_sub_et2 %>%
                 pivot_wider(id_cols = Name,
                             names_from = Event,
                             values_from = all_of(c(newcolname,newcolname2,newcolname3)),
-                            names_glue = "{Event}_{.value}"
+                            names_glue = name_glue_solo
                 )
               return(df_sub_et3)
             }))
@@ -6582,11 +7015,77 @@ server <- function(input, output, session) {
             }
           })
           names(wkbk_edit) <- names(wkbk)
-          #wkbk_react_anno(wkbk_edit)
           wkbk_react_anno_sub(wkbk_edit)
         }
-      })
+        
+        event_tabs <- unique(ref_eoi_event_data2$EventTab)
+        event_tabs <- ifelse(length(event_tabs) == 1,paste0(event_tabs," data table "),paste0("The data tables of ",paste0(event_tabs,collapse = ", "," ")))
+        
+        
+        # Simulated values (replace with real reactive values or inputs)
+        #event_tabs <- "Ref_Event_Table1"
+        #ref_type <- "Treatment Start"
+        #eoi <- "Adverse Event"
+        
+        #save(list = ls(), file = "save_anno_log.RData", envir = environment())
+        #
+        # Construct message
+        if (AddAnnoWindow) {
+          # Build window-related message
+          if (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0) {
+            new_entry <- tagList(
+              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$ul(
+                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event")),
+                tags$li("The time difference between the two events")
+              ),
+              tags$hr()
+            )
+          }
+          if (!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) {
+            new_entry <- tagList(
+              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$ul(
+                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event")),
+                tags$li("The time difference between the two events")
+              ),
+              tags$hr()
+            )
+          }
+          if ((!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) && (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0)) {
+            new_entry <- tagList(
+              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$ul(
+                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event")),
+                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event")),
+                tags$li("The time difference between the two events")
+              ),
+              tags$hr()
+            )
+          }
+        } else {
+          # Simpler before/during/after logic
+          new_entry <- tagList(
+            tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+            tags$ul(
+              tags$li("Before, after, or during the reference event"),
+              tags$li("The time difference between the two events"),
+              tags$li("A TRUE or FALSE statement if the EOI occurred or did not occur")
+            ),
+            tags$hr()
+          )
+        }
+        
+        # Append to history
+        current_log <- log_history()
+        log_history(append(list(new_entry),current_log))
+        
+        
+      }, ignoreInit = TRUE)
       
+      output$annotation_log <- renderUI({
+        tagList(log_history())
+      })
       
       #MolecularAnnoTable_reactiveVal <- reactiveVal()
       
@@ -6944,9 +7443,9 @@ server <- function(input, output, session) {
         df <- wkbk[[df_name]]
         ref_feat <- input$FilterTabRefFeature
         if (isTruthy(ref_feat)) {
-          if (ref_feat != "No Reference") {
+          if (ref_feat != "No Reference" & ref_feat %in% colnames(df)) {
             OR_opts <- unique(df[,ref_feat])
-            updateSelectizeInput(session,"OddsRatioColumn", choices = OR_opts, selected = 1,
+            updateSelectizeInput(session,"OddsRatioColumn", choices = OR_opts, selected = NULL,
                                  options = list(
                                    placeholder = 'Please select an option below',
                                    onInitialize = I('function() { this.setValue(""); }')
@@ -7033,6 +7532,7 @@ server <- function(input, output, session) {
         feats <- input$FilterTabCountFeatures
         ref_feat <- input$FilterTabRefFeature
         or_col <- input$OddsRatioColumn
+        ORtest <- input$ORtest
         if (!isTruthy(ref_feat) | ref_feat == "No Reference") {
           ref_feat <- NULL
         } else {
@@ -7043,13 +7543,15 @@ server <- function(input, output, session) {
         
         #save(list = ls(), file = "OR_Err.RData", envir = environment())
         
-        if (isTruthy(or_col)) {
-          #or_col <- paste0(id_col," ",or_col)
-          or_col <- paste0(ref_feat," ",or_col)
-          feats_tab <- perform_fishers_test(feats_tab,or_col)
-          if (input$ORtest) {
-            feats_tab[,grep(" FishersTest Pvalue$",colnames(feats_tab))] <- ifelse(feats_tab[,grep(" OddsRatio$",colnames(feats_tab))] < 1,
-                                                                                   1,feats_tab[,grep(" FishersTest Pvalue$",colnames(feats_tab))])
+        if (ORtest) {
+          if (isTruthy(or_col)) {
+            #or_col <- paste0(id_col," ",or_col)
+            or_col <- paste0(ref_feat," ",or_col)
+            feats_tab <- perform_fishers_test(feats_tab,or_col)
+            if (input$ORtest) {
+              feats_tab[,grep(" FishersTest Pvalue$",colnames(feats_tab))] <- ifelse(feats_tab[,grep(" OddsRatio$",colnames(feats_tab))] < 1,
+                                                                                     1,feats_tab[,grep(" FishersTest Pvalue$",colnames(feats_tab))])
+            }
           }
         }
         
@@ -7091,21 +7593,23 @@ server <- function(input, output, session) {
         }
       )
       
-      switch_main_tab <- function(tab_id, tab_selected){
-        shiny::updateTabsetPanel(session = session, inputId = tab_id, selected = tab_selected)
+      if (!app_lite) {
+        switch_main_tab <- function(tab_id, tab_selected){
+          shiny::updateTabsetPanel(session = session, inputId = tab_id, selected = tab_selected)
+        }
+        switch_main_navbar <- function(navbar_id, navbar_selected){
+          shiny::updateNavbarPage(session = session, inputId = navbar_id, selected = navbar_selected)
+        }
+        
+        Homepage_server("ShinyEvents1", homepage_tutorial_text_list, switch_main_tab, switch_main_navbar)
+        Tutorial_server("ShinyEvents1", homepage_tutorial_text_list)
+        
+        observe({
+          print("this is stupid")
+          updateNavbarPage(session = session, inputId = "shinyevents_tabs", selected = "patient_visual_analytics")
+          updateTabsetPanel(session = session, inputId = "PatientMainPanel", selected = "2")
+        })%>% bindEvent(input$tabselect_test)
       }
-      switch_main_navbar <- function(navbar_id, navbar_selected){
-        shiny::updateNavbarPage(session = session, inputId = navbar_id, selected = navbar_selected)
-      }
-      
-      Homepage_server("ShinyEvents1", homepage_tutorial_text_list, switch_main_tab, switch_main_navbar)
-      Tutorial_server("ShinyEvents1", homepage_tutorial_text_list)
-      
-      observe({
-        print("this is stupid")
-        updateNavbarPage(session = session, inputId = "shinyevents_tabs", selected = "patient_visual_analytics")
-        updateTabsetPanel(session = session, inputId = "PatientMainPanel", selected = "2")
-      })%>% bindEvent(input$tabselect_test)
       
       
     }
