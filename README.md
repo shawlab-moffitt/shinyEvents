@@ -1,7 +1,7 @@
 # Introduction
 
 We created ShinyEvents, a user-friendly website that helps researchers analyze and visualize longitudinal data. With ShinyEvents, you can upload your own files and instantly create interactive timelines showing a patient’s treatments and medical events.
-The tool can also group patients into treatment categories, define key points in their care, and produce helpful visual summaries like:
+The tool can also group patients into treatment categories, define key points in the clinical course, and produce helpful visual summaries like:
 * Sankey diagrams to show treatment pathways
 * Swimmer plots to map out each patient's journey
 
