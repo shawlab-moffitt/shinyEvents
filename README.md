@@ -1,4 +1,13 @@
-# shinyEvents
+# shinyEvents Introduction
+
+We created ShinyEvents, a user-friendly website that helps researchers analyze and visualize longitudinal data. With ShinyEvents, you can upload your own files and instantly create interactive timelines showing a patient’s treatments and medical events.
+The tool can also group patients into treatment categories, define key points in their care, and produce helpful visual summaries like:
+* Sankey diagrams to show treatment pathways
+* Swimmer plots to map out each patient's journey
+
+Additionally, ShinyEvents can estimate the duration of time patients remain stable without their disease worsening and perform standard survival analyses, such as Kaplan-Meier and Cox regression.
+
+By making it easier to work with layered time-based data, ShinyEvents helps connect treatments with real-world outcomes—quickly and visually.
 
 An online version is available below for research purposes only.
 https://shawlab-moffitt.shinyapps.io/shinyevents/
@@ -19,9 +28,6 @@ This tool is provided solely for research and exploratory purposes. It is not in
 
 ### By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies. (edited) 
 
-
-10:51
-I'll go ahead and add it onto the GitHub page
 # shinyEvents Setup
 
 ## Dependencies
