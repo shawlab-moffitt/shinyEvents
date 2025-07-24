@@ -7047,6 +7047,180 @@ server <- function(input, output, session) {
       
       log_history <- reactiveVal(list())
       
+      #observeEvent(input$SaveAnnotation, {
+      #  #ref_eoi_merge_df_cast_list <- reactive({
+      #  req(ref_eoi_merge_df())
+      #  wkbk <- wkbk_react_anno_sub()
+      #  ref_eoi_event_data2 <- ref_eoi_merge_df()
+      #  GroupRefEventSelect <- input$GroupRefEventSelect
+      #  EOIEventColName <- input$EOIEventColName
+      #  if (!isTruthy(EOIEventColName)) {
+      #    EOIEventColName <- "CustomEventOfInterest"
+      #  }
+      #  EOIEventSelect <- input$EOIEventSelect
+      #  EOIEventSelect <- gsub(":","_",EOIEventSelect)
+      #  eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
+      #  
+      #  
+      #  AddAnnoWindow <- input$AddAnnoWindow
+      #  AddAnnoWindowNumBefore <- input$AddAnnoWindowNumBefore
+      #  AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
+      #  
+      #  #save(list = ls(), file = "SaveAnnotation.RData", envir = environment())
+      #  
+      #  if (AddAnnoWindow) {
+      #    newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore")
+      #    newcolname2 <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter")
+      #    newcolname3 <- paste0(eoi_name,"_MinTimeDiffBefore")
+      #    newcolname4 <- paste0(eoi_name,"_MinTimeDiffAfter")
+      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname,"_RefEvent"))] <- newcolname
+      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname2,"_RefEvent"))] <- newcolname2
+      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname3,"_RefEvent"))] <- newcolname3
+      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname4,"_RefEvent"))] <- newcolname4
+      #    name_glue_grp <- "{.value}_{EventType_Ref}"
+      #    name_glue_solo <- "{.value}_{Event_Ref}"
+      #  } else {
+      #    newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
+      #    newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
+      #    newcolname3 <- paste0(newcolname,"_EventPresent")
+      #    newcolname4 <- NULL
+      #    name_glue_grp <- "{EventType_Ref}_{.value}"
+      #    name_glue_solo <- "{Event_Ref}_{.value}"
+      #  }
+      #  
+      #  # this may cause issues
+      #  ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
+      #  
+      #  if (GroupRefEventSelect) {
+      #    updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab_Ref), function(tab) {
+      #      df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab_Ref == tab),]
+      #      df_sub2 <- df_sub %>%
+      #        pivot_wider(id_cols = Name,
+      #                    names_from = EventType_Ref,
+      #                    values_from = any_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
+      #                    names_glue = name_glue_grp
+      #        )
+      #      wkbk_df <- wkbk[[tab]]
+      #      colnames(df_sub2)[1] <- colnames(wkbk_df)[1]
+      #      wkbk_df_anno <- merge(wkbk_df,df_sub2,all.x = T)
+      #      return(wkbk_df_anno)
+      #    })
+      #    names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab_Ref)
+      #    wkbk_edit <- lapply(names(wkbk),function(df_name) {
+      #      if (df_name %in% names(updated_dfs)) {
+      #        return(updated_dfs[[df_name]])
+      #      } else {
+      #        return(wkbk[[df_name]])
+      #      }
+      #    })
+      #    names(wkbk_edit) <- names(wkbk)
+      #    wkbk_react_anno_sub(wkbk_edit)
+      #  } else {
+      #    updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab), function(tab) {
+      #      df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
+      #      updated_dfs_et <- do.call(rbind,lapply(unique(df_sub$EventType), function(event_type) {
+      #        df_sub_et <- df_sub[which(df_sub$EventType == event_type),]
+      #        df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3,newcolname4))]
+      #        df_sub_et3 <- df_sub_et2 %>%
+      #          pivot_wider(id_cols = Name,
+      #                      names_from = Event,
+      #                      values_from = all_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
+      #                      names_glue = name_glue_solo
+      #          )
+      #        return(df_sub_et3)
+      #      }))
+      #      wkbk_df <- wkbk[[tab]]
+      #      colnames(updated_dfs_et)[1] <- colnames(wkbk_df)[1]
+      #      wkbk_df_anno <- merge(wkbk_df,updated_dfs_et,all.x = T)
+      #      return(wkbk_df_anno)
+      #    })
+      #    names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab)
+      #    wkbk_edit <- lapply(names(wkbk),function(df_name) {
+      #      if (df_name %in% names(updated_dfs)) {
+      #        return(updated_dfs[[df_name]])
+      #      } else {
+      #        return(wkbk[[df_name]])
+      #      }
+      #    })
+      #    names(wkbk_edit) <- names(wkbk)
+      #    wkbk_react_anno_sub(wkbk_edit)
+      #  }
+      #  
+      #  event_tabs <- unique(ref_eoi_event_data2$EventTab)
+      #  event_tabs <- ifelse(length(event_tabs) == 1,paste0("<b>",event_tabs,"</b> data table "),paste0("The data tables of <b>",paste0(event_tabs,collapse = ", ","</b> ")))
+      #  event_types_uniq <- unique(ref_eoi_event_data2$EventType)
+      #  if (length(event_types_uniq) > 1) {
+      #    event_types <- paste0(unique(ref_eoi_event_data2$EventType),collapse = ", ")
+      #    event_type_text <- paste0("<b>Reference Events:</b> ",event_types)
+      #  } else {
+      #    event_type_text <- paste0("<b>Reference Event:</b> ",event_types_uniq)
+      #  }
+      #  if (length(EOIEventSelect) > 1) {
+      #    eoi_text <- paste0("<b>Events of Interest:</b> ",eoi_name)
+      #  } else {
+      #    eoi_text <- paste0("<b>Event of Interest:</b> ",eoi_name)
+      #  }
+      #  eventTab_text <- paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
+      #  
+      #  if (AddAnnoWindow) {
+      #    # Build window-related message
+      #    if (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0) {
+      #      new_entry <- tagList(
+      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
+      #        tags$ul(
+      #          tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
+      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
+      #        ),
+      #        tags$hr()
+      #      )
+      #    }
+      #    if (!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) {
+      #      new_entry <- tagList(
+      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
+      #        tags$ul(
+      #          tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
+      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
+      #        ),
+      #        tags$hr()
+      #      )
+      #    }
+      #    if ((!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) && (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0)) {
+      #      new_entry <- tagList(
+      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
+      #        tags$ul(
+      #          tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
+      #          tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
+      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
+      #        ),
+      #        tags$hr()
+      #      )
+      #    }
+      #  } else {
+      #    # Simpler before/during/after logic
+      #    new_entry <- tagList(
+      #      tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+      #      tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
+      #      tags$ul(
+      #        tags$li("If the EOI start occured before or after the reference event start"),
+      #        tags$li("The time difference between the two events"),
+      #        tags$li("A TRUE or FALSE statement if the EOI occurred or did not occur")
+      #      ),
+      #      tags$hr()
+      #    )
+      #  }
+      #  
+      #  # Append to history
+      #  current_log <- log_history()
+      #  log_history(append(list(new_entry),current_log))
+      #  
+      #  showNotification("Event Annotation Saved!", type = "message")
+      #  
+      #  
+      #}, ignoreInit = TRUE)
+      
       observeEvent(input$SaveAnnotation, {
         #ref_eoi_merge_df_cast_list <- reactive({
         req(ref_eoi_merge_df())
@@ -7088,66 +7262,57 @@ server <- function(input, output, session) {
           name_glue_solo <- "{Event_Ref}_{.value}"
         }
         
-        # this may cause issues
         ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
         
         if (GroupRefEventSelect) {
-          updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab_Ref), function(tab) {
-            df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab_Ref == tab),]
-            df_sub2 <- df_sub %>%
+          ref_eoi_event_data2 <- ref_eoi_event_data2 %>%
+            select(-any_of(c("Event_Ref","Event_EOI"))) %>%
+            unique() %>%
+            as.data.frame()
+          event_anno_dfs <- split(ref_eoi_event_data2,ref_eoi_event_data2$EventTab_Ref)
+          event_anno_dfs2 <- lapply(event_anno_dfs,function(df) {
+            df2 <- df %>%
+              select(any_of(c("Name","EventType_Ref",newcolname,newcolname2,newcolname3,newcolname4))) %>%
               pivot_wider(id_cols = Name,
                           names_from = EventType_Ref,
                           values_from = any_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
                           names_glue = name_glue_grp
               )
-            wkbk_df <- wkbk[[tab]]
-            colnames(df_sub2)[1] <- colnames(wkbk_df)[1]
-            wkbk_df_anno <- merge(wkbk_df,df_sub2,all.x = T)
-            return(wkbk_df_anno)
           })
-          names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab_Ref)
-          wkbk_edit <- lapply(names(wkbk),function(df_name) {
-            if (df_name %in% names(updated_dfs)) {
-              return(updated_dfs[[df_name]])
-            } else {
-              return(wkbk[[df_name]])
-            }
+          event_anno_df <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),event_anno_dfs2)
+          wkbk_edit <- lapply(wkbk,function(df) {
+            colnames(event_anno_df)[1] <- colnames(df)[1]
+            df_merge <- merge(df,event_anno_df,all.x = T)
+            return(df_merge)
           })
-          names(wkbk_edit) <- names(wkbk)
           wkbk_react_anno_sub(wkbk_edit)
         } else {
-          updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab), function(tab) {
-            df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
-            updated_dfs_et <- do.call(rbind,lapply(unique(df_sub$EventType), function(event_type) {
-              df_sub_et <- df_sub[which(df_sub$EventType == event_type),]
-              df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3,newcolname4))]
-              df_sub_et3 <- df_sub_et2 %>%
+          ref_eoi_event_data2 <- ref_eoi_event_data2 %>%
+            select(-any_of(c("Event_Ref","Event_EOI"))) %>%
+            unique() %>%
+            as.data.frame()
+          event_anno_dfs <- split(ref_eoi_event_data2,ref_eoi_event_data2$EventTab_Ref)
+          event_anno_dfs2 <- lapply(event_anno_dfs,function(df) {
+            event_anno_dfs_typ <- split(df,df$EventType)
+            event_anno_dfs_typ2 <- do.call(rbind,lapply(event_anno_dfs_typ, function(df_typ) {
+              df_typ2 <- df_typ %>%
                 pivot_wider(id_cols = Name,
-                            names_from = Event,
-                            values_from = all_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
+                            names_from = Event_Ref,
+                            values_from = any_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
                             names_glue = name_glue_solo
                 )
-              return(df_sub_et3)
+              return(df_typ2)
             }))
-            wkbk_df <- wkbk[[tab]]
-            colnames(updated_dfs_et)[1] <- colnames(wkbk_df)[1]
-            wkbk_df_anno <- merge(wkbk_df,updated_dfs_et,all.x = T)
-            return(wkbk_df_anno)
+            
           })
-          names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab)
-          wkbk_edit <- lapply(names(wkbk),function(df_name) {
-            if (df_name %in% names(updated_dfs)) {
-              return(updated_dfs[[df_name]])
-            } else {
-              return(wkbk[[df_name]])
-            }
+          event_anno_df <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),event_anno_dfs2)
+          wkbk_edit <- lapply(wkbk,function(df) {
+            colnames(event_anno_df)[1] <- colnames(df)[1]
+            df_merge <- merge(df,event_anno_df,all.x = T)
+            return(df_merge)
           })
-          names(wkbk_edit) <- names(wkbk)
           wkbk_react_anno_sub(wkbk_edit)
         }
-        
-        event_tabs <- unique(ref_eoi_event_data2$EventTab)
-        event_tabs <- ifelse(length(event_tabs) == 1,paste0("<b>",event_tabs,"</b> data table "),paste0("The data tables of <b>",paste0(event_tabs,collapse = ", ","</b> ")))
         event_types_uniq <- unique(ref_eoi_event_data2$EventType)
         if (length(event_types_uniq) > 1) {
           event_types <- paste0(unique(ref_eoi_event_data2$EventType),collapse = ", ")
@@ -7160,7 +7325,7 @@ server <- function(input, output, session) {
         } else {
           eoi_text <- paste0("<b>Event of Interest:</b> ",eoi_name)
         }
-        eventTab_text <- paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
+        eventTab_text <- paste0("App data now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
         
         if (AddAnnoWindow) {
           # Build window-related message
