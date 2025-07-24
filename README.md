@@ -12,8 +12,7 @@ By making it easier to work with layered time-based data, ShinyEvents helps conn
 An online version is available below for research purposes only.
 https://shawlab-moffitt.shinyapps.io/shinyevents/
 
-:warning: Data Use Disclaimer
-* Please read before uploading any files:
+# :warning: Data Use Disclaimer - Please read before uploading any files
 
 ## Warning Regarding Personal Health Information (PHI):
 The online version of the application is for research purposes and not designed for handling or processing personal health information (PHI).
