@@ -26,7 +26,7 @@ Any data uploaded to this server is used temporarily during the session and is n
 ## For Research Use Only:
 This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.
 
-### By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies. (edited) 
+### By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies.
 
 # shinyEvents Setup
 
