@@ -1,7 +1,22 @@
 # shinyEvents
 
+An online version is available below for research purposes only.
 https://shawlab-moffitt.shinyapps.io/shinyevents/
+:warning: Data Use Disclaimer
+* Please read before uploading any files:
+** Warning Regarding Personal Health Information (PHI):
+The online version of the application is for research purposes and not designed for handling or processing personal health information (PHI).
+** Do not upload any files containing PHI or sensitive personal data.
+For working with protected data, we strongly recommend downloading and running the tool locally on a secure environment.
+** No Data Storage:
+Any data uploaded to this server is used temporarily during the session and is not stored, saved, or shared. Once your session ends or the page is refreshed, all uploaded data is automatically deleted.
+** For Research Use Only:
+ This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.
+By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies. (edited) 
 
+
+10:51
+I'll go ahead and add it onto the GitHub page
 # shinyEvents Setup
 
 ## Dependencies
