@@ -1,0 +1,34 @@
+<p style="margin-top: -3px;margin-bottom: -3px;"><strong>ShinyEvents</strong> is a web-based analytical framework designed for the exploration and visualization of complex longitudinal clinical data with features such as:</p>
+<ul style="margin-top: -3px;margin-bottom: -3px;">
+  <li style="margin-top: -3px;">Interactive timelines that trace individual patient trajectories</li>
+  <li>Treatment clustering, treatment duration, and endpoint annotation</li>
+  <li>Intuitive visual summaries, including Sankey diagrams, Swimmer plots, and Kaplan-Meier plots</li>
+  <li style="margin-bottom: -3px;">Explore real-world progression-free survival (rwPFS) based on user-defined clinical endpoints</li>
+</ul>
+<p style="margin-top: -3px;margin-bottom: -3px;">By linking a clinical journeys with patients' outcomes, ShinyEvents empowers real-time, multilayered longitudinal data analysis to support clinical research and decision-making.</p>
+
+<hr style="margin-top: -3px;margin-bottom: -3px; border: none; height: 1px; background-color: #ccc;">
+
+<p style="margin-bottom: -3px;">
+  <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i>
+  <span style="font-size: 20px; font-weight: bold;">Disclaimer</span>
+  <i class="fa-solid fa-triangle-exclamation" style="margin-left: 6px;"></i>
+</p>
+<p style="margin-top: -3px;margin-bottom: -3px;"><strong>Warning Regarding Personal Health Information (PHI):</strong></p>
+<ul style="margin-top: -3px;margin-bottom: -3px;">
+  <li style="margin-top: -3px">The online version of the application is research purpose and not designed for handling or processing personal health information (PHI).</li>
+  <li><strong>Do not upload any files containing PHI or sensitive personal data.</strong></li>
+  <li style="margin-bottom: -3px;">For working with protected data, we strongly recommend downloading and running the tool locally on a secure environment.</li>
+</ul>
+
+<p style="margin-top: -3px;margin-bottom: -3px;"><strong>No Data Storage:</strong></p>
+<ul style="margin-top: -3px;margin-bottom: -3px;">
+  <li style="margin-top: -3px;margin-bottom: -3px;">Any data uploaded to this server is used temporarily during the session and is not stored, saved, or shared. Once your session ends or the page is refreshed, all uploaded data is automatically deleted.</li>
+</ul>
+
+<p style="margin-top: -3px;margin-bottom: -3px;"><strong>For Research Use Only:</strong></p>
+<ul style="margin-top: -3px;margin-bottom: -3px;">
+  <li style="margin-top: -3px;margin-bottom: -3px;">This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.</li>
+</ul>
+
+<p style="margin-top: -3px;margin-bottom: -3px;">By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies.</p>

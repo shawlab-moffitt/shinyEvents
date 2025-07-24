@@ -3,7 +3,8 @@ Homepage_server <- function(id, homepage_texts, switch_main_tab, switch_main_nav
     
     homepage_tutorial_text_list <- homepage_texts
     
-    output$homepage_text <- renderText(homepage_tutorial_text_list[["Homepage"]]$text)
+    output$homepage_text <- renderText(homepage_tutorial_text_list[["Homepage_v2"]]$text)
+    #output$disclaimer_text <- renderText(homepage_tutorial_text_list[["disclaimer"]]$text)
     # Homepage homepage
     output$homepage <- renderUI({
       shiny::fluidPage(

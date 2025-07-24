@@ -1,4 +1,27 @@
-﻿<p><b>ShinyEvents</b> is a web-based analytical framework designed for the exploration and visualization of complex longitudinal clinical data. It enables users to upload structured datasets and generate interactive timelines that trace individual patient trajectories. At the cohort level, ShinyEvents supports treatment clustering, endpoint annotation, and the generation of intuitive visual summaries, including Sankey diagrams of treatment sequences and Swimmer plots of clinical timelines. The platform also offers integrated survival analysis tools, allowing users to infer real-world progression-free survival (rwPFS) based on custom-defined clinical endpoints and perform Kaplan-Meier estimation and Cox proportional hazards modeling. By linking treatment lines with patient outcomes, ShinyEvents empowers real-time, multilayered longitudinal data analysis to support clinical research and decision-making.</p>
+<p><b>ShinyEvents</b> is a web-based analytical framework designed for the exploration and visualization of complex longitudinal clinical data. It enables users to upload structured datasets and generate interactive timelines that trace individual patient trajectories. At the cohort level, ShinyEvents supports treatment clustering, endpoint annotation, and the generation of intuitive visual summaries, including Sankey diagrams of treatment sequences and Swimmer plots of clinical timelines. The platform also offers integrated survival analysis tools, allowing users to infer real-world progression-free survival (rwPFS) based on custom-defined clinical endpoints and perform Kaplan-Meier estimation and Cox proportional hazards modeling. By linking treatment lines with patient outcomes, ShinyEvents empowers real-time, multilayered longitudinal data analysis to support clinical research and decision-making.</p>
 <p>For any questions, please select the <b>"Need Tutorial?"</b> button, which will direct users to a thorough tutorial, which covers app navigation and provides helpful information for the analytical methods included in the app.</p>
 
 <p>To begin, please click the <b>Get Started</b> button</p>
+
+
+
+<p style="margin-bottom: 2px;"><strong>ShinyEvents</strong> is a web-based analytical framework designed for the exploration and visualization of complex longitudinal clinical data.</p>
+<p style="">ShinyEvents Features:</p>
+<ul style="margin-bottom: 2px; margin-top: 2px; padding-left: 20px;">
+  <li style="margin-bottom: 2px; margin-top: 2px;">Interactive timelines that trace individual patient trajectories</li>
+  <li style="margin-bottom: 2px;">Treatment clustering, treatment duration, and endpoint annotation</li>
+  <li style="margin-bottom: 2px;">Intuitive visual summaries, including Sankey diagrams, Swimmer plots, and Kaplan-Meier plots</li>
+  <li style="margin-bottom: 2px;">Explore real-world progression-free survival (rwPFS) based on user-defined clinical endpoints</li>
+</ul>
+
+<p style="margin-bottom: 2px; margin-top: 2px;"><strong>No Data Storage:</strong></p>
+<ul style="margin-bottom: 2px; margin-top: 2px;  padding-left: 20px;">
+  <li style="margin-bottom: 2px; margin-top: 2px;">Any data uploaded to this server is used temporarily during the session and is not stored, saved, or shared. Once your session ends or the page is refreshed, all uploaded data is automatically deleted.</li>
+</ul>
+
+<p style="margin-bottom: 2px; margin-top: 2px;"><strong>For Research Use Only:</strong></p>
+<ul style="margin-bottom: 2px; margin-top: 2px;  padding-left: 20px;">
+  <li style="margin-bottom: 2px; margin-top: 2px;">This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.</li>
+</ul>
+
+<p style="margin-bottom: 2px;">By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies.</p>

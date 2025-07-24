@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250722")
+version_id <- paste0("v1.0.20250724")
 
 # lite swap able
 
@@ -183,27 +183,25 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                ),
                                "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
                              ),
-                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px;margin-bottom:-15px"),
-               actionButton("LoadExampleData","Load Example Data"),
-               actionButton("EventDataHelp","Click here to view event data input formatting", icon = icon("circle-question"), width = "100%",
-                            style = "background-color: #2c3e50; border-color: #2c3e50"),
+                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px;margin-bottom:-25px"),
+               
+               fluidRow(
+                 column(6,
+                        # Maybe include example with parameter file?
+                        #selectInput("ExampleDataOptions","Example Data Options:", choices = c("Event Data Only" = "1","Detailed Event Data" = "2","Event and Supplementary Data" = "3"))#,
+                        selectInput("ExampleDataOptions","Example Data Options:", choices = c("Event Data Only" = "1","Event and Supplementary Data" = "3"))#,
+                        #actionButton("LoadExampleData","Load Example Event Data")
+                 ),
+                 column(6, style = "margin-top:30px",
+                        actionButton("LoadExampleData","Load Example Data", width = "100%")
+                 )
+               ),
+               actionButton("EventDataHelp","Event data input formatting", icon = icon("circle-question"), width = "100%",
+                            style = "background-color: #2c3e50; border-color: #2c3e50; margin-top:-15px"),
                conditionalPanel(condition = "output.EventDataFileIn_found",
                                 div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                shinyWidgets::radioGroupButtons(
-                                  inputId = "SuppDataInput1",
-                                  label = tooltip(
-                                    trigger = list(
-                                      "Would you like to upload supplementary data?",
-                                      bsicons::bs_icon("info-circle")
-                                    ),
-                                    "Tabular Excel file with further details aligning with the event data. First column of all sheets must be the patient identifier. Sheet names must correlate to annotated column in event data."
-                                  ),
-                                  choices = c("Yes",
-                                              "No"),
-                                  selected = "No",
-                                  justified = TRUE
-                                ),
-                                conditionalPanel(condition = "input.SuppDataInput1 == 'Yes'",
+                                shinyWidgets::materialSwitch("SuppDataInput1","Would you like to upload supplementary data?", inline = T, status = "primary"),
+                                conditionalPanel(condition = "input.SuppDataInput1 == true",
                                                  div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
                                                      style = "margin-top:-15px;margin-bottom:-15px"),
                                                  #conditionalPanel(condition = "output.SuppDataFileInput1_found",
@@ -223,8 +221,10 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                                    )
                                                  )
                                                  #)
-                                ),
-                                actionButton("LoadExSuppData","Load Example Supplementary Data"),
+                                )#,
+                                #actionButton("SuppDataHelp","Supplementary data input formatting", icon = icon("circle-question"), width = "100%",
+                                 #            style = "background-color: #2c3e50; border-color: #2c3e50"),
+                                #actionButton("LoadExSuppData","Load Example Supplementary Data"),
                ),
                p(),
                conditionalPanel(condition = "output.InputDataReady",
@@ -373,11 +373,11 @@ if (!app_lite) {
                                       )))
 } else {
   DataInput_tab <- tabPanel("Pre-Processing",
-                                    value = "data_input_tab",
-                                    #p(
+                            value = "data_input_tab",
+                            #p(
                             fluidPage(
-                                        tags$head(
-                                          tags$style(HTML("
+                              tags$head(
+                                tags$style(HTML("
                                                         .nav-tabs {
                                                         overflow-x: auto;
                                                         overflow-y: hidden;
@@ -386,9 +386,9 @@ if (!app_lite) {
                                                         display: flex;
                                                         }
                                                         "))
-                                        ),
-                                        tags$head(
-                                          tags$style(HTML("
+                              ),
+                              tags$head(
+                                tags$style(HTML("
                                                         .selectize-input {
                                                         max-height: 82px;
                                                         overflow-y: auto;
@@ -441,12 +441,12 @@ if (!app_lite) {
                                                         margin: 0 auto;
                                                         }
                                                         "))
-                                        ),
-                                        DataInput_tab_contents,
-                                        tagList(
-                                          tags$head(
-                                            tags$style(
-                                              HTML("
+                              ),
+                              DataInput_tab_contents,
+                              tagList(
+                                tags$head(
+                                  tags$style(
+                                    HTML("
                                      .info_box {
                                      width: auto;
                                      height: auto;
@@ -456,17 +456,17 @@ if (!app_lite) {
                                      font-size: 12px;
                                      z-index : 9999;
                                      }",
-                                                   glue::glue("#{'AppVersion'} {{
+                                         glue::glue("#{'AppVersion'} {{
                                                 position: {'fixed'};
                                                 top: 0;
                                                 right: 0;
                                                 }}")
-                                              )
-                                            )
-                                          ),
-                                          div(id = "AppVersion", class = "info_box", version_id)
-                                        )
-                                      )
+                                    )
+                                  )
+                                ),
+                                div(id = "AppVersion", class = "info_box", version_id)
+                              )
+                            )
                             #)
   )
 }
@@ -522,14 +522,12 @@ PatientLevel_tab_contents <- sidebarLayout(
                                          textInput("linePlotCutPAnno","Cut-Point Annotation:", placeholder = "i.e. Adverse Event Name")
                                   )
                                 ),
+                                h4("Save Annotation:"),
                                 fluidRow(
-                                  column(3, style = "margin-top:-10px",
-                                         h4("Save Annotation:")
-                                  ),
-                                  column(4,
+                                  column(6,
                                          actionButton("saveLinePlotAbvCutP","Above Cut-Point")
                                   ),
-                                  column(4,
+                                  column(6,
                                          actionButton("saveLinePlotBelCutP","Below Cut-Point")
                                   )
                                 )
@@ -671,15 +669,15 @@ if (!app_lite) {
   )
 } else {
   PatientLevel_tab <- tabPanel("Patient Visual Analytics",
-                                       value = "patient_visual_analytics",
-                                       #p(
+                               value = "patient_visual_analytics",
+                               #p(
                                fluidPage(
-                                           PatientLevel_tab_contents
-                                           ,
-                                           tagList(
-                                             tags$head(
-                                               tags$style(
-                                                 HTML("
+                                 PatientLevel_tab_contents
+                                 ,
+                                 tagList(
+                                   tags$head(
+                                     tags$style(
+                                       HTML("
                                      .info_box {
                                      width: auto;
                                      height: auto;
@@ -689,19 +687,19 @@ if (!app_lite) {
                                      font-size: 12px;
                                      z-index : 9999;
                                      }",
-                                                      glue::glue("#{'AppVersion'} {{
+                                            glue::glue("#{'AppVersion'} {{
                                                 position: {'fixed'};
                                                 top: 0;
                                                 right: 0;
                                                 }}")
-                                                 )
-                                               )
-                                             ),
-                                             div(id = "AppVersion", class = "info_box", version_id)
-                                           )
-                                         )
-                                       #)
-                                       
+                                       )
+                                     )
+                                   ),
+                                   div(id = "AppVersion", class = "info_box", version_id)
+                                 )
+                               )
+                               #)
+                               
   )
 }
 
@@ -1047,15 +1045,15 @@ if (!app_lite) {
   )
 } else {
   TreatmentAnalytics_tab <- tabPanel("Treatment Associated Analytics",
-                                             value = "treatment_associated_analytics",
-                                             #p(
+                                     value = "treatment_associated_analytics",
+                                     #p(
                                      fluidPage(
-                                                 TreatmentAnalytics_tab_contents
-                                                 ,
-                                                 tagList(
-                                                   tags$head(
-                                                     tags$style(
-                                                       HTML("
+                                       TreatmentAnalytics_tab_contents
+                                       ,
+                                       tagList(
+                                         tags$head(
+                                           tags$style(
+                                             HTML("
                                      .info_box {
                                      width: auto;
                                      height: auto;
@@ -1065,19 +1063,19 @@ if (!app_lite) {
                                      font-size: 12px;
                                      z-index : 9999;
                                      }",
-                                                            glue::glue("#{'AppVersion'} {{
+                                                  glue::glue("#{'AppVersion'} {{
                                                 position: {'fixed'};
                                                 top: 0;
                                                 right: 0;
                                                 }}")
-                                                       )
-                                                     )
-                                                   ),
-                                                   div(id = "AppVersion", class = "info_box", version_id)
-                                                 )
-                                               )
-                                             #)
-                                             
+                                             )
+                                           )
+                                         ),
+                                         div(id = "AppVersion", class = "info_box", version_id)
+                                       )
+                                     )
+                                     #)
+                                     
   )
 }
 
@@ -1282,15 +1280,15 @@ if (!app_lite) {
   )
 } else {
   tte_tab <- tabPanel("Time-To-Event Analysis",
-                              value = "time_to_event_analysis",
-                              #p(
+                      value = "time_to_event_analysis",
+                      #p(
                       fluidPage(
-                                  tte_tab_contents
-                                  ,
-                                  tagList(
-                                    tags$head(
-                                      tags$style(
-                                        HTML("
+                        tte_tab_contents
+                        ,
+                        tagList(
+                          tags$head(
+                            tags$style(
+                              HTML("
                                      .info_box {
                                      width: auto;
                                      height: auto;
@@ -1300,19 +1298,19 @@ if (!app_lite) {
                                      font-size: 12px;
                                      z-index : 9999;
                                      }",
-                                             glue::glue("#{'AppVersion'} {{
+                                   glue::glue("#{'AppVersion'} {{
                                                 position: {'fixed'};
                                                 top: 0;
                                                 right: 0;
                                                 }}")
-                                        )
-                                      )
-                                    ),
-                                    div(id = "AppVersion", class = "info_box", version_id)
-                                  )
-                                )
-                              #)
-                              
+                              )
+                            )
+                          ),
+                          div(id = "AppVersion", class = "info_box", version_id)
+                        )
+                      )
+                      #)
+                      
   )
 }
 
@@ -1392,20 +1390,21 @@ CohortLevel_tab_contents <- sidebarLayout(
                                       fluidRow(
                                         column(6,
                                                numericInput("AddAnnoWindowNumBefore","Before Reference Event", value = 30, min = 0, step = 1)
-                                               ),
+                                        ),
                                         column(6,
                                                numericInput("AddAnnoWindowNumAfter","After Reference Event", value = 30, min = 0, step = 1)
-                                               )
                                         )
+                                      )
                      ),
                      hr(),
                      actionButton("SaveAnnotation","Save Annotation", width = "100%"),
                      p(),
-                     tags$h4("Annotation Log"),
-                     wellPanel(
-                       style = "max-height: 300px; overflow-y: auto; border: 1px solid #ccc;",
-                       uiOutput("annotation_log")
-                     )
+                     uiOutput("rend_anno_log")#,
+                     #tags$h4("Annotation Log"),
+                     #wellPanel(
+                     #  style = "max-height: 300px; overflow-y: auto; border: 1px solid #ccc;",
+                     #  uiOutput("annotation_log")
+                     #)
     ),
     conditionalPanel(condition = "input.SummaryMain == '3'",
                      p(),
@@ -1530,15 +1529,15 @@ if (!app_lite) {
   )
 } else {
   CohortLevel_tab <- tabPanel("Cohort Overview",
-                                      value = "cohort_overview",
-                                      #p(
+                              value = "cohort_overview",
+                              #p(
                               fluidPage(
-                                          CohortLevel_tab_contents
-                                          ,
-                                          tagList(
-                                            tags$head(
-                                              tags$style(
-                                                HTML("
+                                CohortLevel_tab_contents
+                                ,
+                                tagList(
+                                  tags$head(
+                                    tags$style(
+                                      HTML("
                                      .info_box {
                                      width: auto;
                                      height: auto;
@@ -1548,19 +1547,19 @@ if (!app_lite) {
                                      font-size: 12px;
                                      z-index : 9999;
                                      }",
-                                                     glue::glue("#{'AppVersion'} {{
+                                           glue::glue("#{'AppVersion'} {{
                                                 position: {'fixed'};
                                                 top: 0;
                                                 right: 0;
                                                 }}")
-                                                )
-                                              )
-                                            ),
-                                            div(id = "AppVersion", class = "info_box", version_id)
-                                          )
-                                        )
-                                      #)
-                                      
+                                      )
+                                    )
+                                  ),
+                                  div(id = "AppVersion", class = "info_box", version_id)
+                                )
+                              )
+                              #)
+                              
   )
 }
 
@@ -1652,20 +1651,20 @@ server <- function(input, output, session) {
   
   # Password Protection --------------------------------------------------------
   # hack to add the logout button to the navbar on app launch
-  if (Password_Protected) {
-    insertUI(
-      selector = ".navbar .container-fluid .navbar-collapse",
-      ui = tags$ul(
-        class="nav navbar-nav navbar-right",
-        tags$li(
-          div(
-            style = "padding: 10px; padding-top: 8px; padding-bottom: 0;",
-            logoutUI("logout")
-          )
-        )
-      )
-    )
-  }
+  #if (Password_Protected) {
+  #  insertUI(
+  #    selector = ".navbar .container-fluid .navbar-collapse",
+  #    ui = tags$ul(
+  #      class="nav navbar-nav navbar-right",
+  #      tags$li(
+  #        div(
+  #          style = "padding: 10px; padding-top: 8px; padding-bottom: 0;",
+  #          logoutUI("logout")
+  #        )
+  #      )
+  #    )
+  #  )
+  #}
   
   # call the shinyauthr login and logout server modules
   if (Password_Protected) {
@@ -1674,9 +1673,9 @@ server <- function(input, output, session) {
       data = user_base,
       user_col = "user",
       pwd_col = "password",
-      sodium_hashed = FALSE,
-      reload_on_logout = TRUE,
-      log_out = reactive(logout_init())
+      sodium_hashed = FALSE#,
+      #reload_on_logout = TRUE,
+      #log_out = reactive(logout_init())
     )
   } else {
     credentials <- reactive({
@@ -1684,12 +1683,12 @@ server <- function(input, output, session) {
     })
   }
   
-  if (Password_Protected) {
-    logout_init <- logoutServer(
-      id = "logout",
-      active = reactive(credentials()$user_auth)
-    )
-  }
+  #if (Password_Protected) {
+  #  logout_init <- logoutServer(
+  #    id = "logout",
+  #    active = reactive(credentials()$user_auth)
+  #  )
+  #}
   
   observeEvent(credentials()$user_auth, {
     # if user logs in successfully
@@ -1814,7 +1813,9 @@ server <- function(input, output, session) {
         updateSelectInput(session,"GlobalAppTimeUnit", selected = "Years")
         updateTextInput(session,"UserProjectName", value = "AACR Genie NSCLC Adenocarcinoma")
         updateTabsetPanel(session,"shinyevents_tabs",selected = "patient_visual_analytics")
-        #updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
+        if (input$ExampleDataOptions == "3") {
+          updateMaterialSwitch(session,"SuppDataInput1",value = TRUE)
+        }
       })
       AllFilesReady_react <- reactiveVal(FALSE)
       observe({
@@ -1857,9 +1858,16 @@ server <- function(input, output, session) {
       
       observeEvent(input$LoadExampleData, {
         
+        req(input$ExampleDataOptions)
+        ExampleDataOptions <- input$ExampleDataOptions
+        
         withProgress(message = "Loading Example Data", value = 0, {
           incProgress(0.2, detail = "Loading file")
-          event_data <- as.data.frame(fread(Example_event_file, na.strings = c("","NA")))
+          if (ExampleDataOptions == "1" | ExampleDataOptions == "3") {
+            event_data <- as.data.frame(fread(Example_event_file, na.strings = c("","NA")))
+          } else if (ExampleDataOptions == "2") {
+            
+          }
           eventDataInput_raw(event_data)
           
           eventDataInput_raw <- event_data
@@ -1895,9 +1903,11 @@ server <- function(input, output, session) {
           )
           #event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
           
-          event_wkbk_link <- "EventTab"
-          uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
-          event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          if (ExampleDataOptions == "3") {
+            event_wkbk_link <- "EventTab"
+            uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+            event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          }
           
           incProgress(0.2, detail = "Formatting parameter file")
           param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
@@ -1925,9 +1935,12 @@ server <- function(input, output, session) {
           event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
           
           
-          #wkbk <- read_excel_allsheets(Example_wkbk_file)
-          #wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
-          wkbk <- list(InputData = eventDataInput_raw)
+          if (ExampleDataOptions == "3") {
+            wkbk <- read_excel_allsheets(Example_wkbk_file)
+            wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
+          } else {
+            wkbk <- list(InputData = eventDataInput_raw)
+          }
           
           incProgress(0.2, detail = "Formatting patient selection table")
           pat_anno <- event_count_df(event_data_processed)
@@ -1936,8 +1949,6 @@ server <- function(input, output, session) {
             event_new <- apply(event_data_processed,1,function(x) {
               event <- x[["Event"]]
               eventtype <- x[["EventType"]]
-              #eventsumm <- x[["EventSummary"]]
-              #if (is.na(eventsumm)) {
               if (event == eventtype) {
                 return(event)
               } else {
@@ -1947,9 +1958,6 @@ server <- function(input, output, session) {
                   return(paste0(eventtype,": ",event))
                 }
               }
-              #} else {
-              #  return(event)
-              #}
             })
             event_data_processed$Event <- event_new
           }
@@ -2010,44 +2018,27 @@ server <- function(input, output, session) {
         
       })
       
-      observeEvent(input$LoadExSuppData, {
-        req(eventDataInput_raw)
-        wkbk <- read_excel_allsheets(Example_wkbk_file)
-        wkbk <- c(list(InputData = eventDataInput_raw()),wkbk)
-        wkbk_raw_react(wkbk)
-        wkbk_react(wkbk)
-        wkbk_react_anno(wkbk)
-        wkbk_react_anno_sub(wkbk)
-        wkbk_react_sub(wkbk)
-        Clin_Supp_Cols_List <- lapply(wkbk,function(x){
-          return(colnames(x)[-1])
-        })
-        Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
-        updateRadioGroupButtons(session,"SuppDataInput1",selected = "Yes")
-      })
-      
-      
       output$EventDataFileIn_found <- reactive({
         if (!AllFilesReady) {
-        EventDataFileInput <- input$EventDataFileInput
-        if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
-          TRUE
-        } else {
-          FALSE
-        }
+          EventDataFileInput <- input$EventDataFileInput
+          if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
+            TRUE
+          } else {
+            FALSE
+          }
         }
       })
       outputOptions(output, "EventDataFileIn_found", suspendWhenHidden = FALSE)
       
       output$SuppDataInput1_found <- reactive({
         if (!AllFilesReady) {
-        SuppDataInput1 <- input$SuppDataInput1
-        if (SuppDataInput1 == "Yes") {
-          #if (isTruthy(SuppDataInput1)) {
-          TRUE
-        } else {
-          FALSE
-        }
+          SuppDataInput1 <- input$SuppDataInput1
+          if (SuppDataInput1) {
+            #if (isTruthy(SuppDataInput1)) {
+            TRUE
+          } else {
+            FALSE
+          }
         }
       })
       outputOptions(output, "SuppDataInput1_found", suspendWhenHidden = FALSE)
@@ -2150,10 +2141,56 @@ server <- function(input, output, session) {
         GlobalAppTimeUnit_react(input$GlobalAppTimeUnit)
       })
       
+      observe({
+        print(input$TreatmentWarn)
+      })
+      
+      process_input_react <- reactiveVal(TRUE)
+      
       observeEvent(input$ProcessInputData, {
-        req(eventDataInput_raw())
-        req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
-        withProgress(message = "Processing Input Data", value = 0, {
+        EventDataTreatmentEvents <- input$EventDataTreatmentEvents
+        if (length(EventDataTreatmentEvents) == 0) {
+          shinyalert::shinyalert(
+            inputId = "TreatmentWarn",
+            title = "Warning!",
+            text = tagList(
+              tags$p("Selection of treatment defining events is required to utilize the Treatment Associate Analytics, Time-To-Event Analysis, and Cohort Overiew Summaries."),
+              tags$br(),
+              tags$p("Patient Visual Analytics can still be viewed."),
+              tags$br(),
+              tags$p("Press 'Confirm' to continue or 'Cancel' to add 'Treatment Defining Events'")
+            ),
+            size = "s", 
+            closeOnEsc = TRUE,
+            closeOnClickOutside = TRUE,
+            html = TRUE,
+            type = "warning",
+            showConfirmButton = TRUE,
+            showCancelButton = TRUE,
+            confirmButtonText = "Confirm",
+            confirmButtonCol = "#AEDEF4",
+            cancelButtonText = "Cancel",
+            timer = 0,
+            imageUrl = "",
+            animation = TRUE
+          )
+          process_input_react(FALSE)
+        } else {
+          process_input_react(TRUE)
+        }
+        
+      })
+      
+      observeEvent(input$TreatmentWarn, {
+        process_input_react(input$TreatmentWarn)
+      })
+      
+      observeEvent(process_input_react(), {
+      #observeEvent(input$TreatWarn, {
+      #observeEvent(input$ProcessInputData, {
+        if (process_input_react()) {
+          req(eventDataInput_raw())
+          req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
           
           eventDataInput_raw <- eventDataInput_raw()
           EventDataPatientIDcol <- input$EventDataPatientIDcol
@@ -2169,174 +2206,187 @@ server <- function(input, output, session) {
           
           SuppEventColumnLink <- input$SuppEventColumnLink
           SuppDataFileInput1 <- input$SuppDataFileInput1
-          
-          input_file <- input$EventDataFileInput$datapath
-          if (!isTruthy(input_file)) {
-            input_file <- "InputDataFile.txt"
-          }
-          if (!isTruthy(EventDataEventTypecol)) {
-            EventDataEventTypecol <- EventDataEventcol
-            eventtype_in <- NA
-          } else { eventtype_in <- EventDataEventcol }
-          cluster_window <- input$MainClusterWindowSet
-          updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
+          TreatmentWarn <- input$TreatmentWarn
           
           
-          #save(list = ls(), file = "eventdata_make.RData", envir = environment())
           
-          incProgress(0.2, detail = "Formatting event data")
-          
-          event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
-                                             Event = eventDataInput_raw[,EventDataEventcol],
-                                             EventType = eventDataInput_raw[,EventDataEventTypecol],
-                                             EventTab = "InputData",
-                                             EventStart = eventDataInput_raw[,EventDataEventStartcol],
-                                             EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                             EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
-                                             #EventSummary = NA
-          )
-          #if (isTruthy(EventDataEventSummary)) {
-          #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
-          #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
-          #}
-          if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
-            event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
-                                                        event_data_processed[,"EventStart"],
-                                                        event_data_processed[,"EventEnd"])
-            event_data_processed[,"EventStart"] <- ifelse(is.na(event_data_processed[,"EventStart"]),
-                                                          event_data_processed[,"EventEnd"],
-                                                          event_data_processed[,"EventStart"])
-          }
-          
-          event_data_processed <- event_data_processed[which(!is.na(event_data_processed$Event)),]
-          
-          if (isTruthy(input$SuppDataFileInput1)) {
-            if (isTruthy(input$SuppEventColumnLink)) {
-              event_wkbk_link <- input$SuppEventColumnLink
-              uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
-              event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+          #if (!is.null(TreatmentWarn)) {
+          #  if (TreatmentWarn) {
+          withProgress(message = "Processing Input Data", value = 0, {
+            
+            input_file <- input$EventDataFileInput$datapath
+            if (!isTruthy(input_file)) {
+              input_file <- "InputDataFile.txt"
             }
-          }
-          
-          
-          incProgress(0.2, detail = "Formatting parameter file")
-          param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
-                          "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
-          
-          
-          treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
-          respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
-          
-          
-          event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
-          event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
-          
-          event_params <- data.frame(data_table_name = event_params_base$EventTab,
-                                     data_file = basename(input_file),
-                                     event_name = event_params_base$EventType,
-                                     column_defined_event = TRUE,
-                                     event_category = event_params_base$EventType,
-                                     event_start_col = EventDataEventStartcol,
-                                     event_end_col = EventDataEventEndcol,
-                                     treatment = FALSE,
-                                     response = FALSE,
-                                     start_time_units = EventDataEventStartUnits,
-                                     end_time_units = EventDataEventEndUnits)
-          colnames(event_params) <- param_cols
-          event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
-          event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
-          
-          
-          #save(list = ls(), file = "eventdataparams_make.RData", envir = environment())
-          
-          wkbk <- list(InputData = eventDataInput_raw)
-          
-          #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
-          
-          incProgress(0.2, detail = "Formatting patient selection table")
-          pat_anno <- event_count_df(event_data_processed)
-          
-          
-          if (!is.na(eventtype_in)) {
-            event_new <- apply(event_data_processed,1,function(x) {
-              event <- x[["Event"]]
-              eventtype <- x[["EventType"]]
-              #eventsumm <- x[["EventSummary"]]
-              #if (is.na(eventsumm)) {
-              if (event == eventtype) {
-                return(event)
-              } else {
-                if (grepl(paste0("^",eventtype,": "),event, ignore.case = T)) {
+            if (!isTruthy(EventDataEventTypecol)) {
+              EventDataEventTypecol <- EventDataEventcol
+              eventtype_in <- NA
+            } else { eventtype_in <- EventDataEventcol }
+            cluster_window <- input$MainClusterWindowSet
+            updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
+            
+            
+            #save(list = ls(), file = "eventdata_make.RData", envir = environment())
+            
+            incProgress(0.2, detail = "Formatting event data")
+            
+            event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
+                                               Event = eventDataInput_raw[,EventDataEventcol],
+                                               EventType = eventDataInput_raw[,EventDataEventTypecol],
+                                               EventTab = "InputData",
+                                               EventStart = eventDataInput_raw[,EventDataEventStartcol],
+                                               EventEnd = eventDataInput_raw[,EventDataEventEndcol],
+                                               EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
+                                               #EventSummary = NA
+            )
+            #if (isTruthy(EventDataEventSummary)) {
+            #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
+            #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
+            #}
+            if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
+              event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
+                                                          event_data_processed[,"EventStart"],
+                                                          event_data_processed[,"EventEnd"])
+              event_data_processed[,"EventStart"] <- ifelse(is.na(event_data_processed[,"EventStart"]),
+                                                            event_data_processed[,"EventEnd"],
+                                                            event_data_processed[,"EventStart"])
+            }
+            
+            event_data_processed <- event_data_processed[which(!is.na(event_data_processed$Event)),]
+            
+            if (isTruthy(input$SuppDataFileInput1)) {
+              if (isTruthy(input$SuppEventColumnLink)) {
+                event_wkbk_link <- input$SuppEventColumnLink
+                uniq_links <- unique(eventDataInput_raw[,c(EventDataEventTypecol,event_wkbk_link)])
+                event_data_processed$EventTab <- uniq_links[,event_wkbk_link][match(event_data_processed$EventType, uniq_links[,EventDataEventTypecol])]
+              }
+            }
+            
+            
+            incProgress(0.2, detail = "Formatting parameter file")
+            param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
+                            "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
+            
+            
+            treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
+            respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
+            
+            
+            event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
+            event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
+            
+            event_params <- data.frame(data_table_name = event_params_base$EventTab,
+                                       data_file = basename(input_file),
+                                       event_name = event_params_base$EventType,
+                                       column_defined_event = TRUE,
+                                       event_category = event_params_base$EventType,
+                                       event_start_col = EventDataEventStartcol,
+                                       event_end_col = EventDataEventEndcol,
+                                       treatment = FALSE,
+                                       response = FALSE,
+                                       start_time_units = EventDataEventStartUnits,
+                                       end_time_units = EventDataEventEndUnits)
+            colnames(event_params) <- param_cols
+            event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
+            event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
+            
+            
+            #save(list = ls(), file = "eventdataparams_make.RData", envir = environment())
+            
+            wkbk <- list(InputData = eventDataInput_raw)
+            
+            #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
+            
+            incProgress(0.2, detail = "Formatting patient selection table")
+            pat_anno <- event_count_df(event_data_processed)
+            
+            
+            if (!is.na(eventtype_in)) {
+              event_new <- apply(event_data_processed,1,function(x) {
+                event <- x[["Event"]]
+                eventtype <- x[["EventType"]]
+                #eventsumm <- x[["EventSummary"]]
+                #if (is.na(eventsumm)) {
+                if (event == eventtype) {
                   return(event)
                 } else {
-                  return(paste0(eventtype,": ",event))
+                  if (grepl(paste0("^",eventtype,": "),event, ignore.case = T)) {
+                    return(event)
+                  } else {
+                    return(paste0(eventtype,": ",event))
+                  }
                 }
-              }
-              #} else {
-              #  return(event)
-              #}
-              
-            })
-            event_data_processed$Event <- event_new
-          }
-          
-          incProgress(0.2, detail = "Summarizing event clusters")
-          if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
-            #if (all(is.na(event_data_processed$EventSummary))) {
-            if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
-              treatment_events <- EventDataTreatmentEvents
-              response_events <- EventDataResponseEvents
-              if (isTruthy(treatment_events)) {
-                event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
-                event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
-              } else { event_data_tr_cls <- NULL }
-              if (isTruthy(response_events)) {
-                event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
-                event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
-              } else { event_data_re_cls <- NULL }
-              
-              event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-              event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-              event_data_cls <- event_data_cls %>%
-                group_by(Name) %>%
-                arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-              Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
-              Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
-              Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
-              event_data_processed <- Patient_Event_Data_cls_all
+                #} else {
+                #  return(event)
+                #}
+                
+              })
+              event_data_processed$Event <- event_new
             }
-          }
+            
+            incProgress(0.2, detail = "Summarizing event clusters")
+            if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
+              #if (all(is.na(event_data_processed$EventSummary))) {
+              if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
+                treatment_events <- EventDataTreatmentEvents
+                response_events <- EventDataResponseEvents
+                if (isTruthy(treatment_events)) {
+                  event_data_tr <- event_data_processed[grepl(paste(treatment_events,collapse = "|"),event_data_processed$Event),]
+                  event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = F, cluster_window = cluster_window)
+                } else { event_data_tr_cls <- NULL }
+                if (isTruthy(response_events)) {
+                  event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
+                  event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
+                } else { event_data_re_cls <- NULL }
+                
+                event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
+                event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
+                event_data_cls <- event_data_cls %>%
+                  group_by(Name) %>%
+                  arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
+                Patient_Event_Data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data_processed), fill = T)
+                Patient_Event_Data_cls_all <- Patient_Event_Data_cls_all[order(Patient_Event_Data_cls_all[,1]),]
+                Patient_Event_Data_cls_all <- as.data.frame(Patient_Event_Data_cls_all)
+                event_data_processed <- Patient_Event_Data_cls_all
+              }
+            }
+            
+            incProgress(0.5, detail = "Complete!")
+          })
           
-          incProgress(0.5, detail = "Complete!")
-        })
+          #save(list = ls(), file = "eventdataparamswkbksumm_make.RData", envir = environment())
+          
+          ProjectName_react(input$UserProjectName)
+          Param_File_react(NULL)
+          Workbook_file_predf_react(NULL)
+          Workbook_file_react(NULL)
+          PatientAnno_file_react(NULL)
+          PatientEvent_File_react(NULL)
+          
+          wkbk_raw_react(wkbk)
+          wkbk_react(wkbk)
+          wkbk_react_anno(wkbk)
+          wkbk_react_anno_sub(wkbk)
+          wkbk_react_sub(wkbk)
+          Clin_Supp_Cols_List <- lapply(wkbk,function(x){
+            return(colnames(x)[-1])
+          })
+          Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
+          pat_react(pat_anno)
+          event_data_raw(event_data_processed)
+          event_data_summ(event_data_processed)
+          event_data(event_data_processed)
+          param_data(event_params)
+          paramEvent <- event_params[which(!is.na(event_params[,3])),]
+          paramEvent_data(paramEvent)
+          
+          tabs_trigger(tabs_trigger()+1)
+          
+          #  }
+          #}
+          
+        }
         
-        #save(list = ls(), file = "eventdataparamswkbksumm_make.RData", envir = environment())
-        
-        ProjectName_react(input$UserProjectName)
-        Param_File_react(NULL)
-        Workbook_file_predf_react(NULL)
-        Workbook_file_react(NULL)
-        PatientAnno_file_react(NULL)
-        PatientEvent_File_react(NULL)
-        
-        wkbk_raw_react(wkbk)
-        wkbk_react(wkbk)
-        wkbk_react_anno(wkbk)
-        wkbk_react_anno_sub(wkbk)
-        wkbk_react_sub(wkbk)
-        Clin_Supp_Cols_List <- lapply(wkbk,function(x){
-          return(colnames(x)[-1])
-        })
-        Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
-        pat_react(pat_anno)
-        event_data_raw(event_data_processed)
-        event_data_summ(event_data_processed)
-        event_data(event_data_processed)
-        param_data(event_params)
-        paramEvent <- event_params[which(!is.na(event_params[,3])),]
-        paramEvent_data(paramEvent)
-        
-        tabs_trigger(tabs_trigger()+1)
         
       })
       
@@ -6710,26 +6760,25 @@ server <- function(input, output, session) {
         event_data <- event_data()
         ref_event <- input$RefEventSelect
         GroupRefEventSelect <- input$GroupRefEventSelect
+        #save(list = ls(), file = "ref_event_df.RData", envir = environment())
         
         ref_event_data <- event_data[which(event_data$Event %in% ref_event),]
         if (GroupRefEventSelect) {
           ref_event_data2 <- ref_event_data %>%
             group_by(Name, EventType) %>%
-            slice_min(order_by = data.frame(EventStart,EventEnd)) %>%
-            select(Name,EventType,EventTab,EventStart,EventEnd) %>%
+            slice_min(order_by = EventStart) %>%
+            select(Name,Event,EventType,EventTab,EventStart) %>%
             unique() %>%
-            rename(EventStart_Ref = EventStart) %>%
-            rename(EventEnd_Ref = EventEnd) %>%
+            rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
             as.data.frame()
           ref_event_data2
         } else {
           ref_event_data2 <- ref_event_data %>%
             group_by(Name, Event) %>%
-            slice_min(order_by = data.frame(EventStart,EventEnd)) %>%
-            select(Name,Event,EventType,EventTab,EventStart,EventEnd) %>%
+            slice_min(order_by = EventStart) %>%
+            select(Name,Event,EventType,EventTab,EventStart) %>%
             unique() %>%
-            rename(EventStart_Ref = EventStart) %>%
-            rename(EventEnd_Ref = EventEnd) %>%
+            rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
             as.data.frame()
           ref_event_data2
         }
@@ -6737,7 +6786,7 @@ server <- function(input, output, session) {
       output$RefEventTableOut <- DT::renderDataTable({
         req(ref_event_df())
         df <- ref_event_df()
-        df[,c("EventStart_Ref","EventEnd_Ref")] <- apply(df[,c("EventStart_Ref","EventEnd_Ref")],2,formatC)
+        df[,"EventStart_Ref"] <- formatC(df[,"EventStart_Ref"])
         df[is.na(df)] <- "NA"
         DT::datatable(df,
                       extensions = 'Scroller',
@@ -6763,6 +6812,8 @@ server <- function(input, output, session) {
         event_data <- event_data()
         eoi_event <- input$EOIEventSelect
         andor <- input$EOIEventAndOr
+        AddAnnoWindow <- input$AddAnnoWindow
+        #save(list = ls(), file = "eoi_event_df.RData", envir = environment())
         
         eoi_event_data <- event_data[which(event_data$Event %in% eoi_event),]
         
@@ -6773,20 +6824,29 @@ server <- function(input, output, session) {
             filter(Event %in% eoi_event) %>%
             as.data.frame()
         }
-        eoi_event_data2 <- eoi_event_data %>%
-          group_by(Name) %>%
-          slice_min(order_by = data.frame(EventStart,EventEnd)) %>%
-          select(Name,EventStart,EventEnd)%>%
-          rename(EventStart_EOI = EventStart) %>%
-          rename(EventEnd_EOI = EventEnd) %>%
-          unique() %>%
-          as.data.frame()
+        if (AddAnnoWindow) {
+          eoi_event_data2 <- eoi_event_data %>%
+            group_by(Name) %>%
+            arrange(EventStart, .by_group = TRUE) %>%
+            select(Name,Event,EventStart) %>%
+            rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
+            unique() %>%
+            as.data.frame()
+        } else {
+          eoi_event_data2 <- eoi_event_data %>%
+            group_by(Name) %>%
+            slice_min(order_by = EventStart) %>%
+            select(Name,Event,EventStart) %>%
+            rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
+            unique() %>%
+            as.data.frame()
+        }
         eoi_event_data2
       })
       output$EOIEventTableOut <- DT::renderDataTable({
         req(eoi_event_df())
         df <- eoi_event_df()
-        df[,c("EventStart_EOI","EventEnd_EOI")] <- apply(df[,c("EventStart_EOI","EventEnd_EOI")],2,formatC)
+        df[,"EventStart_EOI"] <- formatC(df[,"EventStart_EOI"])
         df[is.na(df)] <- "NA"
         DT::datatable(df,
                       extensions = 'Scroller',
@@ -6829,59 +6889,87 @@ server <- function(input, output, session) {
             EOIEventColName <- "CustomEventOfInterest"
           }
           eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-          newcolname2 <- paste0(eoi_name,"_TimeDiff_RefEvent")
-          ref_eoi_event_data[,newcolname2] <- round(ref_eoi_event_data$EventStart_EOI-ref_eoi_event_data$EventStart_Ref,4)
+          
+          df_list <- list(ref_event_df)
+          newcolname2_b <- paste0(eoi_name,"_MinTimeDiffBefore_RefEvent")
+          newcolname_b <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore_RefEvent")
+          newcolname2_a <- paste0(eoi_name,"_MinTimeDiffAfter_RefEvent")
+          newcolname_a <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter_RefEvent")
+          
           if (!is.na(AddAnnoWindowNumBefore)) {
             if (AddAnnoWindowNumBefore > 0) {
-              newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore_RefEvent")
-              AddAnnoWindowNumBefore <- convert_time_units(AddAnnoWindowNumBefore,"days",GlobalAppTimeUnit)
-              ref_eoi_event_data$BeforeEventStart_RefWindow <- ref_eoi_event_data$EventStart_Ref - AddAnnoWindowNumBefore
-              ref_eoi_event_data <- ref_eoi_event_data %>%
-                mutate(!!sym(newcolname) := case_when(
-                  abs(!!sym(newcolname2)) <= AddAnnoWindowNumBefore & EventStart_EOI <= EventStart_Ref ~ TRUE,
-                  abs(!!sym(newcolname2)) >= AddAnnoWindowNumBefore | EventStart_EOI > EventStart_Ref ~ FALSE
+              ref_eoi_event_data_b <- ref_eoi_event_data[which(ref_eoi_event_data$EventStart_EOI < ref_eoi_event_data$EventStart_Ref),]
+              ref_eoi_event_data_b[,newcolname2_b] <- round(ref_eoi_event_data_b$EventStart_EOI-ref_eoi_event_data_b$EventStart_Ref,4)
+              AddAnnoWindowNumBefore_conv <- convert_time_units(AddAnnoWindowNumBefore,"days",GlobalAppTimeUnit)
+              ref_eoi_event_data_b2 <- ref_eoi_event_data_b %>%
+                group_by(Name) %>%
+                slice_min(order_by = abs(!!sym(newcolname2_b))) %>%
+                mutate(!!sym(newcolname_b) := case_when(
+                  abs(!!sym(newcolname2_b)) <= AddAnnoWindowNumBefore_conv ~ TRUE,
+                  abs(!!sym(newcolname2_b)) > AddAnnoWindowNumBefore_conv ~ FALSE
                 )) %>%
-                select(-BeforeEventStart_RefWindow) %>%
+                rename("Event_EOI_BeforeRef" = Event_EOI) %>%
+                rename("EventStart_EOI_BeforeRef" = EventStart_EOI) %>%
                 as.data.frame()
+              df_list[[2]] <- ref_eoi_event_data_b2
             }
           }
           if (!is.na(AddAnnoWindowNumAfter)) {
             if (AddAnnoWindowNumAfter > 0) {
-              newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter_RefEvent")
-              AddAnnoWindowNumAfter <- convert_time_units(AddAnnoWindowNumAfter,"days",GlobalAppTimeUnit)
-              ref_eoi_event_data$AfterEventStart_RefWindow <- ref_eoi_event_data$EventStart_Ref + AddAnnoWindowNumAfter
-              ref_eoi_event_data <- ref_eoi_event_data %>%
-                mutate(!!sym(newcolname) := case_when(
-                  abs(!!sym(newcolname2)) <= AddAnnoWindowNumAfter & EventStart_EOI >= EventStart_Ref ~ TRUE,
-                  abs(!!sym(newcolname2)) >= AddAnnoWindowNumAfter | EventStart_EOI < EventStart_Ref ~ FALSE
+              ref_eoi_event_data_a <- ref_eoi_event_data[which(ref_eoi_event_data$EventStart_EOI > ref_eoi_event_data$EventStart_Ref),]
+              ref_eoi_event_data_a[,newcolname2_a] <- round(ref_eoi_event_data_a$EventStart_EOI-ref_eoi_event_data_a$EventStart_Ref,4)
+              AddAnnoWindowNumAfter_conv <- convert_time_units(AddAnnoWindowNumAfter,"days",GlobalAppTimeUnit)
+              ref_eoi_event_data_a2 <- ref_eoi_event_data_a %>%
+                group_by(Name) %>%
+                slice_min(order_by = abs(!!sym(newcolname2_a))) %>%
+                mutate(!!sym(newcolname_a) := case_when(
+                  abs(!!sym(newcolname2_a)) <= AddAnnoWindowNumAfter_conv ~ TRUE,
+                  abs(!!sym(newcolname2_a)) > AddAnnoWindowNumAfter_conv ~ FALSE
                 )) %>%
-                select(-AfterEventStart_RefWindow) %>%
+                rename("Event_EOI_AfterRef" = Event_EOI) %>%
+                rename("EventStart_EOI_AfterRef" = EventStart_EOI) %>%
                 as.data.frame()
+              df_list[[3]] <- ref_eoi_event_data_a2
             }
           }
-          ref_eoi_event_data
+          if (length(df_list) > 1) {
+            ref_eoi_event_data <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),df_list)
+            ref_eoi_event_data <- ref_eoi_event_data %>%
+              relocate(any_of(c("Event_EOI_AfterRef",newcolname_a)), .after = EventStart_Ref) %>%
+              relocate(any_of(c("Event_EOI_BeforeRef",newcolname_b)), .after = EventStart_Ref) %>%
+              as.data.frame()
+            ref_eoi_event_data
+          } else {
+            ref_eoi_event_data
+          }
         } else {
           if (!isTruthy(EOIEventColName)) {
             EOIEventColName <- "CustomEventOfInterest"
           }
           eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-          newcolname <- paste0("RelativeTo_",eoi_name)
-          newcolname2 <- paste0(newcolname,"_TimeDiff")
+          newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
+          newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
           newcolname3 <- paste0(newcolname,"_EventPresent")
           ref_eoi_event_data2 <- ref_eoi_event_data %>%
             mutate(!!sym(newcolname) := case_when(
-              EventStart_Ref >= EventStart_EOI & EventStart_Ref <= EventEnd_EOI ~ "During",
-              EventStart_Ref < EventStart_EOI & EventEnd_Ref < EventStart_EOI ~ "Before",
-              EventStart_Ref > EventStart_EOI & EventStart_Ref > EventEnd_EOI ~ "After",
-              EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventStart_EOI ~ "Before&During",
-              EventStart_Ref > EventStart_EOI & EventStart_Ref < EventEnd_EOI & EventEnd_Ref > EventEnd_EOI ~ "During&After",
-              EventStart_Ref < EventStart_EOI & EventEnd_Ref > EventEnd_EOI ~ "Before&During&After"
+              # EOIS REFS
+              EventStart_EOI < EventStart_Ref ~ "Before",
+              # REFS EOIS
+              EventStart_EOI > EventStart_Ref ~ "After",
+              ## EOIS EOIE REFS REFE
+              #EventStart_EOI < EventStart_Ref & EventEnd_EOI < EventStart_Ref ~ "Before",
+              ## REFS EOIS EOIE REFE
+              #EventStart_EOI >= EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI <= EventEnd_Ref ~ "During",
+              ## REFS REFE EOIS EOIE
+              #EventStart_EOI > EventEnd_Ref ~ "After",
+              ## EOIS REFS EOIE REFE
+              #EventStart_EOI < EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI < EventEnd_Ref ~ "Before&During",
+              ## REFS EOIS REFE EOIE
+              #EventStart_EOI > EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI > EventEnd_Ref ~ "During&After",
+              ## EOIS REFS REFE EOIE
+              #EventStart_EOI < EventStart_Ref & EventEnd_EOI > EventEnd_Ref ~ "Before&During&After"
             )) %>%
-            mutate(!!sym(newcolname2) := case_when(
-              !!sym(newcolname) == "Before" ~ round(EventStart_Ref-EventStart_EOI,4),
-              !!sym(newcolname) == "After" ~ round(EventStart_Ref-EventEnd_EOI,4),
-              !!sym(newcolname) != "Before" & !!sym(newcolname) != "After" ~ 0
-            )) %>%
+            mutate(!!sym(newcolname2) := round(EventStart_EOI-EventStart_Ref,4)) %>%
             mutate(!!sym(newcolname3) := ifelse(is.na(!!sym(newcolname)),as.character(FALSE),as.character(TRUE))) %>%
             as.data.frame()
           ref_eoi_event_data2
@@ -6896,7 +6984,14 @@ server <- function(input, output, session) {
         req(ref_eoi_merge_df())
         df <- ref_eoi_merge_df()
         AddAnnoWindow <- input$AddAnnoWindow
-        df[,c("EventStart_Ref","EventEnd_Ref","EventStart_EOI","EventEnd_EOI")] <- apply(df[,c("EventStart_Ref","EventEnd_Ref","EventStart_EOI","EventEnd_EOI")],2,formatC)
+        df <- as.data.frame(sapply(df, function(x) {
+          if (is.numeric(x)) {
+            return(formatC(x))
+          } else {
+            x[is.na(x)] <- "NA"
+            return(x)
+          }
+        }))
         if (!AddAnnoWindow) {
           req(input$EOIEventSelect)
           EOIEventSelect <- input$EOIEventSelect
@@ -6906,19 +7001,14 @@ server <- function(input, output, session) {
             EOIEventColName <- "CustomEventOfInterest"
           }
           eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-          newcolname <- paste0("RelativeTo_",eoi_name)
-          newcolname2 <- paste0(newcolname,"_TimeDiff")
-          newcolname3 <- paste0(newcolname,"_EventPresent")
-          colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
-          colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
-          colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
         }
-        df[is.na(df)] <- "NA"
         DT::datatable(df,
-                      extensions = 'Scroller',
+                      extensions = c('Scroller','ColReorder'),
                       options = list(lengthMenu = c(5,10,25,50,100, 1000),
-                                     pageLength = 10,
-                                     scrollX = T),
+                                     pageLength = 5,
+                                     scrollX = T,
+                                     target = "cell",
+                                     colReorder = TRUE),
                       rownames = F
         )
       })
@@ -6939,16 +7029,21 @@ server <- function(input, output, session) {
               EOIEventColName <- "CustomEventOfInterest"
             }
             eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-            newcolname <- paste0("RelativeTo_",eoi_name)
-            newcolname2 <- paste0(newcolname,"_TimeDiff")
-            newcolname3 <- paste0(newcolname,"_EventPresent")
-            colnames(df)[which(colnames(df) == newcolname)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname)])
-            colnames(df)[which(colnames(df) == newcolname2)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname2)])
-            colnames(df)[which(colnames(df) == newcolname3)] <- paste0("RefEvent_",colnames(df)[which(colnames(df) == newcolname3)])
           }
           write.table(df,file, sep = '\t', row.names = F)
         }
       )
+      
+      output$rend_anno_log <- renderUI({
+        if (length(log_history()) == 0) return(NULL)
+        tagList(
+          tags$h4("Annotation Log"),
+          wellPanel(
+            style = "max-height: 300px; overflow-y: auto; border: 1px solid #ccc;",
+            uiOutput("annotation_log")
+          )
+        )
+      })
       
       log_history <- reactiveVal(list())
       
@@ -6976,30 +7071,33 @@ server <- function(input, output, session) {
         if (AddAnnoWindow) {
           newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore")
           newcolname2 <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter")
-          newcolname3 <- paste0(eoi_name,"_TimeDiff")
+          newcolname3 <- paste0(eoi_name,"_MinTimeDiffBefore")
+          newcolname4 <- paste0(eoi_name,"_MinTimeDiffAfter")
           colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname,"_RefEvent"))] <- newcolname
           colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname2,"_RefEvent"))] <- newcolname2
           colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname3,"_RefEvent"))] <- newcolname3
-          name_glue_grp <- "{.value}_{EventType}"
-          name_glue_solo <- "{.value}_{Event}"
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname4,"_RefEvent"))] <- newcolname4
+          name_glue_grp <- "{.value}_{EventType_Ref}"
+          name_glue_solo <- "{.value}_{Event_Ref}"
         } else {
-          newcolname <- paste0("RelativeTo_",eoi_name)
-          newcolname2 <- paste0(newcolname,"_TimeDiff")
+          newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
+          newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
           newcolname3 <- paste0(newcolname,"_EventPresent")
-          name_glue_grp <- "{EventType}_{.value}"
-          name_glue_solo <- "{Event}_{.value}"
+          newcolname4 <- NULL
+          name_glue_grp <- "{EventType_Ref}_{.value}"
+          name_glue_solo <- "{Event_Ref}_{.value}"
         }
         
         # this may cause issues
-        ref_eoi_event_data2$EventTab[which(is.na(ref_eoi_event_data2$EventTab))] <- "InputData"
+        ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
         
         if (GroupRefEventSelect) {
-          updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab), function(tab) {
-            df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
+          updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab_Ref), function(tab) {
+            df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab_Ref == tab),]
             df_sub2 <- df_sub %>%
               pivot_wider(id_cols = Name,
-                          names_from = EventType,
-                          values_from = any_of(c(newcolname,newcolname2,newcolname3)),
+                          names_from = EventType_Ref,
+                          values_from = any_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
                           names_glue = name_glue_grp
               )
             wkbk_df <- wkbk[[tab]]
@@ -7007,7 +7105,7 @@ server <- function(input, output, session) {
             wkbk_df_anno <- merge(wkbk_df,df_sub2,all.x = T)
             return(wkbk_df_anno)
           })
-          names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab)
+          names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab_Ref)
           wkbk_edit <- lapply(names(wkbk),function(df_name) {
             if (df_name %in% names(updated_dfs)) {
               return(updated_dfs[[df_name]])
@@ -7022,12 +7120,11 @@ server <- function(input, output, session) {
             df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
             updated_dfs_et <- do.call(rbind,lapply(unique(df_sub$EventType), function(event_type) {
               df_sub_et <- df_sub[which(df_sub$EventType == event_type),]
-              df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3))]
-              #df_sub_et2 <- df_sub_et[,c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3)]
+              df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3,newcolname4))]
               df_sub_et3 <- df_sub_et2 %>%
                 pivot_wider(id_cols = Name,
                             names_from = Event,
-                            values_from = all_of(c(newcolname,newcolname2,newcolname3)),
+                            values_from = all_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
                             names_glue = name_glue_solo
                 )
               return(df_sub_et3)
@@ -7050,46 +7147,53 @@ server <- function(input, output, session) {
         }
         
         event_tabs <- unique(ref_eoi_event_data2$EventTab)
-        event_tabs <- ifelse(length(event_tabs) == 1,paste0(event_tabs," data table "),paste0("The data tables of ",paste0(event_tabs,collapse = ", "," ")))
+        event_tabs <- ifelse(length(event_tabs) == 1,paste0("<b>",event_tabs,"</b> data table "),paste0("The data tables of <b>",paste0(event_tabs,collapse = ", ","</b> ")))
+        event_types_uniq <- unique(ref_eoi_event_data2$EventType)
+        if (length(event_types_uniq) > 1) {
+          event_types <- paste0(unique(ref_eoi_event_data2$EventType),collapse = ", ")
+          event_type_text <- paste0("<b>Reference Events:</b> ",event_types)
+        } else {
+          event_type_text <- paste0("<b>Reference Event:</b> ",event_types_uniq)
+        }
+        if (length(EOIEventSelect) > 1) {
+          eoi_text <- paste0("<b>Events of Interest:</b> ",eoi_name)
+        } else {
+          eoi_text <- paste0("<b>Event of Interest:</b> ",eoi_name)
+        }
+        eventTab_text <- paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
         
-        
-        # Simulated values (replace with real reactive values or inputs)
-        #event_tabs <- "Ref_Event_Table1"
-        #ref_type <- "Treatment Start"
-        #eoi <- "Adverse Event"
-        
-        #save(list = ls(), file = "save_anno_log.RData", envir = environment())
-        #
-        # Construct message
         if (AddAnnoWindow) {
           # Build window-related message
           if (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0) {
             new_entry <- tagList(
-              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+              tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
               tags$ul(
-                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event")),
-                tags$li("The time difference between the two events")
+                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
+                tags$li("The minimum time difference between the EOI start before and after the reference event start")
               ),
               tags$hr()
             )
           }
           if (!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) {
             new_entry <- tagList(
-              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+              tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
               tags$ul(
-                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event")),
-                tags$li("The time difference between the two events")
+                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
+                tags$li("The minimum time difference between the EOI start before and after the reference event start")
               ),
               tags$hr()
             )
           }
           if ((!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) && (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0)) {
             new_entry <- tagList(
-              tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+              tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+              tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
               tags$ul(
-                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event")),
-                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event")),
-                tags$li("The time difference between the two events")
+                tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
+                tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
+                tags$li("The minimum time difference between the EOI start before and after the reference event start")
               ),
               tags$hr()
             )
@@ -7097,9 +7201,10 @@ server <- function(input, output, session) {
         } else {
           # Simpler before/during/after logic
           new_entry <- tagList(
-            tags$p(paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI):")),
+            tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
+            tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
             tags$ul(
-              tags$li("Before, after, or during the reference event"),
+              tags$li("If the EOI start occured before or after the reference event start"),
               tags$li("The time difference between the two events"),
               tags$li("A TRUE or FALSE statement if the EOI occurred or did not occur")
             ),
@@ -7110,6 +7215,8 @@ server <- function(input, output, session) {
         # Append to history
         current_log <- log_history()
         log_history(append(list(new_entry),current_log))
+        
+        showNotification("Event Annotation Saved!", type = "message")
         
         
       }, ignoreInit = TRUE)
