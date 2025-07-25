@@ -3691,10 +3691,10 @@ server <- function(input, output, session) {
         #save(list = ls(), file = "PatientTimelinePlot_df.RData", envir = environment())
         if (length(EventsToHighlight) > 0) {
           Patient_Event_Data_sub$highlight <- ifelse(Patient_Event_Data_sub$Event_Age %in% EventsToHighlight,TRUE,FALSE)
-          Patient_Event_Data_sub <- Patient_Event_Data_sub %>%
-            select(-Age_Comb,-Event_Age) %>%
-            as.data.frame()
         }
+        Patient_Event_Data_sub <- Patient_Event_Data_sub %>%
+          select(-any_of(c("Age_Comb","Event_Age"))) %>%
+          as.data.frame()
         Patient_Event_Data_sub
       })
       
