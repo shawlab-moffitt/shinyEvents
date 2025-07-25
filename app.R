@@ -5402,6 +5402,7 @@ server <- function(input, output, session) {
         treat_resp_df <- unique(event_data_key[,c("Event","EventType")])
         treat_resp_choices_full <- unique(grep("^Full ",treat_resp_df$EventType,value = T))
         treat_resp_choices_full <- grep(" Summary$",treat_resp_choices_full,value = T)
+        treat_resp_choices_full <- paste0(treat_resp_choices_full," ")
         treat_resp_choices_full_all <- grep(paste0(treat_resp_choices_full,collapse = "|"),treat_resp_df$EventType,value = T)
         treat_resp_df <- treat_resp_df[which(!treat_resp_df$EventType %in% treat_resp_choices_full_all),]
         treat_resp_choices <- split(treat_resp_df[,"Event"], treat_resp_df[,"EventType"])
@@ -6755,6 +6756,7 @@ server <- function(input, output, session) {
         event_anno_df <- unique(event_data_key[,c("Event","EventType")])
         event_anno_choices_full <- unique(grep("^Full ",event_anno_df$EventType,value = T))
         event_anno_choices_full <- grep(" Summary$",event_anno_choices_full,value = T)
+        treat_resp_choices_full <- paste0(treat_resp_choices_full," ")
         event_anno_choices_full_all <- grep(paste0(event_anno_choices_full,collapse = "|"),event_anno_df$EventType,value = T)
         event_anno_df <- event_anno_df[which(!event_anno_df$EventType %in% event_anno_choices_full_all),]
         
