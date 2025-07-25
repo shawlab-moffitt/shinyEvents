@@ -32,7 +32,6 @@ PasswordSet <- ''
 
 
 
-
 # app.R processing - DO NOT EDIT ###############################################
 
 app_lite <- FALSE
@@ -223,7 +222,7 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                                  #)
                                 )#,
                                 #actionButton("SuppDataHelp","Supplementary data input formatting", icon = icon("circle-question"), width = "100%",
-                                 #            style = "background-color: #2c3e50; border-color: #2c3e50"),
+                                #            style = "background-color: #2c3e50; border-color: #2c3e50"),
                                 #actionButton("LoadExSuppData","Load Example Supplementary Data"),
                ),
                p(),
@@ -535,14 +534,14 @@ PatientLevel_tab_contents <- sidebarLayout(
                h4("Patient Selection"),
                div(DT::dataTableOutput("PatientSelectionTab"), style = "font-size:10px"),
                p(),
-               fluidRow(
-                 column(6,
-                        checkboxInput("RemoveUnknownNA","Remove Unknown/NA",value = T)
-                 ),
-                 column(6,
-                        downloadButton("dnldCohortEventTab","Cohort Event Table")
-                 )
-               )
+               #fluidRow(
+               #  column(6,
+               #         checkboxInput("RemoveUnknownNA","Remove Unknown/NA",value = T)
+               #  ),
+               #  column(6,
+               downloadButton("dnldCohortEventTab","Cohort Event Table")
+               #  )
+               #)
       ),
       tabPanel("Figure Settings",
                p(),
@@ -2194,8 +2193,8 @@ server <- function(input, output, session) {
       
       
       observeEvent(process_input_react(), {
-      #observeEvent(input$TreatWarn, {
-      #observeEvent(input$ProcessInputData, {
+        #observeEvent(input$TreatWarn, {
+        #observeEvent(input$ProcessInputData, {
         if (process_input_react()) {
           req(eventDataInput_raw())
           req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
@@ -3589,9 +3588,11 @@ server <- function(input, output, session) {
       observe({
         wkbk <- pat_wkbk_react_sub()
         pat_event_data <- patient_event_data_single()
+        pat_event_data_help <- patient_event_data_helper()
         hoverCols <- input$SwimmerHoverSelect
         swimmer_hover_opts <- swimmer_hover_opts()
         param <- param_data()
+        event_data_key <- event_data_key()
         #save(list = ls(), file = "event_data_single_patient_hover.RData", envir = environment())
       })
       
@@ -3599,31 +3600,28 @@ server <- function(input, output, session) {
         req(pat_wkbk_react_sub())
         req(patient_event_data_helper())
         req(swimmer_hover_opts())
+        req(event_data_key())
+        req(param_data())
         
         wkbk <- pat_wkbk_react_sub()
         pat_event_data <- patient_event_data_helper()
         hoverCols <- input$SwimmerHoverSelect
         swimmer_hover_opts <- swimmer_hover_opts()
+        event_data_key <- event_data_key()
+        param <- param_data()
         
         Patient_Event_Data_sub <- pat_event_data
         event_order <- Patient_Event_Data_sub
         
-        req(param_data())
-        Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
-        Patient_Table_df <- Patient_Table_React()
-        Patient <- Patient_Table_df[Patient_Row_Selec,1]
-        wkbk <- wkbk_react_sub()
         param <- param_data()
         if (nrow(Patient_Event_Data_sub) > 0) {
           if (isTruthy(hoverCols)) {
             for (col in hoverCols) {
               
               colAnno_dfName <- strsplit(col,": ")[[1]][1]
-              colAnno <- strsplit(col,": ")[[1]][2]
+              colAnno <- paste0(strsplit(col,": ")[[1]][-1],collapse = ": ")
               
               anno_df <- wkbk[[colAnno_dfName]]
-              #anno_df <- wkbk[[grep(colAnno_dfName,names(wkbk),ignore.case = T)]]
-              anno_df <- anno_df[which(anno_df[,1] == Patient),]
               startCol <- param[which(param[,1] == colAnno_dfName),6]
               startCol <- startCol[!is.na(startCol)]
               stopCol <- param[which(param[,1] == colAnno_dfName),7]
@@ -3641,11 +3639,14 @@ server <- function(input, output, session) {
                     temp_df <- anno_df %>%
                       select(any_of(c(colnames(anno_df)[1],startCol[timeCol],stopCol[timeCol],colAnno))) %>%
                       unique() %>%
-                      mutate(EventTab = EventTab) %>%
+                      #mutate(EventTab = EventTab) %>%
                       rename(any_of(c(EventStart = startCol[timeCol], EventEnd = stopCol[timeCol], Name = colnames(anno_df)[1]))) %>%
                       as.data.frame()
-                    if (!"EventEnd" %in% colnames(temp_df) & "EventStart" %in% colnames(temp_df)) {
-                      temp_df[,"EventEnd"] <- temp_df[,"EventStart"]
+                    if ("EventStart" %in% colnames(temp_df)) {
+                      if (!"EventEnd" %in% colnames(temp_df)) {
+                        temp_df[,"EventEnd"] <- temp_df[,"EventStart"]
+                      }
+                      temp_df[which(is.na(temp_df[,"EventEnd"])),"EventEnd"] <- temp_df[which(is.na(temp_df[,"EventEnd"])),"EventStart"]
                     }
                     Patient_Event_Data_sub <- merge(Patient_Event_Data_sub,temp_df, all.x = T, sort = F)
                   } else {
@@ -3653,12 +3654,16 @@ server <- function(input, output, session) {
                     temp_df <- anno_df %>%
                       select(any_of(c(colnames(anno_df)[1],startCol[timeCol],stopCol[timeCol],colAnno))) %>%
                       unique() %>%
-                      mutate(EventTab = EventTab) %>%
+                      #mutate(EventTab = EventTab) %>%
                       rename(any_of(c(EventStart = startCol[timeCol], EventEnd = stopCol[timeCol], Name = colnames(anno_df)[1]))) %>%
                       as.data.frame()
+                    # This catches that the annotation is not event specific
                     if (nrow(temp_df) > 1) {
-                      if (!"EventEnd" %in% colnames(temp_df) & "EventStart" %in% colnames(temp_df)) {
-                        temp_df[,"EventEnd"] <- temp_df[,"EventStart"]
+                      if ("EventStart" %in% colnames(temp_df)) {
+                        if (!"EventEnd" %in% colnames(temp_df)) {
+                          temp_df[,"EventEnd"] <- temp_df[,"EventStart"]
+                        }
+                        temp_df[which(is.na(temp_df[,"EventEnd"])),"EventEnd"] <- temp_df[which(is.na(temp_df[,"EventEnd"])),"EventStart"]
                       }
                       Patient_Event_Data_sub <- merge(Patient_Event_Data_sub,temp_df, all.x = T, sort = F)
                     } else {
@@ -3724,7 +3729,8 @@ server <- function(input, output, session) {
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           if (Patient %in% Patient_Table_df[,1]) {
-            RemoveUnkNA_opt <- input$RemoveUnknownNA
+            #RemoveUnkNA_opt <- input$RemoveUnknownNA
+            RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
             SwimmerTheme <- input$TimeLineTheme
             TitleFont <- input$TimeLineTitleSize
@@ -4011,7 +4017,8 @@ server <- function(input, output, session) {
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           if (Patient %in% Patient_Table_df[,1]) {
-            RemoveUnkNA_opt <- input$RemoveUnknownNA
+            #RemoveUnkNA_opt <- input$RemoveUnknownNA
+            RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
             SwimmerTheme <- input$TimeLineTheme
             TitleFont <- input$TimeLineTitleSize
@@ -4304,11 +4311,17 @@ server <- function(input, output, session) {
       
       # Clustering -------------------------------------------------------------
       ## Sankey ----------------------------------------------------------------
-      
+      observe({
+        event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
+        #save(list = ls(), file = "event_data_tr_clusters_clean.RData",envir = environment())
+      })
       observeEvent(event_data_tr_clusters_clean(),{
         req(event_data_tr_clusters_clean())
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
         sankey_event_choices <- unique(event_data_tr_clusters_clean$EventType)
+        sankey_event_choices_full <- grep("^Full ",sankey_event_choices,value = T)
+        sankey_event_choices_full <- grep(" Summary$",sankey_event_choices_full,value = T)
+        sankey_event_choices <- sankey_event_choices[which(!sankey_event_choices %in% sankey_event_choices_full)]
         sankey_event_select <- ifelse(any(grepl("cluster",sankey_event_choices, ignore.case = T)),
                                       grep("cluster",sankey_event_choices,value = T, ignore.case = T)[1],
                                       sankey_event_choices[1])
@@ -5387,6 +5400,10 @@ server <- function(input, output, session) {
         event_data_key <- event_data_key()
         
         treat_resp_df <- unique(event_data_key[,c("Event","EventType")])
+        treat_resp_choices_full <- unique(grep("^Full ",treat_resp_df$EventType,value = T))
+        treat_resp_choices_full <- grep(" Summary$",treat_resp_choices_full,value = T)
+        treat_resp_choices_full_all <- grep(paste0(treat_resp_choices_full,collapse = "|"),treat_resp_df$EventType,value = T)
+        treat_resp_df <- treat_resp_df[which(!treat_resp_df$EventType %in% treat_resp_choices_full_all),]
         treat_resp_choices <- split(treat_resp_df[,"Event"], treat_resp_df[,"EventType"])
         treat_resp_choices_cls <- treat_resp_choices[grep("Cluster Line",names(treat_resp_choices))]
         treat_resp_choices_summ_names <- grep("Summary",names(treat_resp_choices), value = T)
@@ -5394,6 +5411,8 @@ server <- function(input, output, session) {
         treat_resp_choices_summ <- treat_resp_choices[treat_resp_choices_summ_names]
         treat_resp_choices <- c(treat_resp_choices[grep("Summary|Cluster",names(treat_resp_choices),invert = T)],
                                 treat_resp_choices_summ,treat_resp_choices_cls)
+        
+        #save(list = ls(), file = "tte_choices.RData", envir = environment())
         
         
         start_terms <- c("medication","drug","treatment","diagnosis")
@@ -6732,6 +6751,13 @@ server <- function(input, output, session) {
         req(event_data_key())
         event_data_key <- event_data_key()
         event_anno_df <- unique(event_data_key[,c("Event","EventType")])
+        
+        event_anno_df <- unique(event_data_key[,c("Event","EventType")])
+        event_anno_choices_full <- unique(grep("^Full ",event_anno_df$EventType,value = T))
+        event_anno_choices_full <- grep(" Summary$",event_anno_choices_full,value = T)
+        event_anno_choices_full_all <- grep(paste0(event_anno_choices_full,collapse = "|"),event_anno_df$EventType,value = T)
+        event_anno_df <- event_anno_df[which(!event_anno_df$EventType %in% event_anno_choices_full_all),]
+        
         event_anno_choices <- split(event_anno_df[,"Event"], event_anno_df[,"EventType"])
         event_anno_choices_cls <- event_anno_choices[grep("Cluster Line",names(event_anno_choices))]
         event_anno_choices_summ_names <- grep("Summary",names(event_anno_choices), value = T)
