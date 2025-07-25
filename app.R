@@ -3999,9 +3999,9 @@ server <- function(input, output, session) {
         req(event_data_tr_clusters_clean())
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
         sankey_event_choices <- unique(event_data_tr_clusters_clean$EventType)
-        sankey_event_choices_full <- grep("^Full ",sankey_event_choices,value = T)
-        sankey_event_choices_full <- grep(" Summary$",sankey_event_choices_full,value = T)
-        sankey_event_choices <- sankey_event_choices[which(!sankey_event_choices %in% sankey_event_choices_full)]
+        #sankey_event_choices_full <- grep("^Full ",sankey_event_choices,value = T)
+        #sankey_event_choices_full <- grep(" Summary$",sankey_event_choices_full,value = T)
+        #sankey_event_choices <- sankey_event_choices[which(!sankey_event_choices %in% sankey_event_choices_full)]
         sankey_event_select <- ifelse(any(grepl("cluster",sankey_event_choices, ignore.case = T)),
                                       grep("cluster",sankey_event_choices,value = T, ignore.case = T)[1],
                                       sankey_event_choices[1])
