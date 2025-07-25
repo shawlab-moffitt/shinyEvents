@@ -2888,6 +2888,7 @@ server <- function(input, output, session) {
                     # remove comma's with space from original test, to differentiate from edited version
                     check_splt_tocollapse <- gsub(", ",",",check_splt[-headers])
                     new_col <- trimws(paste0(check_splt_tocollapse, collapse = ", "))
+                    new_col <- paste0(check_splt[headers],": ",new_col)
                   }
                 } else {
                   check_splt_tocollapse <- gsub(", ",",",check_splt)
@@ -4053,6 +4054,9 @@ server <- function(input, output, session) {
         sankey_event <- input$sankeyEvent
         SankeyXgroups <- input$sankeyXaxis
         sankey_clusters_cast <- sankey_clusters_cast()
+        
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.25, detail = "Formatting Sankey Data")
         sankey_clusters_cast_sub <- sankey_clusters_cast[,c(colnames(sankey_clusters_cast)[1],SankeyXgroups)]
         if (cat_NA) {
           sankey_clusters_cast_sub[is.na(sankey_clusters_cast_sub)] <- "NA"
@@ -4071,13 +4075,17 @@ server <- function(input, output, session) {
           as.data.frame()
         sankey_clusters_cast_sub_plot$x <- factor(sankey_clusters_cast_sub_plot$x, levels = SankeyXgroups)
         sankey_clusters_cast_sub_plot$next_x <- factor(sankey_clusters_cast_sub_plot$next_x, levels = SankeyXgroups)
+        incProgress(0.25, detail = "Tallying Groups")
         sankey_clusters_cast_sub_plot_n <- sankey_clusters_cast_sub_plot %>%
           group_by(across(all_of(c("x", "node")))) %>%
           tally() %>%
           as.data.frame()
+        incProgress(0.25, detail = "Merging")
         sankey_clusters_cast_sub_plot2 <- merge(sankey_clusters_cast_sub_plot,
                                                 sankey_clusters_cast_sub_plot_n,
                                                 all.x = TRUE)
+        incProgress(0.25, detail = "Complete!")
+        })
         sankey_clusters_cast_sub_plot2
         
       })
@@ -4086,32 +4094,36 @@ server <- function(input, output, session) {
         req(sankeyEvent_df_react())
         event_data_clusters_sub_wid_plot2 <- sankeyEvent_df_react()
         if (sum(is.na(event_data_clusters_sub_wid_plot2$x))!=nrow(event_data_clusters_sub_wid_plot2)) {
-          pl <- ggplot(event_data_clusters_sub_wid_plot2, aes(x = x,
-                                                              next_x = next_x,
-                                                              node = node,
-                                                              next_node = next_node,
-                                                              fill = factor(node),
-                                                              label = paste0(node, " = ", n))) +
-            theme_minimal()
-          pl <- pl + geom_sankey(flow.alpha = 0.5,          # This Creates the transparency of your node
-                                 node.color = "black",      # This is your node color
-                                 show.legend = FALSE)       # This determines if you want your legend to show
-          pl <- pl + geom_sankey_label(size = 4,
-                                       color = "black",
-                                       fill = NA,
-                                       hjust = 0,
-                                       position = position_nudge(x = 0.05),
-                                       label.size = NA
-          )
-          pl <- pl + theme(legend.position = 'none',
-                           axis.title = element_blank(),
-                           axis.text.y = element_blank(),
-                           axis.text.x = element_text(size = 12),
-                           axis.ticks = element_blank(),
-                           panel.grid.major.y = element_blank(),
-                           plot.margin = unit(c(0, 0, 0.5, 0.5),
-                                              "inches")) +
-            scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.5, detail = "Generating Sankey Plot")
+            pl <- ggplot(event_data_clusters_sub_wid_plot2, aes(x = x,
+                                                                next_x = next_x,
+                                                                node = node,
+                                                                next_node = next_node,
+                                                                fill = factor(node),
+                                                                label = paste0(node, " = ", n))) +
+              theme_minimal()
+            pl <- pl + geom_sankey(flow.alpha = 0.5,          # This Creates the transparency of your node
+                                   node.color = "black",      # This is your node color
+                                   show.legend = FALSE)       # This determines if you want your legend to show
+            pl <- pl + geom_sankey_label(size = 4,
+                                         color = "black",
+                                         fill = NA,
+                                         hjust = 0,
+                                         position = position_nudge(x = 0.05),
+                                         label.size = NA
+            )
+            pl <- pl + theme(legend.position = 'none',
+                             axis.title = element_blank(),
+                             axis.text.y = element_blank(),
+                             axis.text.x = element_text(size = 12),
+                             axis.ticks = element_blank(),
+                             panel.grid.major.y = element_blank(),
+                             plot.margin = unit(c(0, 0, 0.5, 0.5),
+                                                "inches")) +
+              scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
+            incProgress(0.5, detail = "Complete!")
+          })
           pl
         }
       })
@@ -4210,30 +4222,36 @@ server <- function(input, output, session) {
         HeatFlip <- input$HeatFlip
         event_data_key <- event_data_key()
         if (EventSum %in% cluster_df$EventType) {
-          cluster_df_event <- cluster_df %>%
-            filter(EventType == EventSum) %>%
-            separate_rows(EventSummary, sep = ", ") %>%
-            mutate(Event = EventSummary) %>%
-            rename("EventStart_Cluster" = EventStart) %>%
-            rename("EventEnd_Cluster" = EventEnd) %>%
-            select(Name,Event,Treatment_Line_Cluster,EventStart_Cluster,EventEnd_Cluster)
-          cluster_event_df <- cluster_df_event
-          if (heat_view == "Clusters") {
-            cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Treatment_Line_Cluster,
-                                                     fun.aggregate = length, value.var = "EventEnd_Cluster")
-          } else {
-            cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Name,
-                                                     fun.aggregate = length, value.var = "EventEnd_Cluster")
-          }
-          rownames(cluster_event_df_cast) <- cluster_event_df_cast[,1]
-          cluster_event_df_cast_mat <- as.matrix(cluster_event_df_cast[,-1])
-          rownames(cluster_event_df_cast_mat) <- rownames(cluster_event_df_cast)
-          colnames(cluster_event_df_cast_mat) <- colnames(cluster_event_df_cast)[-1]
-          columns_ordered <- stringr::str_sort(colnames(cluster_event_df_cast_mat), numeric = T)
-          cluster_event_df_cast_mat <- cluster_event_df_cast_mat[,columns_ordered, drop = F]
-          if (HeatFlip) {
-            cluster_event_df_cast_mat <- as.matrix(t(cluster_event_df_cast_mat))
-          }
+          
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.4, detail = "Parsing Event Clusters")
+            cluster_df_event <- cluster_df %>%
+              filter(EventType == EventSum) %>%
+              separate_rows(EventSummary, sep = ", ") %>%
+              mutate(Event = EventSummary) %>%
+              rename("EventStart_Cluster" = EventStart) %>%
+              rename("EventEnd_Cluster" = EventEnd) %>%
+              select(Name,Event,Treatment_Line_Cluster,EventStart_Cluster,EventEnd_Cluster)
+            cluster_event_df <- cluster_df_event
+            incProgress(0.3, detail = "Formatting Matrix")
+            if (heat_view == "Clusters") {
+              cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Treatment_Line_Cluster,
+                                                       fun.aggregate = length, value.var = "EventEnd_Cluster")
+            } else {
+              cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Name,
+                                                       fun.aggregate = length, value.var = "EventEnd_Cluster")
+            }
+            rownames(cluster_event_df_cast) <- cluster_event_df_cast[,1]
+            cluster_event_df_cast_mat <- as.matrix(cluster_event_df_cast[,-1])
+            rownames(cluster_event_df_cast_mat) <- rownames(cluster_event_df_cast)
+            colnames(cluster_event_df_cast_mat) <- colnames(cluster_event_df_cast)[-1]
+            columns_ordered <- stringr::str_sort(colnames(cluster_event_df_cast_mat), numeric = T)
+            cluster_event_df_cast_mat <- cluster_event_df_cast_mat[,columns_ordered, drop = F]
+            if (HeatFlip) {
+              cluster_event_df_cast_mat <- as.matrix(t(cluster_event_df_cast_mat))
+            }
+            incProgress(0.3, detail = "Complete!")
+            })
           TreatClusterHeatmapdf_EventCount(cluster_event_df_cast_mat)
           if (heat_view == "Patients") {
             cluster_event_df_cast_mat[which(cluster_event_df_cast_mat > 0)] <- 1
@@ -4278,38 +4296,44 @@ server <- function(input, output, session) {
               }
             }
             if (all(areColors(c(color_lo, color_hi)))) {
-              if (heat_view == "Patients") {
-                col_fun = structure(c(color_lo,color_hi), names = c("0", "1"))
-                legendParam <- list(title = "Event (Yes-1/No-0)",
-                                    title_gp = gpar(fontsize = 12, fontface = 'bold'),
-                                    labels_gp = gpar(fontsize = 12))
-              } else {
-                if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
-                  col_fun = structure(c(color_lo,color_hi), names = c("0", as.character(max(plot_df, na.rm = T))))
-                  legendParam <- list(title = "Number of Events",
+              
+              withProgress(message = "Processing", value = 0, {
+                incProgress(0.3, detail = "Building Heatmap Legends")
+                if (heat_view == "Patients") {
+                  col_fun = structure(c(color_lo,color_hi), names = c("0", "1"))
+                  legendParam <- list(title = "Event (Yes-1/No-0)",
                                       title_gp = gpar(fontsize = 12, fontface = 'bold'),
                                       labels_gp = gpar(fontsize = 12))
                 } else {
-                  col_fun = colorRamp2(seq(min(plot_df, na.rm = T), max(plot_df, na.rm = T), length = 2),
-                                       colors = c(color_lo,color_hi))
-                  legendParam <- list(title = "Number of Events",
-                                      title_gp = gpar(fontsize = 12, fontface = 'bold'),
-                                      labels_gp = gpar(fontsize = 12))
+                  if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
+                    col_fun = structure(c(color_lo,color_hi), names = c("0", as.character(max(plot_df, na.rm = T))))
+                    legendParam <- list(title = "Number of Events",
+                                        title_gp = gpar(fontsize = 12, fontface = 'bold'),
+                                        labels_gp = gpar(fontsize = 12))
+                  } else {
+                    col_fun = colorRamp2(seq(min(plot_df, na.rm = T), max(plot_df, na.rm = T), length = 2),
+                                         colors = c(color_lo,color_hi))
+                    legendParam <- list(title = "Number of Events",
+                                        title_gp = gpar(fontsize = 12, fontface = 'bold'),
+                                        labels_gp = gpar(fontsize = 12))
+                  }
                 }
-              }
-              if (border_op) {
-                cell_border <- gpar(col = "black", lwd = 1)
-              } else {
-                cell_border <- gpar(col = NA)
-              }
-              p <- ComplexHeatmap::Heatmap(plot_df,
-                                           col = col_fun,
-                                           clustering_method_columns = cluster_method, row_names_max_width = unit(10, "cm"),
-                                           cluster_rows = heat_cluster_rows, cluster_columns = heat_cluster_cols,
-                                           heatmap_legend_param = legendParam,
-                                           row_names_gp = gpar(fontsize = row_font), column_names_gp = gpar(fontsize = col_font),
-                                           rect_gp = cell_border,
-                                           border = FALSE)
+                if (border_op) {
+                  cell_border <- gpar(col = "black", lwd = 1)
+                } else {
+                  cell_border <- gpar(col = NA)
+                }
+                incProgress(0.4, detail = "Assembling Heatmap")
+                p <- ComplexHeatmap::Heatmap(plot_df,
+                                             col = col_fun,
+                                             clustering_method_columns = cluster_method, row_names_max_width = unit(10, "cm"),
+                                             cluster_rows = heat_cluster_rows, cluster_columns = heat_cluster_cols,
+                                             heatmap_legend_param = legendParam,
+                                             row_names_gp = gpar(fontsize = row_font), column_names_gp = gpar(fontsize = col_font),
+                                             rect_gp = cell_border,
+                                             border = FALSE)
+                incProgress(0.3, detail = "Rendering Heatmap")
+                })
               draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
             }
           }
@@ -4395,44 +4419,50 @@ server <- function(input, output, session) {
         event <- event_data()
         event_type <- input$durationHeatEventType
         event_spec <- input$BoxplotXaxis
-        if (event_type == "All Treatment Events") {
-          event_selected <- event_spec
-        } else {
-          event_selected <- event_data_key[which(event_data_key$EventType == event_type & event_data_key$EventSpecified == event_spec),1]
-        }
-        event_sub <- event[which(event$Event == event_selected),]
         MaxOrSum <- input$EventDurMaxSum
-        AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
-        event_sub_event_bp <- event_sub[,c(1,2,5,6)]
-        if (AppTimeUnits != "days") {
-          time_duration <- event_sub_event_bp[,4] - event_sub_event_bp[,3]
-          time_duration <- convert_time_units(suppressWarnings(as.numeric(time_duration)),AppTimeUnits,"days")
-          event_sub_event_bp$Days <- time_duration
-        } else {
-          event_sub_event_bp$Days <- round((event_sub_event_bp[,4] - event_sub_event_bp[,3]),4)
-        }
-        event_sub_event_bp <- event_sub_event_bp[complete.cases(event_sub_event_bp),]
-        event_sub_event_bp$Days <- ifelse(event_sub_event_bp$Days == 0,1,event_sub_event_bp$Days)
-        rownames(event_sub_event_bp) <- NULL
-        if (MaxOrSum == "sum") {
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.25, detail = "Subsetting Event Data")
+          if (event_type == "All Treatment Events") {
+            event_selected <- event_spec
+          } else {
+            event_selected <- event_data_key[which(event_data_key$EventType == event_type & event_data_key$EventSpecified == event_spec),1]
+          }
+          event_sub <- event[which(event$Event == event_selected),]
+          AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
+          event_sub_event_bp <- event_sub[,c(1,2,5,6)]
+          if (AppTimeUnits != "days") {
+            time_duration <- event_sub_event_bp[,4] - event_sub_event_bp[,3]
+            time_duration <- convert_time_units(suppressWarnings(as.numeric(time_duration)),AppTimeUnits,"days")
+            event_sub_event_bp$Days <- time_duration
+          } else {
+            event_sub_event_bp$Days <- round((event_sub_event_bp[,4] - event_sub_event_bp[,3]),4)
+          }
+          event_sub_event_bp <- event_sub_event_bp[complete.cases(event_sub_event_bp),]
+          event_sub_event_bp$Days <- ifelse(event_sub_event_bp$Days == 0,1,event_sub_event_bp$Days)
+          rownames(event_sub_event_bp) <- NULL
+          incProgress(0.25, detail = paste0("Calculating ",MaxOrSum," Event Duration"))
+          if (MaxOrSum == "sum") {
+            event_sub_event_bp <- event_sub_event_bp %>%
+              group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
+              mutate(Days = sum(Days)) %>%
+              ungroup() %>%
+              mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
+          } else if (MaxOrSum == "max") {
+            event_sub_event_bp <- event_sub_event_bp %>%
+              group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
+              mutate(Days = max(Days)) %>%
+              ungroup() %>%
+              mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
+          }
+          incProgress(0.25, detail = "Deriving Quantiles")
+          quart <- quantile(event_sub_event_bp$Days, na.rm = T)
+          event_sub_event_bp$Quartile <- cut(event_sub_event_bp$Days,breaks = quart, labels = c("Q1","Q2","Q3","Q4"), include.lowest = TRUE)
           event_sub_event_bp <- event_sub_event_bp %>%
-            group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
-            mutate(Days = sum(Days)) %>%
-            ungroup() %>%
-            mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
-        } else if (MaxOrSum == "max") {
-          event_sub_event_bp <- event_sub_event_bp %>%
-            group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
-            mutate(Days = max(Days)) %>%
-            ungroup() %>%
-            mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
-        }
-        quart <- quantile(event_sub_event_bp$Days, na.rm = T)
-        event_sub_event_bp$Quartile <- cut(event_sub_event_bp$Days,breaks = quart, labels = c("Q1","Q2","Q3","Q4"), include.lowest = TRUE)
-        event_sub_event_bp <- event_sub_event_bp %>%
-          select(-c(EventStart,EventEnd)) %>%
-          unique() %>%
-          as.data.frame()
+            select(-c(EventStart,EventEnd)) %>%
+            unique() %>%
+            as.data.frame()
+          incProgress(0.25, detail = "Complete!")
+          })
         event_sub_event_bp
       })
       
@@ -4450,42 +4480,46 @@ server <- function(input, output, session) {
         BPplottheme <- input$BPTheme
         VilOrBP <- input$ViolinOrBoxP
         if (nrow(df) > 0) {
-          p <- ggplot(df, aes(x = Event, y = Days))
-          if (VilOrBP == "Box Plot") {
-            p <- p + geom_boxplot(fill = "#5F9EA0")
-          }
-          if (VilOrBP == "Violin Plot") {
-            p <- p + geom_violin(fill = "#5F9EA0") +
-              stat_summary(fun=median, geom="crossbar", width=0.5, color="black")
-          }
-          p <- p +
-            get(BPplottheme)() +
-            labs(title = paste("Length of ",event_type," Event: \n",xAxisCol," in Days",sep = ""),
-                 x = NULL, y = "Days")
-          if (dotChoice) {
-            p <- p + suppressWarnings(geom_jitter(aes(label = Name),
-                                                  width = 0.25, size = dotSize))
-          }
-          p <- p + theme(axis.text.x = element_text(size = Xaxis_font),
-                         axis.title.x = element_text(size = Xaxis_font),
-                         axis.text.y = element_text(size = Yaxis_font),
-                         axis.title.y = element_text(size = Yaxis_font),
-                         plot.title = element_text(size = title_font,margin=margin(0,0,30,0)),
-                         legend.position = "none") +
-            scale_x_discrete(labels = xAxisCol)
-          if (bpFlip) {
-            p <- p + coord_flip()
-          }
-          ply <- ggplotly(p)
-          ply <- ply %>%
-            config(
-              toImageButtonOptions = list(
-                format = "svg",
-                height = input$BPHeight,
-                width = input$BPWidth,
-                filename = paste0(gsub(" ","_",Project_Name),"_",gsub(" ","_",xAxisCol),"_Boxplot_",Sys.Date(),".txt")
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.5, detail = "Rendering Box Plot")
+            p <- ggplot(df, aes(x = Event, y = Days))
+            if (VilOrBP == "Box Plot") {
+              p <- p + geom_boxplot(fill = "#5F9EA0")
+            }
+            if (VilOrBP == "Violin Plot") {
+              p <- p + geom_violin(fill = "#5F9EA0") +
+                stat_summary(fun=median, geom="crossbar", width=0.5, color="black")
+            }
+            p <- p +
+              get(BPplottheme)() +
+              labs(title = paste("Length of ",event_type," Event: \n",xAxisCol," in Days",sep = ""),
+                   x = NULL, y = "Days")
+            if (dotChoice) {
+              p <- p + suppressWarnings(geom_jitter(aes(label = Name),
+                                                    width = 0.25, size = dotSize))
+            }
+            p <- p + theme(axis.text.x = element_text(size = Xaxis_font),
+                           axis.title.x = element_text(size = Xaxis_font),
+                           axis.text.y = element_text(size = Yaxis_font),
+                           axis.title.y = element_text(size = Yaxis_font),
+                           plot.title = element_text(size = title_font,margin=margin(0,0,30,0)),
+                           legend.position = "none") +
+              scale_x_discrete(labels = xAxisCol)
+            if (bpFlip) {
+              p <- p + coord_flip()
+            }
+            ply <- ggplotly(p)
+            ply <- ply %>%
+              config(
+                toImageButtonOptions = list(
+                  format = "svg",
+                  height = input$BPHeight,
+                  width = input$BPWidth,
+                  filename = paste0(gsub(" ","_",Project_Name),"_",gsub(" ","_",xAxisCol),"_Boxplot_",Sys.Date(),".txt")
+                )
               )
-            )
+            incProgress(0.5, detail = "Complete!")
+            })
           ply
         }
       })
@@ -4557,55 +4591,59 @@ server <- function(input, output, session) {
         MaxOrSum <- input$EventDurMaxSumHeat
         heat_flip <- input$HeatFlipDist
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
-        if (dur_event == "All Treatment Events") {
-          duration_event_tabs <- unique(param[which(!is.na(param[,"Event End Column"])),1])
-          duration_events <- unique(event_key[which(event_key$EventTab %in% duration_event_tabs),"EventType"])
-          event_data <- event_data[which(event_data$Event %in% duration_events),]
-        } else {
-          event_data <- event_data[which(event_data$EventType == dur_event),]
-        }
-        if (AppTimeUnits != "days") {
-          time_duration <- event_data$EventEnd - event_data$EventStart
-          time_duration <- convert_time_units(suppressWarnings(as.numeric(time_duration)),AppTimeUnits,"days")
-          event_data$EventDuration <- time_duration
-        } else {
-          event_data$EventDuration <- round((event_data$EventEnd - event_data$EventStart),4)
-        }
-        event_data$EventDuration <- ifelse(event_data$EventDuration == 0,1,event_data$EventDuration)
-        
-        if (MaxOrSum == "sum") {
-          event_data_dur <- event_data %>%
-            group_by(Name,Event) %>%
-            mutate(EventDuration = sum(EventDuration)) %>%
-            ungroup() %>%
-            select(Name,Event,EventDuration) %>%
-            unique() %>%
-            mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
-            pivot_wider(id_cols = Name,
-                        names_from = Event,
-                        values_from = EventDuration) %>%
-            as.data.frame()
-          
-        } else if (MaxOrSum == "max") {
-          event_data_dur <- event_data %>%
-            group_by(Name,Event) %>%
-            mutate(EventDuration = max(EventDuration)) %>%
-            ungroup() %>%
-            select(Name,Event,EventDuration) %>%
-            unique() %>%
-            mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
-            pivot_wider(id_cols = Name,
-                        names_from = Event,
-                        values_from = EventDuration) %>%
-            as.data.frame()
-        }
-        rownames(event_data_dur) <- event_data_dur[,1]
-        event_data_dur <- as.matrix(event_data_dur[,-1,drop = F])
-        event_data_dur <- as.matrix(t(event_data_dur))
-        
-        if (heat_flip) {
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.25, detail = "Subsetting Event Data")
+          if (dur_event == "All Treatment Events") {
+            duration_event_tabs <- unique(param[which(!is.na(param[,"Event End Column"])),1])
+            duration_events <- unique(event_key[which(event_key$EventTab %in% duration_event_tabs),"EventType"])
+            event_data <- event_data[which(event_data$Event %in% duration_events),]
+          } else {
+            event_data <- event_data[which(event_data$EventType == dur_event),]
+          }
+          if (AppTimeUnits != "days") {
+            time_duration <- event_data$EventEnd - event_data$EventStart
+            time_duration <- convert_time_units(suppressWarnings(as.numeric(time_duration)),AppTimeUnits,"days")
+            event_data$EventDuration <- time_duration
+          } else {
+            event_data$EventDuration <- round((event_data$EventEnd - event_data$EventStart),4)
+          }
+          event_data$EventDuration <- ifelse(event_data$EventDuration == 0,1,event_data$EventDuration)
+          incProgress(0.25, detail = paste0("Calculating ",MaxOrSum," Event Duration"))
+          if (MaxOrSum == "sum") {
+            event_data_dur <- event_data %>%
+              group_by(Name,Event) %>%
+              mutate(EventDuration = sum(EventDuration)) %>%
+              ungroup() %>%
+              select(Name,Event,EventDuration) %>%
+              unique() %>%
+              mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
+              pivot_wider(id_cols = Name,
+                          names_from = Event,
+                          values_from = EventDuration) %>%
+              as.data.frame()
+            
+          } else if (MaxOrSum == "max") {
+            event_data_dur <- event_data %>%
+              group_by(Name,Event) %>%
+              mutate(EventDuration = max(EventDuration)) %>%
+              ungroup() %>%
+              select(Name,Event,EventDuration) %>%
+              unique() %>%
+              mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
+              pivot_wider(id_cols = Name,
+                          names_from = Event,
+                          values_from = EventDuration) %>%
+              as.data.frame()
+          }
+          incProgress(0.3, detail = "Formatting Matrix")
+          rownames(event_data_dur) <- event_data_dur[,1]
+          event_data_dur <- as.matrix(event_data_dur[,-1,drop = F])
           event_data_dur <- as.matrix(t(event_data_dur))
-        }
+          if (heat_flip) {
+            event_data_dur <- as.matrix(t(event_data_dur))
+          }
+          incProgress(0.3, detail = "Complete!")
+          })
         event_data_dur
       })
       
@@ -4643,30 +4681,35 @@ server <- function(input, output, session) {
           }
           plot_df[is.na(plot_df)] <- 0
           if (all(areColors(c(color_lo, color_hi)))) {
-            if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
-              col_fun = structure(c(color_lo,color_hi), names = c("0", as.character(max(plot_df, na.rm = T))))
-              legendParam <- list(title = "Event Duration (Days)",
-                                  title_gp = gpar(fontsize = 12, fontface = 'bold'),
-                                  labels_gp = gpar(fontsize = 12))
-            } else {
-              col_fun = colorRamp2(c(min(plot_df,na.rm = T),max(plot_df,na.rm = T)), c(color_lo, color_hi))
-              legendParam <- list(title = "Event Duration (Days)",
-                                  title_gp = gpar(fontsize = 12, fontface = 'bold'),
-                                  labels_gp = gpar(fontsize = 12))
-            }
-            if (border_op) {
-              cell_border <- gpar(col = "black", lwd = 1)
-            } else {
-              cell_border <- gpar(col = NA)
-            }
-            p <- ComplexHeatmap::Heatmap(plot_df,
-                                         col = col_fun,
-                                         clustering_method_columns = cluster_method, row_names_max_width = unit(10, "cm"),
-                                         cluster_rows = heat_cluster_rows, cluster_columns = heat_cluster_cols,
-                                         heatmap_legend_param = legendParam,
-                                         row_names_gp = gpar(fontsize = row_font), column_names_gp = gpar(fontsize = col_font),
-                                         rect_gp = cell_border,
-                                         border = FALSE)
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Building Heatmap Legends")
+              if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
+                col_fun = structure(c(color_lo,color_hi), names = c("0", as.character(max(plot_df, na.rm = T))))
+                legendParam <- list(title = "Event Duration (Days)",
+                                    title_gp = gpar(fontsize = 12, fontface = 'bold'),
+                                    labels_gp = gpar(fontsize = 12))
+              } else {
+                col_fun = colorRamp2(c(min(plot_df,na.rm = T),max(plot_df,na.rm = T)), c(color_lo, color_hi))
+                legendParam <- list(title = "Event Duration (Days)",
+                                    title_gp = gpar(fontsize = 12, fontface = 'bold'),
+                                    labels_gp = gpar(fontsize = 12))
+              }
+              if (border_op) {
+                cell_border <- gpar(col = "black", lwd = 1)
+              } else {
+                cell_border <- gpar(col = NA)
+              }
+              incProgress(0.4, detail = "Assembling Heatmap")
+              p <- ComplexHeatmap::Heatmap(plot_df,
+                                           col = col_fun,
+                                           clustering_method_columns = cluster_method, row_names_max_width = unit(10, "cm"),
+                                           cluster_rows = heat_cluster_rows, cluster_columns = heat_cluster_cols,
+                                           heatmap_legend_param = legendParam,
+                                           row_names_gp = gpar(fontsize = row_font), column_names_gp = gpar(fontsize = col_font),
+                                           rect_gp = cell_border,
+                                           border = FALSE)
+              incProgress(0.3, detail = "Rendering Heatmap")
+              })
             draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
           }
         }
@@ -4740,60 +4783,67 @@ server <- function(input, output, session) {
         event_data <- event_data()
         event_type <- input$durationHeatEventType
         event_spec <- input$BoxplotXaxis
-        if (event_type == "All Treatment Events") {
-          event_selected <- event_spec
-        } else {
-          event_selected <- event_data_key[which(event_data_key$EventType == event_type & event_data_key$EventSpecified == event_spec),1]
-        }
-        event_sub_event <- event_data[which(event_data$Event == event_selected),]
-        Patient_Event_Data <- event_sub_event %>%
-          arrange(Name,EventStart) %>%
-          select(Name,Event,EventStart,EventEnd) %>%
-          as.data.frame()
-        Patient_Event_Data_fl <- event_data %>%
-          group_by(Name) %>%
-          filter(Name %in% unique(Patient_Event_Data$Name)) %>%
-          mutate(Event_New = case_when(
-            EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
-            EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
-          )) %>%
-          ungroup() %>%
-          select(Name,Event,Event_New,EventStart,EventEnd) %>%
-          filter(!is.na(Event_New)) %>%
-          arrange(Name, EventStart) %>%
-          group_by(Name, Event_New) %>%
-          mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
-          ungroup() %>%
-          mutate(Event = Event_New) %>%
-          select(Name,Event,EventStart,EventEnd,Event_Details) %>%
-          unique() %>%
-          group_by(Name, Event) %>%
-          arrange(EventStart,EventEnd, .by_group = TRUE) %>%
-          slice_head(n = 1) %>%
-          unique() %>%
-          as.data.frame()
-        Patient_Event_Data2 <- merge(Patient_Event_Data,Patient_Event_Data_fl,all = T)
-        Patient_Event_Data3 <- Patient_Event_Data2 %>%
-          arrange(Name,EventStart) %>%
-          group_by(Name) %>%
-          mutate(EventStart_FromZero = round(EventStart - min(EventStart,na.rm = T),3)) %>%
-          mutate(EventEnd_FromZero = round(EventEnd - min(EventStart,na.rm = T),3)) %>%
-          mutate(FirstEventTime_FromZero = 0.00) %>%
-          mutate(FinalEventTime_FromZero = round(EventEnd[which(Event == "Final Recorded Time Point")] - min(EventStart,na.rm = T),3)) %>%
-          ungroup() %>%
-          mutate(Event_Details = case_when(
-            Event == "First Recorded Time Point" ~ paste0("<b>",Name,"</b>\n",paste0("<b>First Recorded Time Point</b>: ",FirstEventTime_FromZero,"\n"),
-                                                          paste0("Age at Event: ",round(EventStart,3),"\n"),
-                                                          Event_Details),
-            Event == "Final Recorded Time Point" ~ paste0("<b>",Name,"</b>\n",paste0("<b>Final Recorded Time Point</b>: ",FinalEventTime_FromZero,"\n"),
-                                                          paste0("Age at Event: ",round(EventEnd,3),"\n"),
-                                                          Event_Details),
-            !Event %in% c("First Recorded Time Point","Final Recorded Time Point") ~ paste0("<b>",Name,"</b>\n",paste0("<b>",Event,"</b>: ",EventStart_FromZero," - ",EventEnd_FromZero,"\n"),
-                                                                                            paste0("Age at Event: ",round(EventStart,3)," - ",round(EventEnd,3),"\n"))
-          )) %>%
-          select(-EventStart,-EventEnd) %>%
-          unique() %>%
-          as.data.frame()
+        
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.25, detail = "Subsetting Event Data")
+          if (event_type == "All Treatment Events") {
+            event_selected <- event_spec
+          } else {
+            event_selected <- event_data_key[which(event_data_key$EventType == event_type & event_data_key$EventSpecified == event_spec),1]
+          }
+          event_sub_event <- event_data[which(event_data$Event == event_selected),]
+          Patient_Event_Data <- event_sub_event %>%
+            arrange(Name,EventStart) %>%
+            select(Name,Event,EventStart,EventEnd) %>%
+            as.data.frame()
+          incProgress(0.25, detail = "Deriving First and Final Endpoints")
+          Patient_Event_Data_fl <- event_data %>%
+            group_by(Name) %>%
+            filter(Name %in% unique(Patient_Event_Data$Name)) %>%
+            mutate(Event_New = case_when(
+              EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
+              EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
+            )) %>%
+            ungroup() %>%
+            select(Name,Event,Event_New,EventStart,EventEnd) %>%
+            filter(!is.na(Event_New)) %>%
+            arrange(Name, EventStart) %>%
+            group_by(Name, Event_New) %>%
+            mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
+            ungroup() %>%
+            mutate(Event = Event_New) %>%
+            select(Name,Event,EventStart,EventEnd,Event_Details) %>%
+            unique() %>%
+            group_by(Name, Event) %>%
+            arrange(EventStart,EventEnd, .by_group = TRUE) %>%
+            slice_head(n = 1) %>%
+            unique() %>%
+            as.data.frame()
+          Patient_Event_Data2 <- merge(Patient_Event_Data,Patient_Event_Data_fl,all = T)
+          incProgress(0.25, detail = "Calculating Event Duration")
+          Patient_Event_Data3 <- Patient_Event_Data2 %>%
+            arrange(Name,EventStart) %>%
+            group_by(Name) %>%
+            mutate(EventStart_FromZero = round(EventStart - min(EventStart,na.rm = T),3)) %>%
+            mutate(EventEnd_FromZero = round(EventEnd - min(EventStart,na.rm = T),3)) %>%
+            mutate(FirstEventTime_FromZero = 0.00) %>%
+            mutate(FinalEventTime_FromZero = round(EventEnd[which(Event == "Final Recorded Time Point")] - min(EventStart,na.rm = T),3)) %>%
+            ungroup() %>%
+            mutate(Event_Details = case_when(
+              Event == "First Recorded Time Point" ~ paste0("<b>",Name,"</b>\n",paste0("<b>First Recorded Time Point</b>: ",FirstEventTime_FromZero,"\n"),
+                                                            paste0("Age at Event: ",round(EventStart,3),"\n"),
+                                                            Event_Details),
+              Event == "Final Recorded Time Point" ~ paste0("<b>",Name,"</b>\n",paste0("<b>Final Recorded Time Point</b>: ",FinalEventTime_FromZero,"\n"),
+                                                            paste0("Age at Event: ",round(EventEnd,3),"\n"),
+                                                            Event_Details),
+              !Event %in% c("First Recorded Time Point","Final Recorded Time Point") ~ paste0("<b>",Name,"</b>\n",paste0("<b>",Event,"</b>: ",EventStart_FromZero," - ",EventEnd_FromZero,"\n"),
+                                                                                              paste0("Age at Event: ",round(EventStart,3)," - ",round(EventEnd,3),"\n"))
+            )) %>%
+            select(-EventStart,-EventEnd) %>%
+            unique() %>%
+            as.data.frame()
+          incProgress(0.25, detail = "Complete!")
+          })
         Patient_Event_Data3
       })
       
@@ -4852,49 +4902,54 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
-            if (length(patientsSpec) > 0) {
-              maxpats <- maxpats-length(patientsSpec)
-              get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
-              ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
-            } else {
-              if (length(unique(ply_df$Name)) > maxpats) {
-                get_pats <- head(unique(ply_df$Name),maxpats)
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Building Swimmers Plot")
+              if (length(patientsSpec) > 0) {
+                maxpats <- maxpats-length(patientsSpec)
+                get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
                 ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
+              } else {
+                if (length(unique(ply_df$Name)) > maxpats) {
+                  get_pats <- head(unique(ply_df$Name),maxpats)
+                  ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
+                }
               }
-            }
-            # sort to display in correct visual order (needs to be opposite)
-            if (swimmSort == "Duration - Ascending") {
-              ply_df <- ply_df[order(ply_df$EventTime_Sum, decreasing = T),]
-            } else if (swimmSort == "Duration - Descending") {
-              ply_df <- ply_df[order(ply_df$EventTime_Sum),]
-            } else if (swimmSort == "Overall Time - Ascending") {
-              ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero, decreasing = T),]
-            } else if (swimmSort == "Overall Time - Descending") {
-              ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero),]
-            } else if (swimmSort == "Alphabetical - Ascending") {
-              ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
-            } else if (swimmSort == "Alphabetical - Descending") {
-              ply_df <- ply_df[order(ply_df$Name),]
-            }
-            patientIDs <- unique(ply_df[,1])
-            ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
-            patients <- unique(ply_df$Index)
-            base_lines <- ply_df %>%
-              group_by(Name) %>%
-              summarize(
-                First = min(FirstEventTime_FromZero),
-                Final = max(FinalEventTime_FromZero),
-                Index = unique(Index),
-                .groups = "drop"
-              )
-            start_events <- ply_df %>%
-              filter(Event == "First Recorded Time Point") %>%
-              select(x = EventStart_FromZero, y = Index, Event_Details)
-            end_events <- ply_df %>%
-              filter(Event == "Final Recorded Time Point") %>%
-              select(x = EventStart_FromZero, y = Index, Event_Details)
-            main_events <- ply_df %>%
-              filter(Event == full_event_name)
+              # sort to display in correct visual order (needs to be opposite)
+              if (swimmSort == "Duration - Ascending") {
+                ply_df <- ply_df[order(ply_df$EventTime_Sum, decreasing = T),]
+              } else if (swimmSort == "Duration - Descending") {
+                ply_df <- ply_df[order(ply_df$EventTime_Sum),]
+              } else if (swimmSort == "Overall Time - Ascending") {
+                ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero, decreasing = T),]
+              } else if (swimmSort == "Overall Time - Descending") {
+                ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero),]
+              } else if (swimmSort == "Alphabetical - Ascending") {
+                ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
+              } else if (swimmSort == "Alphabetical - Descending") {
+                ply_df <- ply_df[order(ply_df$Name),]
+              }
+              patientIDs <- unique(ply_df[,1])
+              ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
+              patients <- unique(ply_df$Index)
+              base_lines <- ply_df %>%
+                group_by(Name) %>%
+                summarize(
+                  First = min(FirstEventTime_FromZero),
+                  Final = max(FinalEventTime_FromZero),
+                  Index = unique(Index),
+                  .groups = "drop"
+                )
+              incProgress(0.3, detail = "Assembling Swimmers Plot")
+              start_events <- ply_df %>%
+                filter(Event == "First Recorded Time Point") %>%
+                select(x = EventStart_FromZero, y = Index, Event_Details)
+              end_events <- ply_df %>%
+                filter(Event == "Final Recorded Time Point") %>%
+                select(x = EventStart_FromZero, y = Index, Event_Details)
+              main_events <- ply_df %>%
+                filter(Event == full_event_name)
+              incProgress(0.4, detail = "Rendering Swimmers Plot")
+              })
             plot_ly() %>%
               # Add base duration lines
               add_segments(data = base_lines,
@@ -5289,10 +5344,14 @@ server <- function(input, output, session) {
         if (ncol(plot_df) == 4) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
-              plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
-              strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
-              form <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
-              tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
+              withProgress(message = "Processing", value = 0, {
+                incProgress(0.3, detail = "Performing Cox Proportional Hazards")
+                plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
+                strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+                form <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
+                tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
+                incProgress(0.3, detail = "Complete!")
+                })
               tab
             }
           }
@@ -5542,69 +5601,75 @@ server <- function(input, output, session) {
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         if (nrow(Patient_Event_Data) > 0) {
-          Patient_Event_Data2 <- Patient_Event_Data %>%
-            group_by(Name) %>%
-            mutate(swimmer_event = case_when(
-              Event %in% start_events & EventStart == Start_Time_Point ~ "Start Event",
-              EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
-              Event %in% stop_events & EventStart == End_Time_Point ~ "Progression Event",
-              EventEnd == Final_Time_Point ~ "Final Recorded Time Point"
-            )) %>%
-            relocate(swimmer_event, .after = Name) %>%
-            ungroup()
-          event_types <- c("First Recorded Time Point", "Start Event", "Progression Event", "Final Recorded Time Point")
-          Patient_Event_Data3 <- Patient_Event_Data2 %>%
-            filter(!is.na(swimmer_event)) %>%
-            arrange(Name,EventStart) %>%
-            group_by(Name, swimmer_event) %>%
-            mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
-            select(Name, swimmer_event,Event_Details,EventStart,Start_Time_Point,End_Time_Point,Final_Time_Point) %>%
-            unique() %>%
-            mutate(EventTime = case_when(
-              swimmer_event == "First Recorded Time Point" ~ min(unique(EventStart,na.rm = T)),
-              swimmer_event == "Start Event" ~ min(unique(Start_Time_Point,na.rm = T)),
-              swimmer_event == "Progression Event" ~ min(unique(End_Time_Point,na.rm = T)),
-              swimmer_event == "Final Recorded Time Point" ~ min(unique(Final_Time_Point,na.rm = T))
-            )) %>%
-            ungroup() %>%
-            group_by(Name) %>%
-            mutate(EventTime_FromZero = EventTime - min(EventTime,na.rm = T)) %>%
-            select(Name, swimmer_event,Event_Details,EventTime,EventTime_FromZero) %>%
-            complete(swimmer_event = event_types, fill = list()) %>%
-            mutate(swimmer_event = factor(swimmer_event, levels = event_types)) %>%
-            arrange(Name, swimmer_event) %>%
-            unique() %>%
-            as.data.frame()
-          NonProg_Pats <- Patient_Event_Data3[which(Patient_Event_Data3$swimmer_event == "Progression Event" & is.na(Patient_Event_Data3$Event_Details)),1]
-          Patient_Event_Data3 <- Patient_Event_Data3 %>%
-            group_by(Name) %>%
-            fill(Event_Details,EventTime,EventTime_FromZero, .direction = "up") %>%
-            ungroup() %>%
-            mutate(across(c(Event_Details,EventTime,EventTime_FromZero), ~ ifelse(swimmer_event == "Progression Event" & Name %in% NonProg_Pats,NA,.))) %>%
-            mutate(Event_Details = paste0(paste0("<b>",swimmer_event,"</b> - ",round(EventTime_FromZero,3),"\n"),
-                                          paste0("Age - ",round(EventTime,3),"\n"),
-                                          Event_Details,sep = "\n")) %>%
-            as.data.frame() %>%
-            group_by(Name,EventTime,EventTime_FromZero) %>%
-            mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
-            ungroup() %>%
-            as.data.frame()
-          Patient_Event_Data3[which(Patient_Event_Data3[,1] %in% NonProg_Pats & Patient_Event_Data3$swimmer_event == "Progression Event"),c(3,4,5)] <- NA
-          Patient_Event_Data3_cast <- Patient_Event_Data3 %>%
-            mutate(row_index = row_number()) %>%
-            pivot_wider(
-              id_cols = c(Name,row_index,Event_Details),
-              names_from = swimmer_event,
-              values_from = EventTime_FromZero
-            ) %>%
-            select(-row_index,-Event_Details) %>%
-            group_by(Name) %>%
-            summarize_all(~ max(., na.rm = TRUE)) %>%
-            as.data.frame()
-          Patient_Event_Data3_cast[] <- Map(function(x) replace(x, is.infinite(x), NA), Patient_Event_Data3_cast)
-          Patient_Event_Data3_cast$Index <- as.numeric(factor(Patient_Event_Data3_cast[,1]))
-          Patient_Event_Data3_cast_det <- merge(Patient_Event_Data3_cast,Patient_Event_Data3[,-c(4,5)], all = T)
-          colnames(Patient_Event_Data3_cast_det)[which(colnames(Patient_Event_Data3_cast_det) == "swimmer_event")] <- "Event"
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.25, detail = "Deriving Time Points")
+            Patient_Event_Data2 <- Patient_Event_Data %>%
+              group_by(Name) %>%
+              mutate(swimmer_event = case_when(
+                Event %in% start_events & EventStart == Start_Time_Point ~ "Start Event",
+                EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
+                Event %in% stop_events & EventStart == End_Time_Point ~ "Progression Event",
+                EventEnd == Final_Time_Point ~ "Final Recorded Time Point"
+              )) %>%
+              relocate(swimmer_event, .after = Name) %>%
+              ungroup()
+            event_types <- c("First Recorded Time Point", "Start Event", "Progression Event", "Final Recorded Time Point")
+            incProgress(0.25, detail = "Summarizing Event Details")
+            Patient_Event_Data3 <- Patient_Event_Data2 %>%
+              filter(!is.na(swimmer_event)) %>%
+              arrange(Name,EventStart) %>%
+              group_by(Name, swimmer_event) %>%
+              mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
+              select(Name, swimmer_event,Event_Details,EventStart,Start_Time_Point,End_Time_Point,Final_Time_Point) %>%
+              unique() %>%
+              mutate(EventTime = case_when(
+                swimmer_event == "First Recorded Time Point" ~ min(unique(EventStart,na.rm = T)),
+                swimmer_event == "Start Event" ~ min(unique(Start_Time_Point,na.rm = T)),
+                swimmer_event == "Progression Event" ~ min(unique(End_Time_Point,na.rm = T)),
+                swimmer_event == "Final Recorded Time Point" ~ min(unique(Final_Time_Point,na.rm = T))
+              )) %>%
+              ungroup() %>%
+              group_by(Name) %>%
+              mutate(EventTime_FromZero = EventTime - min(EventTime,na.rm = T)) %>%
+              select(Name, swimmer_event,Event_Details,EventTime,EventTime_FromZero) %>%
+              complete(swimmer_event = event_types, fill = list()) %>%
+              mutate(swimmer_event = factor(swimmer_event, levels = event_types)) %>%
+              arrange(Name, swimmer_event) %>%
+              unique() %>%
+              as.data.frame()
+            NonProg_Pats <- Patient_Event_Data3[which(Patient_Event_Data3$swimmer_event == "Progression Event" & is.na(Patient_Event_Data3$Event_Details)),1]
+            incProgress(0.25, detail = "Formatting Hover Text")
+            Patient_Event_Data3 <- Patient_Event_Data3 %>%
+              group_by(Name) %>%
+              fill(Event_Details,EventTime,EventTime_FromZero, .direction = "up") %>%
+              ungroup() %>%
+              mutate(across(c(Event_Details,EventTime,EventTime_FromZero), ~ ifelse(swimmer_event == "Progression Event" & Name %in% NonProg_Pats,NA,.))) %>%
+              mutate(Event_Details = paste0(paste0("<b>",swimmer_event,"</b> - ",round(EventTime_FromZero,3),"\n"),
+                                            paste0("Age - ",round(EventTime,3),"\n"),
+                                            Event_Details,sep = "\n")) %>%
+              as.data.frame() %>%
+              group_by(Name,EventTime,EventTime_FromZero) %>%
+              mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
+              ungroup() %>%
+              as.data.frame()
+            Patient_Event_Data3[which(Patient_Event_Data3[,1] %in% NonProg_Pats & Patient_Event_Data3$swimmer_event == "Progression Event"),c(3,4,5)] <- NA
+            incProgress(0.25, detail = "Formatting Matrix")
+            Patient_Event_Data3_cast <- Patient_Event_Data3 %>%
+              mutate(row_index = row_number()) %>%
+              pivot_wider(
+                id_cols = c(Name,row_index,Event_Details),
+                names_from = swimmer_event,
+                values_from = EventTime_FromZero
+              ) %>%
+              select(-row_index,-Event_Details) %>%
+              group_by(Name) %>%
+              summarize_all(~ max(., na.rm = TRUE)) %>%
+              as.data.frame()
+            Patient_Event_Data3_cast[] <- Map(function(x) replace(x, is.infinite(x), NA), Patient_Event_Data3_cast)
+            Patient_Event_Data3_cast$Index <- as.numeric(factor(Patient_Event_Data3_cast[,1]))
+            Patient_Event_Data3_cast_det <- merge(Patient_Event_Data3_cast,Patient_Event_Data3[,-c(4,5)], all = T)
+            colnames(Patient_Event_Data3_cast_det)[which(colnames(Patient_Event_Data3_cast_det) == "swimmer_event")] <- "Event"
+            })
           if (ncol(Patient_Event_Data3_cast_det) == 8) {
             ply_df <- Patient_Event_Data3_cast_det
             colnames(ply_df) <- c("Name","First_Time_Point","Start_Time_Point","Prog_Time_Point","Final_Time_Point","Index","Event","Event_Details")
@@ -5651,163 +5716,168 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
-            if (length(patientsSpec) > 0) {
-              maxpats <- maxpats-length(patientsSpec)
-              get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
-              ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
-            } else {
-              if (length(unique(ply_df$Name)) > maxpats) {
-                get_pats <- head(unique(ply_df$Name),maxpats)
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Building Swimmers Plot")
+              if (length(patientsSpec) > 0) {
+                maxpats <- maxpats-length(patientsSpec)
+                get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
                 ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
+              } else {
+                if (length(unique(ply_df$Name)) > maxpats) {
+                  get_pats <- head(unique(ply_df$Name),maxpats)
+                  ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
+                }
               }
-            }
-            # sort to display in correct visual order (needs to be opposite)
-            if (swimmSort == "Time - Ascending") {
-              ply_df <- ply_df[order(ply_df$Final_Time_Point, decreasing = T),]
-            } else if (swimmSort == "Time - Descending") {
-              ply_df <- ply_df[order(ply_df$Final_Time_Point),]
-            } else if (swimmSort == "Alphabetical - Ascending") {
-              ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
-            } else if (swimmSort == "Alphabetical - Descending") {
-              ply_df <- ply_df[order(ply_df$Name),]
-            }
-            patientIDs <- unique(ply_df[,1])
-            ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
-            patients <- unique(ply_df$Index)
-            showlegend1 <- TRUE
-            showlegend2 <- TRUE
-            showlegend3 <- TRUE
-            p <- plot_ly()
-            # Loop through patients
-            for (patient in patients) {
-              df_patient <- ply_df[ply_df$Index == patient, ]
-              
-              # Line segment: First_Time_Point to Start_Time_Point
-              p <- add_trace(p,
-                             x = c(df_patient$First_Time_Point[1], df_patient$Start_Time_Point[1]),
-                             y = c(patient, patient),
-                             type = 'scatter',
-                             mode = 'lines',
-                             line = list(color = '#5F9EA0', width = 4),
-                             showlegend = FALSE)
-              
-              # Line segment: Start_Time_Point to Final_Time_Point
-              if (!is.na(df_patient$Prog_Time_Point[1])) {
+              # sort to display in correct visual order (needs to be opposite)
+              if (swimmSort == "Time - Ascending") {
+                ply_df <- ply_df[order(ply_df$Final_Time_Point, decreasing = T),]
+              } else if (swimmSort == "Time - Descending") {
+                ply_df <- ply_df[order(ply_df$Final_Time_Point),]
+              } else if (swimmSort == "Alphabetical - Ascending") {
+                ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
+              } else if (swimmSort == "Alphabetical - Descending") {
+                ply_df <- ply_df[order(ply_df$Name),]
+              }
+              patientIDs <- unique(ply_df[,1])
+              ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
+              patients <- unique(ply_df$Index)
+              showlegend1 <- TRUE
+              showlegend2 <- TRUE
+              showlegend3 <- TRUE
+              p <- plot_ly()
+              incProgress(0.4, detail = "Assempling Swimmers Plot")
+              # Loop through patients
+              for (patient in patients) {
+                df_patient <- ply_df[ply_df$Index == patient, ]
+                
+                # Line segment: First_Time_Point to Start_Time_Point
                 p <- add_trace(p,
-                               x = c(df_patient$Start_Time_Point[1], df_patient$Prog_Time_Point[1]),
-                               y = c(patient, patient),
-                               type = 'scatter',
-                               mode = 'lines',
-                               line = list(color = 'tomato', width = 4),
-                               showlegend = FALSE)
-                p <- add_trace(p,
-                               x = c(df_patient$Prog_Time_Point[1], df_patient$Final_Time_Point[1]),
+                               x = c(df_patient$First_Time_Point[1], df_patient$Start_Time_Point[1]),
                                y = c(patient, patient),
                                type = 'scatter',
                                mode = 'lines',
                                line = list(color = '#5F9EA0', width = 4),
                                showlegend = FALSE)
-              } else {
+                
+                # Line segment: Start_Time_Point to Final_Time_Point
+                if (!is.na(df_patient$Prog_Time_Point[1])) {
+                  p <- add_trace(p,
+                                 x = c(df_patient$Start_Time_Point[1], df_patient$Prog_Time_Point[1]),
+                                 y = c(patient, patient),
+                                 type = 'scatter',
+                                 mode = 'lines',
+                                 line = list(color = 'tomato', width = 4),
+                                 showlegend = FALSE)
+                  p <- add_trace(p,
+                                 x = c(df_patient$Prog_Time_Point[1], df_patient$Final_Time_Point[1]),
+                                 y = c(patient, patient),
+                                 type = 'scatter',
+                                 mode = 'lines',
+                                 line = list(color = '#5F9EA0', width = 4),
+                                 showlegend = FALSE)
+                } else {
+                  p <- add_trace(p,
+                                 x = c(df_patient$Start_Time_Point[1], df_patient$Final_Time_Point[1]),
+                                 y = c(patient, patient),
+                                 type = 'scatter',
+                                 mode = 'lines',
+                                 line = list(color = 'tomato', width = 4),
+                                 showlegend = FALSE)
+                }
+                # First Time Point marker (line)
                 p <- add_trace(p,
-                               x = c(df_patient$Start_Time_Point[1], df_patient$Final_Time_Point[1]),
-                               y = c(patient, patient),
-                               type = 'scatter',
-                               mode = 'lines',
-                               line = list(color = 'tomato', width = 4),
-                               showlegend = FALSE)
-              }
-              # First Time Point marker (line)
-              p <- add_trace(p,
-                             x = df_patient$First_Time_Point[1],
-                             y = patient,
-                             type = 'scatter',
-                             mode = 'markers',
-                             marker = list(symbol = 'line-ns', size = 15, color = "#5F9EA0"),
-                             text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
-                             hoverinfo = 'text',
-                             showlegend = FALSE)
-              # Start_Time_Point marker (Open Circle)
-              p <- add_trace(p,
-                             x = df_patient$Start_Time_Point[1],
-                             y = patient,
-                             type = 'scatter',
-                             mode = 'markers',
-                             marker = list(symbol = 'circle', size = 15, color = "#228B22"),
-                             text = df_patient$Event_Details[df_patient$Event == "Start Event"],
-                             hoverinfo = 'text',
-                             showlegend = (function(){
-                               if(showlegend1){
-                                 showlegend1 <<- FALSE
-                                 return(TRUE)
-                               } else {
-                                 return(FALSE)
-                               }
-                             })(),
-                             name = "Start Event")
-              # Progression Event marker (X symbol)
-              if (!is.na(df_patient$Prog_Time_Point[1])) {
-                p <- add_trace(p,
-                               x = df_patient$Prog_Time_Point[1],
-                               y = patient,
-                               type = 'scatter',
-                               mode = 'markers',
-                               marker = list(symbol = 'x', size = 15, color = "#8B1A1A"),
-                               text = df_patient$Event_Details[df_patient$Event == "Progression Event"],
-                               hoverinfo = 'text',
-                               showlegend = (function(){
-                                 if(showlegend2){
-                                   showlegend2 <<- FALSE
-                                   return(TRUE)
-                                 } else {
-                                   return(FALSE)
-                                 }
-                               })(),
-                               name = "Progression Event")
-                # Final Time Point marker (line)
-                p <- add_trace(p,
-                               x = df_patient$Final_Time_Point[1],
+                               x = df_patient$First_Time_Point[1],
                                y = patient,
                                type = 'scatter',
                                mode = 'markers',
                                marker = list(symbol = 'line-ns', size = 15, color = "#5F9EA0"),
-                               text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
+                               text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
                                hoverinfo = 'text',
                                showlegend = FALSE)
-              } else {
-                # If no progression event, Final_Time_Point gets a triangle-right marker
+                # Start_Time_Point marker (Open Circle)
                 p <- add_trace(p,
-                               x = df_patient$Final_Time_Point[1],
+                               x = df_patient$Start_Time_Point[1],
                                y = patient,
                                type = 'scatter',
                                mode = 'markers',
-                               marker = list(symbol = 'triangle-right', size = 20, color = 'tomato'),
-                               text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
+                               marker = list(symbol = 'circle', size = 15, color = "#228B22"),
+                               text = df_patient$Event_Details[df_patient$Event == "Start Event"],
                                hoverinfo = 'text',
                                showlegend = (function(){
-                                 if(showlegend3){
-                                   showlegend3 <<- FALSE
+                                 if(showlegend1){
+                                   showlegend1 <<- FALSE
                                    return(TRUE)
                                  } else {
                                    return(FALSE)
                                  }
                                })(),
-                               name = "Continued Response")
+                               name = "Start Event")
+                # Progression Event marker (X symbol)
+                if (!is.na(df_patient$Prog_Time_Point[1])) {
+                  p <- add_trace(p,
+                                 x = df_patient$Prog_Time_Point[1],
+                                 y = patient,
+                                 type = 'scatter',
+                                 mode = 'markers',
+                                 marker = list(symbol = 'x', size = 15, color = "#8B1A1A"),
+                                 text = df_patient$Event_Details[df_patient$Event == "Progression Event"],
+                                 hoverinfo = 'text',
+                                 showlegend = (function(){
+                                   if(showlegend2){
+                                     showlegend2 <<- FALSE
+                                     return(TRUE)
+                                   } else {
+                                     return(FALSE)
+                                   }
+                                 })(),
+                                 name = "Progression Event")
+                  # Final Time Point marker (line)
+                  p <- add_trace(p,
+                                 x = df_patient$Final_Time_Point[1],
+                                 y = patient,
+                                 type = 'scatter',
+                                 mode = 'markers',
+                                 marker = list(symbol = 'line-ns', size = 15, color = "#5F9EA0"),
+                                 text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
+                                 hoverinfo = 'text',
+                                 showlegend = FALSE)
+                } else {
+                  # If no progression event, Final_Time_Point gets a triangle-right marker
+                  p <- add_trace(p,
+                                 x = df_patient$Final_Time_Point[1],
+                                 y = patient,
+                                 type = 'scatter',
+                                 mode = 'markers',
+                                 marker = list(symbol = 'triangle-right', size = 20, color = 'tomato'),
+                                 text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
+                                 hoverinfo = 'text',
+                                 showlegend = (function(){
+                                   if(showlegend3){
+                                     showlegend3 <<- FALSE
+                                     return(TRUE)
+                                   } else {
+                                     return(FALSE)
+                                   }
+                                 })(),
+                                 name = "Continued Response")
+                }
               }
-            }
-            # Customize layout
-            p_out <- layout(p,
-                            xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
-                            yaxis = list(title = 'Patients', tickvals = patients, ticktext = patientIDs,
-                                         titlefont = list(size = 20), tickfont = list(size = 15)),
-                            showlegend = TRUE) %>%
-              config(
-                toImageButtonOptions = list(
-                  format = "svg",
-                  height = input$TTESwimmerHeight,
-                  width = input$TTESwimmerWidth,
-                  filename = paste0("Time_To_Event_Swimmers_",Sys.Date())
+              incProgress(0.3, detail = "Rendering Swimmers Plot")
+              # Customize layout
+              p_out <- layout(p,
+                              xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
+                              yaxis = list(title = 'Patients', tickvals = patients, ticktext = patientIDs,
+                                           titlefont = list(size = 20), tickfont = list(size = 15)),
+                              showlegend = TRUE) %>%
+                config(
+                  toImageButtonOptions = list(
+                    format = "svg",
+                    height = input$TTESwimmerHeight,
+                    width = input$TTESwimmerWidth,
+                    filename = paste0("Time_To_Event_Swimmers_",Sys.Date())
+                  )
                 )
-              )
+              })
             p_out
           }
         }
@@ -5928,56 +5998,62 @@ server <- function(input, output, session) {
         event_data_key <- event_data_key()
         Patient_Event_Data <- event_data()
         events_to_plot <- input$SummaryOptions
-        Patient_Event_Data_summ <- Patient_Event_Data[which(Patient_Event_Data$Event %in% events_to_plot),]
-        summ_text_cols <- grep("Summary$",colnames(Patient_Event_Data_summ),value = T)
-        if (length(summ_text_cols) > 0) {
-          Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
-            mutate(Event_Details = coalesce(!!!syms(summ_text_cols))) %>%
-            select(-any_of(summ_text_cols))
-        } else {
-          Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
-            mutate(Event_Details = NA)
-        }
-        Patient_Event_Data_summ2 <- Patient_Event_Data_summ %>%
-          arrange(Name,EventStart) %>%
-          select(-c(EventType,EventTab,EventColumn)) %>%
-          as.data.frame()
-        Patient_Event_Data_fl <- Patient_Event_Data %>%
-          group_by(Name) %>%
-          mutate(Event_New = case_when(
-            EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
-            EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
-          )) %>%
-          ungroup() %>%
-          select(Name,Event,Event_New,EventStart,EventEnd) %>%
-          filter(!is.na(Event_New)) %>%
-          arrange(Name, EventStart) %>%
-          group_by(Name, Event_New) %>%
-          mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
-          ungroup() %>%
-          mutate(Event = Event_New) %>%
-          select(Name,Event,EventStart,EventEnd,Event_Details) %>%
-          unique() %>%
-          as.data.frame()
-        Patient_Event_Data_summ3 <- merge(Patient_Event_Data_summ2,Patient_Event_Data_fl,all = T)
-        Patient_Event_Data_summ3 <- Patient_Event_Data_summ3 %>%
-          arrange(Name,EventStart) %>%
-          group_by(Name) %>%
-          mutate(EventTime_FromZero = EventStart - min(EventStart,na.rm = T)) %>%
-          mutate(FirstEventTime_FromZero = 0.00) %>%
-          mutate(FinalEventTime_FromZero = max(EventEnd[which(Event == "Final Recorded Time Point")], na.rm = T) - min(EventStart,na.rm = T)) %>%
-          ungroup() %>%
-          mutate(Event_Details = paste0(paste0("<b>",Event,"</b> - ",round(EventTime_FromZero,3),"\n"),
-                                        paste0("Age at Event Start - ",round(EventStart,3),"\n"),
-                                        Event_Details,sep = "\n")) %>%
-          select(-EventStart,-EventEnd) %>%
-          unique() %>%
-          group_by(Name,EventTime_FromZero) %>%
-          mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
-          ungroup() %>%
-          as.data.frame()
-        Patient_Event_Data_summ3$Index <- as.numeric(factor(Patient_Event_Data_summ3$Name))
-        ply_df <- Patient_Event_Data_summ3
+        withProgress(message = "Processing", value = 0, {
+          incProgress(0.25, detail = "Subsetting Event Data")
+          Patient_Event_Data_summ <- Patient_Event_Data[which(Patient_Event_Data$Event %in% events_to_plot),]
+          summ_text_cols <- grep("Summary$",colnames(Patient_Event_Data_summ),value = T)
+          if (length(summ_text_cols) > 0) {
+            Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
+              mutate(Event_Details = coalesce(!!!syms(summ_text_cols))) %>%
+              select(-any_of(summ_text_cols))
+          } else {
+            Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
+              mutate(Event_Details = NA)
+          }
+          incProgress(0.25, detail = "Deriving First and Final Time Points")
+          Patient_Event_Data_summ2 <- Patient_Event_Data_summ %>%
+            arrange(Name,EventStart) %>%
+            select(-c(EventType,EventTab,EventColumn)) %>%
+            as.data.frame()
+          Patient_Event_Data_fl <- Patient_Event_Data %>%
+            group_by(Name) %>%
+            mutate(Event_New = case_when(
+              EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
+              EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
+            )) %>%
+            ungroup() %>%
+            select(Name,Event,Event_New,EventStart,EventEnd) %>%
+            filter(!is.na(Event_New)) %>%
+            arrange(Name, EventStart) %>%
+            group_by(Name, Event_New) %>%
+            mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
+            ungroup() %>%
+            mutate(Event = Event_New) %>%
+            select(Name,Event,EventStart,EventEnd,Event_Details) %>%
+            unique() %>%
+            as.data.frame()
+          Patient_Event_Data_summ3 <- merge(Patient_Event_Data_summ2,Patient_Event_Data_fl,all = T)
+          incProgress(0.25, detail = "Formatting Data")
+          Patient_Event_Data_summ3 <- Patient_Event_Data_summ3 %>%
+            arrange(Name,EventStart) %>%
+            group_by(Name) %>%
+            mutate(EventTime_FromZero = EventStart - min(EventStart,na.rm = T)) %>%
+            mutate(FirstEventTime_FromZero = 0.00) %>%
+            mutate(FinalEventTime_FromZero = max(EventEnd[which(Event == "Final Recorded Time Point")], na.rm = T) - min(EventStart,na.rm = T)) %>%
+            ungroup() %>%
+            mutate(Event_Details = paste0(paste0("<b>",Event,"</b> - ",round(EventTime_FromZero,3),"\n"),
+                                          paste0("Age at Event Start - ",round(EventStart,3),"\n"),
+                                          Event_Details,sep = "\n")) %>%
+            select(-EventStart,-EventEnd) %>%
+            unique() %>%
+            group_by(Name,EventTime_FromZero) %>%
+            mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
+            ungroup() %>%
+            as.data.frame()
+          Patient_Event_Data_summ3$Index <- as.numeric(factor(Patient_Event_Data_summ3$Name))
+          ply_df <- Patient_Event_Data_summ3
+          incProgress(0.25, detail = "Complete!")
+          })
         ply_df
       })
       
@@ -6020,112 +6096,119 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
-            if (length(patientsSpec) > 0) {
-              maxpats <- maxpats-length(patientsSpec)
-              get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
-              ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
-            } else {
-              if (length(unique(ply_df$Name)) > maxpats) {
-                get_pats <- head(unique(ply_df$Name),maxpats)
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Building Swimmers Plot")
+              if (length(patientsSpec) > 0) {
+                maxpats <- maxpats-length(patientsSpec)
+                get_pats <- c(patientsSpec,head(unique(ply_df$Name),maxpats))
                 ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
-              }
-            }
-            # sort to display in correct visual order (needs to be opposite)
-            if (swimmSort == "Time - Ascending") {
-              ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero, decreasing = T),]
-            } else if (swimmSort == "Time - Descending") {
-              ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero),]
-            } else if (swimmSort == "Alphabetical - Ascending") {
-              ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
-            } else if (swimmSort == "Alphabetical - Descending") {
-              ply_df <- ply_df[order(ply_df$Name),]
-            }
-            patientIDs <- unique(ply_df[,1])
-            ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
-            patients <- unique(ply_df$Index)
-            event_types <- unique(ply_df$Event)
-            event_types <- event_types[which(!event_types %in% c("First Recorded Time Point","Final Recorded Time Point"))]
-            symbol_palette_base <- c("circle", "square", "diamond", "x", "triangle-up", "star", "cross", "triangle-down", "hourglass", "diamond-wide","star-triangle-up","diamond-tall")
-            if (length(event_types) > length(symbol_palette_base)) {
-              vals <- schema(F)$traces$scatter$attributes$marker$symbol$values
-              symbol_palette <- sample(vals,length(event_types))
-            } else {
-              symbol_palette <- symbol_palette_base[c(1:length(event_types))]
-            }
-            names(symbol_palette) <- event_types
-            qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-            col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-            color_palette <- sample(col_vector, length(event_types))
-            names(color_palette) <- event_types
-            req(length(event_types)>0)
-            showLegend_list <- lapply(rep(TRUE,length(event_types)),function(x){x})
-            names(showLegend_list) <- paste0("showLegend",seq(1:length(event_types)))
-            p <- plot_ly()
-            for (patient in patients) {
-              df_patient <- ply_df[ply_df$Index == patient, ]
-              p <- p %>%
-                add_segments(
-                  x = df_patient$FirstEventTime_FromZero[1], xend = df_patient$FinalEventTime_FromZero[1],
-                  y = df_patient$Index[1], yend = df_patient$Index[1],
-                  line = list(color = "black", width = 2),
-                  name = patient,
-                  showlegend = FALSE
-                )
-              p <- add_trace(p,
-                             x = 0,
-                             y = patient,
-                             type = 'scatter',
-                             mode = 'markers',
-                             marker = list(symbol = 'line-ns', size = 10, color = "black"),
-                             text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
-                             hoverinfo = 'text',
-                             showlegend = FALSE)
-              p <- add_trace(p,
-                             x = df_patient$FinalEventTime_FromZero[1],
-                             y = patient,
-                             type = 'scatter',
-                             mode = 'markers',
-                             marker = list(symbol = 'line-ns', size = 10, color = "black"),
-                             text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
-                             hoverinfo = 'text',
-                             showlegend = FALSE)
-              for (event_seq in seq_along(event_types)) {
-                event <- event_types[event_seq]
-                if (event %in% unique(df_patient$Event)) {
-                  p <- add_trace(p,
-                                 x = df_patient[which(df_patient$Event == event),"EventTime_FromZero"],
-                                 y = patient,
-                                 type = 'scatter',
-                                 mode = 'markers',
-                                 marker = list(symbol = symbol_palette[event], size = 10, color = color_palette[event]),
-                                 text = df_patient$Event_Details[df_patient$Event == event],
-                                 hoverinfo = 'text',
-                                 showlegend = (function(){
-                                   if(showLegend_list[[event_seq]]){
-                                     showLegend_list[[event_seq]] <<- FALSE
-                                     return(TRUE)
-                                   } else {
-                                     return(FALSE)
-                                   }
-                                 })(),
-                                 name = event)
+              } else {
+                if (length(unique(ply_df$Name)) > maxpats) {
+                  get_pats <- head(unique(ply_df$Name),maxpats)
+                  ply_df <- ply_df[which(ply_df$Name %in% get_pats),]
                 }
               }
-            }
-            p_out <- layout(p,
-                            xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
-                            yaxis = list(title = 'Patients', tickvals = patients, ticktext = patientIDs,
-                                         titlefont = list(size = 20), tickfont = list(size = 12)),
-                            legend = list(title = list(text = "Event Type")),
-                            showlegend = TRUE) %>%
-              config(
-                toImageButtonOptions = list(
-                  format = "svg",
-                  height = input$SummSwimmerHeight,
-                  width = input$SummSwimmerWidth,
-                  filename = paste0("Event_Summary_Swimmers_",Sys.Date())
+              # sort to display in correct visual order (needs to be opposite)
+              if (swimmSort == "Time - Ascending") {
+                ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero, decreasing = T),]
+              } else if (swimmSort == "Time - Descending") {
+                ply_df <- ply_df[order(ply_df$FinalEventTime_FromZero),]
+              } else if (swimmSort == "Alphabetical - Ascending") {
+                ply_df <- ply_df[order(ply_df$Name, decreasing = T),]
+              } else if (swimmSort == "Alphabetical - Descending") {
+                ply_df <- ply_df[order(ply_df$Name),]
+              }
+              patientIDs <- unique(ply_df[,1])
+              ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
+              patients <- unique(ply_df$Index)
+              event_types <- unique(ply_df$Event)
+              event_types <- event_types[which(!event_types %in% c("First Recorded Time Point","Final Recorded Time Point"))]
+              symbol_palette_base <- c("circle", "square", "diamond", "x", "triangle-up", "star", "cross", "triangle-down", "hourglass", "diamond-wide","star-triangle-up","diamond-tall")
+              if (length(event_types) > length(symbol_palette_base)) {
+                vals <- schema(F)$traces$scatter$attributes$marker$symbol$values
+                symbol_palette <- sample(vals,length(event_types))
+              } else {
+                symbol_palette <- symbol_palette_base[c(1:length(event_types))]
+              }
+              names(symbol_palette) <- event_types
+              qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+              col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+              color_palette <- sample(col_vector, length(event_types))
+              names(color_palette) <- event_types
+              req(length(event_types)>0)
+              showLegend_list <- lapply(rep(TRUE,length(event_types)),function(x){x})
+              names(showLegend_list) <- paste0("showLegend",seq(1:length(event_types)))
+              p <- plot_ly()
+              incProgress(0.4, detail = "Assembling Swimmers Plot")
+              for (patient in patients) {
+                df_patient <- ply_df[ply_df$Index == patient, ]
+                p <- p %>%
+                  add_segments(
+                    x = df_patient$FirstEventTime_FromZero[1], xend = df_patient$FinalEventTime_FromZero[1],
+                    y = df_patient$Index[1], yend = df_patient$Index[1],
+                    line = list(color = "black", width = 2),
+                    name = patient,
+                    showlegend = FALSE
+                  )
+                p <- add_trace(p,
+                               x = 0,
+                               y = patient,
+                               type = 'scatter',
+                               mode = 'markers',
+                               marker = list(symbol = 'line-ns', size = 10, color = "black"),
+                               text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
+                               hoverinfo = 'text',
+                               showlegend = FALSE)
+                p <- add_trace(p,
+                               x = df_patient$FinalEventTime_FromZero[1],
+                               y = patient,
+                               type = 'scatter',
+                               mode = 'markers',
+                               marker = list(symbol = 'line-ns', size = 10, color = "black"),
+                               text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
+                               hoverinfo = 'text',
+                               showlegend = FALSE)
+                for (event_seq in seq_along(event_types)) {
+                  event <- event_types[event_seq]
+                  if (event %in% unique(df_patient$Event)) {
+                    p <- add_trace(p,
+                                   x = df_patient[which(df_patient$Event == event),"EventTime_FromZero"],
+                                   y = patient,
+                                   type = 'scatter',
+                                   mode = 'markers',
+                                   marker = list(symbol = symbol_palette[event], size = 10, color = color_palette[event]),
+                                   text = df_patient$Event_Details[df_patient$Event == event],
+                                   hoverinfo = 'text',
+                                   showlegend = (function(){
+                                     if(showLegend_list[[event_seq]]){
+                                       showLegend_list[[event_seq]] <<- FALSE
+                                       return(TRUE)
+                                     } else {
+                                       return(FALSE)
+                                     }
+                                   })(),
+                                   name = event)
+                  }
+                }
+              }
+              incProgress(0.3, detail = "Rendering Swimmers Plot")
+              p_out <- layout(p,
+                              xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
+                              yaxis = list(title = 'Patients', tickvals = patients, ticktext = patientIDs,
+                                           titlefont = list(size = 20), tickfont = list(size = 12)),
+                              legend = list(title = list(text = "Event Type")),
+                              showlegend = TRUE) %>%
+                config(
+                  toImageButtonOptions = list(
+                    format = "svg",
+                    height = input$SummSwimmerHeight,
+                    width = input$SummSwimmerWidth,
+                    filename = paste0("Event_Summary_Swimmers_",Sys.Date())
+                  )
                 )
-              )
+              })
+            
+            
             p_out
           }
         }
