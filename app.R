@@ -60,13 +60,10 @@ if (!app_lite) {
 
 set.seed(42)
 
-
-
 # Load input data if available -------------------------------------------------
 
 wkbk_pre <- NULL
 if (file.exists(Event_Param_File)) {
-  #if (file.exists(Event_Param_File) & !file.exists(Workbook_file)) {
   param_pre <- as.data.frame(fread(Event_Param_File,na.strings = c("","NA")))
   wkbk_files <- unique(param_pre[,c(1,2)])
   if (nrow(wkbk_files) > 1) {
@@ -80,7 +77,6 @@ if (file.exists(Event_Param_File)) {
 }
 
 if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & isTruthy(wkbk_pre)) {
-  #if (file.exists(Patient_Event_Data_File) & file.exists(Event_Param_File) & (file.exists(Workbook_file) | isTruthy(wkbk_pre))) {
   AllFilesReady <- TRUE
   start_trigger <- 1
 } else {
@@ -101,8 +97,6 @@ if (exists("Project_Name")) {
   Project_Name <- "ShinyEvents"
 }
 Workbook_file <- ""
-
-#Drug_anno <- as.data.frame(fread(Drug_anno_file))
 
 if (exists("Event_Cluster_Window")) {
   if (!isTruthy(Event_Cluster_Window)) {
@@ -132,7 +126,6 @@ if (!Data_Contains_Longitudinal_Biomarkers) {
 
 #increase file upload size
 options(shiny.maxRequestSize=5000*1024^2)
-
 
 # Password Table ---------------------------------------------------------------
 # user database for logins
@@ -189,7 +182,6 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                         # Maybe include example with parameter file?
                         #selectInput("ExampleDataOptions","Example Data Options:", choices = c("Event Data Only" = "1","Detailed Event Data" = "2","Event and Supplementary Data" = "3"))#,
                         selectInput("ExampleDataOptions","Example Data Options:", choices = c("Event Data Only" = "1","Event and Supplementary Data" = "3"))#,
-                        #actionButton("LoadExampleData","Load Example Event Data")
                  ),
                  column(6, style = "margin-top:30px",
                         actionButton("LoadExampleData","Load Example Data", width = "100%")
@@ -203,7 +195,6 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                 conditionalPanel(condition = "input.SuppDataInput1 == true",
                                                  div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
                                                      style = "margin-top:-15px;margin-bottom:-15px"),
-                                                 #conditionalPanel(condition = "output.SuppDataFileInput1_found",
                                                  fluidRow(
                                                    column(7, style = "margin-bottom:-25px",
                                                           selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
@@ -219,11 +210,7 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                                                        choices = c("Yes","No"), selected = "No", inline = T)
                                                    )
                                                  )
-                                                 #)
-                                )#,
-                                #actionButton("SuppDataHelp","Supplementary data input formatting", icon = icon("circle-question"), width = "100%",
-                                #            style = "background-color: #2c3e50; border-color: #2c3e50"),
-                                #actionButton("LoadExSuppData","Load Example Supplementary Data"),
+                                )
                ),
                p(),
                conditionalPanel(condition = "output.InputDataReady",
@@ -534,14 +521,7 @@ PatientLevel_tab_contents <- sidebarLayout(
                h4("Patient Selection"),
                div(DT::dataTableOutput("PatientSelectionTab"), style = "font-size:10px"),
                p(),
-               #fluidRow(
-               #  column(6,
-               #         checkboxInput("RemoveUnknownNA","Remove Unknown/NA",value = T)
-               #  ),
-               #  column(6,
                downloadButton("dnldCohortEventTab","Cohort Event Table")
-               #  )
-               #)
       ),
       tabPanel("Figure Settings",
                p(),
@@ -669,7 +649,6 @@ if (!app_lite) {
 } else {
   PatientLevel_tab <- tabPanel("Patient Visual Analytics",
                                value = "patient_visual_analytics",
-                               #p(
                                fluidPage(
                                  PatientLevel_tab_contents
                                  ,
@@ -697,8 +676,6 @@ if (!app_lite) {
                                    div(id = "AppVersion", class = "info_box", version_id)
                                  )
                                )
-                               #)
-                               
   )
 }
 
@@ -1045,7 +1022,6 @@ if (!app_lite) {
 } else {
   TreatmentAnalytics_tab <- tabPanel("Treatment Associated Analytics",
                                      value = "treatment_associated_analytics",
-                                     #p(
                                      fluidPage(
                                        TreatmentAnalytics_tab_contents
                                        ,
@@ -1073,8 +1049,6 @@ if (!app_lite) {
                                          div(id = "AppVersion", class = "info_box", version_id)
                                        )
                                      )
-                                     #)
-                                     
   )
 }
 
@@ -1280,10 +1254,8 @@ if (!app_lite) {
 } else {
   tte_tab <- tabPanel("Time-To-Event Analysis",
                       value = "time_to_event_analysis",
-                      #p(
                       fluidPage(
-                        tte_tab_contents
-                        ,
+                        tte_tab_contents,
                         tagList(
                           tags$head(
                             tags$style(
@@ -1308,8 +1280,6 @@ if (!app_lite) {
                           div(id = "AppVersion", class = "info_box", version_id)
                         )
                       )
-                      #)
-                      
   )
 }
 
@@ -1398,12 +1368,7 @@ CohortLevel_tab_contents <- sidebarLayout(
                      hr(),
                      actionButton("SaveAnnotation","Save Annotation", width = "100%"),
                      p(),
-                     uiOutput("rend_anno_log")#,
-                     #tags$h4("Annotation Log"),
-                     #wellPanel(
-                     #  style = "max-height: 300px; overflow-y: auto; border: 1px solid #ccc;",
-                     #  uiOutput("annotation_log")
-                     #)
+                     uiOutput("rend_anno_log")
     ),
     conditionalPanel(condition = "input.SummaryMain == '3'",
                      p(),
@@ -1475,12 +1440,6 @@ CohortLevel_tab_contents <- sidebarLayout(
                                     value = 3
                            )
                          ),
-                         #div(DT::dataTableOutput("MolecularAnnoTable"), style = "font-size:14px"),
-                         #fluidRow(
-                         #  column(3,
-                         #         downloadButton("dlndMolecularAnnoTable", "Download Table")
-                         #  )
-                         #),
                          value = 2
                 ),
                 tabPanel("Cohort Break-Down",
@@ -1529,7 +1488,6 @@ if (!app_lite) {
 } else {
   CohortLevel_tab <- tabPanel("Cohort Overview",
                               value = "cohort_overview",
-                              #p(
                               fluidPage(
                                 CohortLevel_tab_contents
                                 ,
@@ -1557,8 +1515,6 @@ if (!app_lite) {
                                   div(id = "AppVersion", class = "info_box", version_id)
                                 )
                               )
-                              #)
-                              
   )
 }
 
@@ -1649,22 +1605,6 @@ server <- function(input, output, session) {
   if(!interactive()) pdf(NULL)
   
   # Password Protection --------------------------------------------------------
-  # hack to add the logout button to the navbar on app launch
-  #if (Password_Protected) {
-  #  insertUI(
-  #    selector = ".navbar .container-fluid .navbar-collapse",
-  #    ui = tags$ul(
-  #      class="nav navbar-nav navbar-right",
-  #      tags$li(
-  #        div(
-  #          style = "padding: 10px; padding-top: 8px; padding-bottom: 0;",
-  #          logoutUI("logout")
-  #        )
-  #      )
-  #    )
-  #  )
-  #}
-  
   # call the shinyauthr login and logout server modules
   if (Password_Protected) {
     credentials <- loginServer(
@@ -1672,22 +1612,13 @@ server <- function(input, output, session) {
       data = user_base,
       user_col = "user",
       pwd_col = "password",
-      sodium_hashed = FALSE#,
-      #reload_on_logout = TRUE,
-      #log_out = reactive(logout_init())
+      sodium_hashed = FALSE
     )
   } else {
     credentials <- reactive({
       list(user_auth = TRUE)
     })
   }
-  
-  #if (Password_Protected) {
-  #  logout_init <- logoutServer(
-  #    id = "logout",
-  #    active = reactive(credentials()$user_auth)
-  #  )
-  #}
   
   observeEvent(credentials()$user_auth, {
     # if user logs in successfully
@@ -1696,7 +1627,6 @@ server <- function(input, output, session) {
         # remove the login tab
         removeTab("shinyevents_tabs", "login")
         # add home tab
-        
         if (!app_lite) {
           appendTab("shinyevents_tabs", Homepage_tab, select = FALSE)
         }
@@ -1765,10 +1695,8 @@ server <- function(input, output, session) {
         
       })
       
-      
       example_eventdata_format <- as.data.frame(fread(example_eventdata_format_file, na.strings = c("","NA")))
       example_mini_eventdata <- as.data.frame(fread(example_mini_eventdata_file, na.strings = c("","NA")))
-      
       output$desc_table <- renderDT({
         datatable(example_eventdata_format,
                   options = list(
@@ -1778,7 +1706,6 @@ server <- function(input, output, session) {
                   ),
                   class = 'stripe compact')
       })
-      
       output$example_table <- renderDT({
         datatable(example_mini_eventdata,
                   options = list(
@@ -1805,7 +1732,6 @@ server <- function(input, output, session) {
       }, ignoreInit = TRUE)
       
       eventDataInput_raw <- reactiveVal()
-      
       observeEvent(input$LoadExampleData, {
         updateSelectizeInput(session,"EventDataEventStartUnits", selected = "Years")
         updateSelectizeInput(session,"EventDataEventEndUnits", selected = "Years")
@@ -1868,14 +1794,12 @@ server <- function(input, output, session) {
             
           }
           eventDataInput_raw(event_data)
-          
           eventDataInput_raw <- event_data
           EventDataPatientIDcol <- "Name"
           EventDataEventcol <- "Event"
           EventDataEventTypecol <- "EventType"
           EventDataEventStartcol <- "EventStart"
           EventDataEventEndcol <- "EventEnd"
-          #EventDataEventSummary <- "EventSummary"
           EventDataEventStartUnits <- "Years"
           EventDataEventEndUnits <- "Years"
           
@@ -1887,8 +1811,6 @@ server <- function(input, output, session) {
           input_file <- "AACR_Genie_NSCLC_Adenocarcinoma_Example_EventData.txt"
           eventtype_in <- EventDataEventcol
           cluster_window <- 1
-          
-          #save(list = ls(), file = "example_loading.RData", envir = environment())
           incProgress(0.2, detail = "Formatting event data")
           
           event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
@@ -1897,10 +1819,8 @@ server <- function(input, output, session) {
                                              EventTab = "InputData",
                                              EventStart = eventDataInput_raw[,EventDataEventStartcol],
                                              EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                             EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
-                                             #EventSummary = eventDataInput_raw[,EventDataEventSummary]
+                                             EventColumn = eventDataInput_raw[,EventDataEventTypecol]
           )
-          #event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
           
           if (ExampleDataOptions == "3") {
             event_wkbk_link <- "EventTab"
@@ -1933,7 +1853,6 @@ server <- function(input, output, session) {
           event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
           event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
           
-          
           if (ExampleDataOptions == "3") {
             wkbk <- read_excel_allsheets(Example_wkbk_file)
             wkbk <- c(list(InputData = eventDataInput_raw),wkbk)
@@ -1963,7 +1882,6 @@ server <- function(input, output, session) {
           
           incProgress(0.2, detail = "Summarizing event clusters")
           if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
-            #if (all(is.na(event_data_processed$EventSummary))) {
             if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
               treatment_events <- EventDataTreatmentEvents
               response_events <- EventDataResponseEvents
@@ -1975,7 +1893,6 @@ server <- function(input, output, session) {
                 event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
                 event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
               } else { event_data_re_cls <- NULL }
-              
               event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
               event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
               event_data_cls <- event_data_cls %>%
@@ -2078,13 +1995,7 @@ server <- function(input, output, session) {
                                placeholder = 'Please select',
                                onInitialize = I('function() { this.setValue(""); }')
                              ))
-        #updateSelectizeInput(session,"EventDataEventSummary",choices = col_choices, selected = summ_preSel, server = T,
-        #                     options = list(
-        #                       placeholder = 'Please select',
-        #                       onInitialize = I('function() { this.setValue(""); }')
-        #                     ))
       })
-      
       
       observe({
         req(eventDataInput_raw())
@@ -2092,8 +2003,6 @@ server <- function(input, output, session) {
         event_data_raw <- eventDataInput_raw()
         eventname_col <- input$EventDataEventcol
         eventtype_col <- input$EventDataEventTypecol
-        # Could remove event summary options, but might not be good if user made their own
-        #eventsumm_col <- input$EventDataEventSummary
         if (isTruthy(eventtype_col)) {
           treat_resp_df <- unique(event_data_raw[,c(eventtype_col,eventname_col)])
           treat_resp_choices <- split(treat_resp_df[,eventname_col], treat_resp_df[,eventtype_col])
@@ -2147,12 +2056,7 @@ server <- function(input, output, session) {
         GlobalAppTimeUnit_react(input$GlobalAppTimeUnit)
       })
       
-      observe({
-        print(input$TreatmentWarn)
-      })
-      
       process_input_react <- reactiveVal(NULL)
-      
       observeEvent(input$ProcessInputData, {
         EventDataTreatmentEvents <- input$EventDataTreatmentEvents
         if (length(EventDataTreatmentEvents) == 0) {
@@ -2186,15 +2090,10 @@ server <- function(input, output, session) {
         }
         
       }, ignoreInit = TRUE)
-      
       observeEvent(input$TreatmentWarn, {
         process_input_react(input$TreatmentWarn)
       }, ignoreInit = TRUE)
-      
-      
       observeEvent(process_input_react(), {
-        #observeEvent(input$TreatWarn, {
-        #observeEvent(input$ProcessInputData, {
         if (process_input_react()) {
           req(eventDataInput_raw())
           req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
@@ -2205,7 +2104,6 @@ server <- function(input, output, session) {
           EventDataEventTypecol <- input$EventDataEventTypecol
           EventDataEventStartcol <- input$EventDataEventStartcol
           EventDataEventEndcol <- input$EventDataEventEndcol
-          #EventDataEventSummary <- input$EventDataEventSummary
           EventDataEventStartUnits <- input$EventDataEventStartUnits
           EventDataEventEndUnits <- input$EventDataEventEndUnits
           EventDataTreatmentEvents <- input$EventDataTreatmentEvents
@@ -2213,12 +2111,7 @@ server <- function(input, output, session) {
           
           SuppEventColumnLink <- input$SuppEventColumnLink
           SuppDataFileInput1 <- input$SuppDataFileInput1
-          #TreatmentWarn <- input$TreatmentWarn
           
-          
-          
-          #if (!is.null(TreatmentWarn)) {
-          #  if (TreatmentWarn) {
           withProgress(message = "Processing Input Data", value = 0, {
             
             input_file <- input$EventDataFileInput$datapath
@@ -2232,9 +2125,6 @@ server <- function(input, output, session) {
             cluster_window <- input$MainClusterWindowSet
             updateSelectInput(session,"GlobalAppTimeUnit", selected = EventDataEventStartUnits)
             
-            
-            #save(list = ls(), file = "eventdata_make.RData", envir = environment())
-            
             incProgress(0.2, detail = "Formatting event data")
             
             event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
@@ -2243,13 +2133,8 @@ server <- function(input, output, session) {
                                                EventTab = "InputData",
                                                EventStart = eventDataInput_raw[,EventDataEventStartcol],
                                                EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-                                               EventColumn = eventDataInput_raw[,EventDataEventTypecol]#,
-                                               #EventSummary = NA
+                                               EventColumn = eventDataInput_raw[,EventDataEventTypecol]
             )
-            #if (isTruthy(EventDataEventSummary)) {
-            #  event_data_processed$EventSummary <- eventDataInput_raw[,EventDataEventSummary]
-            #  event_data_processed[which(!is.na(event_data_processed$EventSummary)),c("EventTab","EventColumn")] <- NA
-            #}
             if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
               event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
                                                           event_data_processed[,"EventStart"],
@@ -2269,15 +2154,12 @@ server <- function(input, output, session) {
               }
             }
             
-            
             incProgress(0.2, detail = "Formatting parameter file")
             param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
                             "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
             
-            
             treat_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataTreatmentEvents),"EventType"])
             respn_event_types <- unique(event_data_processed[which(event_data_processed$Event %in% EventDataResponseEvents),"EventType"])
-            
             
             event_params_base <- unique(event_data_processed[,c("EventTab","EventType")])
             event_params_base[which(is.na(event_params_base$EventTab)),"EventTab"] <- "InputData"
@@ -2297,23 +2179,15 @@ server <- function(input, output, session) {
             event_params[which(event_params$`Event Category` %in% treat_event_types),"Treatment"] <- TRUE
             event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
             
-            
-            #save(list = ls(), file = "eventdataparams_make.RData", envir = environment())
-            
             wkbk <- list(InputData = eventDataInput_raw)
-            
-            #save(list = ls(), file = "eventdataparamswkbk_make.RData", envir = environment())
             
             incProgress(0.2, detail = "Formatting patient selection table")
             pat_anno <- event_count_df(event_data_processed)
-            
             
             if (!is.na(eventtype_in)) {
               event_new <- apply(event_data_processed,1,function(x) {
                 event <- x[["Event"]]
                 eventtype <- x[["EventType"]]
-                #eventsumm <- x[["EventSummary"]]
-                #if (is.na(eventsumm)) {
                 if (event == eventtype) {
                   return(event)
                 } else {
@@ -2323,17 +2197,12 @@ server <- function(input, output, session) {
                     return(paste0(eventtype,": ",event))
                   }
                 }
-                #} else {
-                #  return(event)
-                #}
-                
               })
               event_data_processed$Event <- event_new
             }
             
             incProgress(0.2, detail = "Summarizing event clusters")
             if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
-              #if (all(is.na(event_data_processed$EventSummary))) {
               if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
                 treatment_events <- EventDataTreatmentEvents
                 response_events <- EventDataResponseEvents
@@ -2345,7 +2214,6 @@ server <- function(input, output, session) {
                   event_data_re <- event_data_processed[grepl(paste(response_events,collapse = "|"),event_data_processed$Event),]
                   event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = F, cluster_window = cluster_window)
                 } else { event_data_re_cls <- NULL }
-                
                 event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
                 event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
                 event_data_cls <- event_data_cls %>%
@@ -2357,11 +2225,8 @@ server <- function(input, output, session) {
                 event_data_processed <- Patient_Event_Data_cls_all
               }
             }
-            
             incProgress(0.5, detail = "Complete!")
           })
-          
-          #save(list = ls(), file = "eventdataparamswkbksumm_make.RData", envir = environment())
           
           ProjectName_react(input$UserProjectName)
           Param_File_react(NULL)
@@ -2391,27 +2256,12 @@ server <- function(input, output, session) {
           
           process_input_react(NULL)
           
-          #  }
-          #}
-          
         }
-        
         
       })
       
       # Front End wkbk input ---------------------------------------------------
       
-      
-      #output$SuppDataFileInput1_found <- reactive({
-      #  req(input$SuppDataFileInput1)
-      #  suppDataFileInput <- input$SuppDataFileInput1
-      #  if (isTruthy(suppDataFileInput) | input$LoadExampleData > 0) {
-      #    TRUE
-      #  } else {
-      #    FALSE
-      #  }
-      #})
-      #outputOptions(output, "SuppDataFileInput1_found", suspendWhenHidden = FALSE)
       observe({
         req(eventDataInput_raw())
         #req(input$SuppDataFileInput1)
@@ -2424,8 +2274,6 @@ server <- function(input, output, session) {
                                onInitialize = I('function() { this.setValue(""); }')
                              ))
       })
-      
-      
       
       # Workbook file(s) input
       Workbook_file_df_react <- reactive({
@@ -2442,7 +2290,6 @@ server <- function(input, output, session) {
         req(input$SuppDataFileInput1)
         file_df <- input$SuppDataFileInput1
         
-        #if (nrow(file_df) == 1) {
         if (tools::file_ext(file_df$datapath[1]) %in% c("xlsx","xls")) {
           withProgress(message = "Loading Supplementary Data", value = 0, {
             incProgress(0.5, detail = "Loading input file")
@@ -2460,21 +2307,6 @@ server <- function(input, output, session) {
           })
           wkbk_raw_react(c(wkbk_raw_react(),wkbk))
         }
-        # Multiple files loaded to be made to wkbk
-        #} #else if (nrow(file_df) > 1) {
-        #withProgress(message = "Loading Supplementary Data", value = 0, {
-        #  incProgress(0.5, detail = "Loading input file")
-        #  incProgress(0.5, detail = "Complete!")
-        #})
-        #wkbk <- list()
-        #for (row in seq(nrow(file_df))) {
-        #  df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
-        #  tabName <- tools::file_path_sans_ext(file_df[row,"name"])
-        #  wkbk[[tabName]] <- df
-        #}
-        #wkbk_raw_react(c(wkbk_raw_react(),wkbk))
-        #}
-        
         
       })
       
@@ -2672,7 +2504,6 @@ server <- function(input, output, session) {
       ## Workbook Adj ------------------------------------------------------------
       # Adjust workbook if needed
       observe({
-        
         req(param_data())
         req(wkbk_raw_react())
         req(GlobalAppTimeUnit_react())
@@ -2680,14 +2511,11 @@ server <- function(input, output, session) {
         wkbk <- wkbk_raw_react()
         AppTimeUnit <- GlobalAppTimeUnit_react()
         AppTimeUnit_low <- tolower(AppTimeUnit)
-        #save(list = ls(), file = "wkbk_react.RData", envir = environment())
         if (length(which(is.na(param[,1]) == T)) == 0) {
           Clin_Supp_Cols_List <- list()
           wkbk_tabs <- unique(param[,1])
-          
           withProgress(message = "Processing Supplementary Data", value = 0, {
             data_to_proc <- length(names(wkbk))
-            
             wkbk_adj <- lapply(names(wkbk), function(df_name) {
               incProgress((1/data_to_proc), detail = paste0("Processing: ",df_name))
               df <- wkbk[[df_name]]
@@ -2701,7 +2529,6 @@ server <- function(input, output, session) {
                     df <- df %>%
                       arrange(!!!syms(c(colnames(df)[1],start_col_names))) %>%
                       as.data.frame()
-                    
                     for (row in 1:nrow(param_tab)) {
                       row <- unlist(param_tab[row,])
                       start_col_name <- row["Event Start Column"]
@@ -2719,8 +2546,6 @@ server <- function(input, output, session) {
                           df[,stop_col_name] <- convert_time_units(suppressWarnings(as.numeric(df[,stop_col_name])),stop_unit,AppTimeUnit_low)
                         }
                       }
-                      #}
-                      
                     }
                   }
                 }
@@ -2737,21 +2562,18 @@ server <- function(input, output, session) {
           wkbk_react_anno(wkbk_adj)
           wkbk_react_anno_sub(wkbk_adj)
           wkbk_react_sub(wkbk_adj)
-          
           Clin_Supp_Cols_List_react(Clin_Supp_Cols_List)
         }
         
       })
       
       observeEvent(input$ApplyDataFilter, {
-        
         req(wkbk_react_anno())
         req(wkbk_raw_react())
         req(wkbk_react())
         req(input$TableToFilterMain)
         req(pat_react())
         req(event_data_summ())
-        
         wkbk <- wkbk_raw_react()
         wkbk_anno <- wkbk_react_anno()
         wkbk_react <- wkbk_react()
@@ -2761,9 +2583,6 @@ server <- function(input, output, session) {
         event_data <- event_data_summ()
         pat_react <- pat_react()
         tree_df <- TableFilterMainInput_df()
-        
-        #save(list = ls(), file = "ApplyDataFilter.RData", envir = environment())
-        
         withProgress(message = "Filtering Dataset", value = 0, {
           incProgress(0.3, detail = "Organizing filter terms")
           if (isTruthy(filters)) {
@@ -2815,7 +2634,6 @@ server <- function(input, output, session) {
         
       })
       
-      
       # Update certain inputs based on workbook information
       observe({
         req(wkbk_react_sub())
@@ -2843,7 +2661,6 @@ server <- function(input, output, session) {
         updateNumericInput(session,"SummaryLeinInput",value = input$MainClusterWindowSet)
       })
       
-      
       # Use example event data
       # pre-processed event data file
       observe({
@@ -2862,8 +2679,6 @@ server <- function(input, output, session) {
         param <- paramEvent_data()
         Patient_Event_Data <- event_data_raw()
         cluster_window <- Event_Cluster_Window
-        
-        
         # Event data already has summary columns
         if (!any(grepl("summary$", colnames(Patient_Event_Data), ignore.case = T))) {
           withProgress(message = "Summaizing Event Data", value = 0, {
@@ -2896,30 +2711,8 @@ server <- function(input, output, session) {
         
       })
       
-      #observe({
-      #  
-      #  param <- paramEvent_data()
-      #  wkbk_raw <- wkbk_raw_react()
-      #  wkbk <- wkbk_react_sub()
-      #  wkbk_anno <- wkbk_react_anno_sub()
-      #  cluster_window <- input$MainClusterWindowSet
-      #  Patient_Event_Data <- event_data_raw()
-      #  event_data <- event_data_summ()
-      #  UpdateSummaryClusters <- input$UpdateSummaryClusters
-      #  event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
-      #  event_data <- event_data()
-      #  event_data_key <- event_data_key()
-      #  
-      #  ParamInputOpt <- input$ParamInputOpt
-      #  Param_File_react <- Param_File_react()
-      #  GenEventData <- input$GenEventData
-      #  
-      #  #save(list = ls(), file = "update_check.RData", envir = environment())
-      #})
-      
       observeEvent(input$UpdateSummaryClusters, {
         
-        #save(list = ls(), file = "UpdateSummaryClusters.RData", envir = environment())
         req(paramEvent_data())
         req(wkbk_react_sub())
         req(event_data_raw())
@@ -3043,16 +2836,12 @@ server <- function(input, output, session) {
         
       }, ignoreInit = TRUE)
       
-      
       sankey_added_events <- reactiveVal()
       observe({
         req(event_data_summ())
         req(paramEvent_data())
         event_data <- event_data_summ()
         param <- paramEvent_data()
-        
-        #save(list = ls(), file = "event_data_tr_clusters_clean_making.RData", envir = environment())
-        
         treatment_events <- param[which(param$Treatment == TRUE),"Event Category"]
         if (length(unique(treatment_events)) > 0) {
           treat_summ_events <- paste0(unique(param[which(param$Treatment == TRUE),"Event Category"])," Summary")
@@ -3120,11 +2909,7 @@ server <- function(input, output, session) {
           sankey_added <- unique(paste0(event_data_clusters_clean$Event,": ",event_data_clusters_clean$EventSummary))
           sankey_added_events(sankey_added)
         }
-        
       })
-      
-      
-      
       
       observe({
         req(event_data_summ())
@@ -3208,12 +2993,7 @@ server <- function(input, output, session) {
                                                                                   options = list(
                                                                                     placeholder = 'Please select',
                                                                                     onInitialize = I('function() { this.setValue(""); }')
-                                                                                  ))#,
-                                                                   #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
-                                                                   #               options = list(
-                                                                   #                 placeholder = 'Please select',
-                                                                   #                 onInitialize = I('function() { this.setValue(""); }')
-                                                                   #               ))
+                                                                                  ))
                                                             ),
                                                             column(4,
                                                                    virtualSelectInput(
@@ -3239,7 +3019,6 @@ server <- function(input, output, session) {
                                                         ),
                                                         p(),
                                                         h3("Input Data Preivew"),
-                                                        #h3("Event Data Preivew"),
                                                         div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
                                        ),
                                        value = "Input Data Formatting"
@@ -3320,7 +3099,6 @@ server <- function(input, output, session) {
       
       output$EventDataTable <- DT::renderDataTable({
         event_data <- event_data()
-        #save(list = ls(), file = "event.RData", envir = environment())
         DT::datatable(event_data,
                       escape = F,
                       class = "display nowrap",
@@ -3403,7 +3181,6 @@ server <- function(input, output, session) {
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
-        #save(list = ls(), file = "patient_event_data_single.RData", envir = environment())
         pat_event_data <- event_data[which(event_data$Name == Patient),]
         patient_event_data_single(pat_event_data)
         
@@ -3436,7 +3213,6 @@ server <- function(input, output, session) {
         names(Clin_Supp_Cols_List_3) <- names(Clin_Supp_Cols_List_2)
         swimmer_hover_opts(Clin_Supp_Cols_List_3)
       })
-      
       shiny::observe({
         req(swimmer_hover_opts())
         swimmer_hover_opts <- swimmer_hover_opts()
@@ -3450,10 +3226,7 @@ server <- function(input, output, session) {
         
         shinyWidgets::updateVirtualSelect(session = session,inputId = "SwimmerHoverSelect",choices = swimmer_hover_opts, selected = preSelectedGet_new)
         shinyWidgets::updateVirtualSelect(session = session,inputId = "HighlightEventSelect",choices = swimmer_hover_opts, selected = preSelectedGet_new)
-        
       })
-      
-      
       observe({
         req(single_patient_highlight_opt())
         req(input$SwimmerYlinesSelect)
@@ -3469,7 +3242,6 @@ server <- function(input, output, session) {
                                         "")
         
         shinyWidgets::updateVirtualSelect(session = session,inputId = "HighlightEventSelect",choices = highlight_opts, selected = highlight_opts_select)
-        
       })
       
       ## Render tabset panel below timeline
@@ -3484,25 +3256,19 @@ server <- function(input, output, session) {
                    downloadButton(paste0(tabs[x],"_TableDnld"), "Download Table")
           )
         })
-        
         do.call(tabsetPanel, myTabs)
-        
       })
       
       ## timeline plot customization
       output$rendTimeLineTitle <- renderUI({
-        
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
         SwimmerTitle <- paste0("Clinical Course of Patient: ", as.character(Patient))
         textInput("TimeLineTitle","Title:",value = SwimmerTitle)
-        
       })
       
       ## Reactive
-      
-      
       ## Generate Patient Clinical data tables
       pat_wkbk_react_sub <- reactive({
         req(wkbk_react_sub())
@@ -3512,7 +3278,6 @@ server <- function(input, output, session) {
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
-        #save(list = ls(), file = "pat_wkbk_react_sub.RData", envir = environment())
         pat_wkbk <- lapply(wkbk,function(x) {
           return(x[which(x[,1] == Patient),])
         })
@@ -3546,19 +3311,13 @@ server <- function(input, output, session) {
         })
       })
       
-      
-      
       ## Generate updated patient annotation table for UI
       Patient_Table_React <- reactive({
-        
         Patient_Annotation <- pat_react()
         Patient_Annotation
-        
       })
-      
       ## Render Patient Selection Table
       output$PatientSelectionTab <- DT::renderDataTable({
-        
         Patient_Table_df <- Patient_Table_React()
         if (nrow(Patient_Table_df) > 10) {
           DT::datatable(Patient_Table_df,
@@ -3584,7 +3343,6 @@ server <- function(input, output, session) {
       })
       
       ## Plot
-      
       observe({
         wkbk <- pat_wkbk_react_sub()
         pat_event_data <- patient_event_data_single()
@@ -3593,7 +3351,6 @@ server <- function(input, output, session) {
         swimmer_hover_opts <- swimmer_hover_opts()
         param <- param_data()
         event_data_key <- event_data_key()
-        #save(list = ls(), file = "event_data_single_patient_hover.RData", envir = environment())
       })
       
       patient_event_data_single_hover <- reactive({
@@ -3639,7 +3396,6 @@ server <- function(input, output, session) {
                     temp_df <- anno_df %>%
                       select(any_of(c(colnames(anno_df)[1],startCol[timeCol],stopCol[timeCol],colAnno))) %>%
                       unique() %>%
-                      #mutate(EventTab = EventTab) %>%
                       rename(any_of(c(EventStart = startCol[timeCol], EventEnd = stopCol[timeCol], Name = colnames(anno_df)[1]))) %>%
                       as.data.frame()
                     if ("EventStart" %in% colnames(temp_df)) {
@@ -3654,7 +3410,6 @@ server <- function(input, output, session) {
                     temp_df <- anno_df %>%
                       select(any_of(c(colnames(anno_df)[1],startCol[timeCol],stopCol[timeCol],colAnno))) %>%
                       unique() %>%
-                      #mutate(EventTab = EventTab) %>%
                       rename(any_of(c(EventStart = startCol[timeCol], EventEnd = stopCol[timeCol], Name = colnames(anno_df)[1]))) %>%
                       as.data.frame()
                     # This catches that the annotation is not event specific
@@ -3684,7 +3439,6 @@ server <- function(input, output, session) {
           Patient_Event_Data_sub <- merge(event_order,Patient_Event_Data_sub,all.x = T, sort = F)
           Patient_Event_Data_sub
         }
-        
       })
       
       ## Generate Patient timeline plot
@@ -3693,7 +3447,6 @@ server <- function(input, output, session) {
         patient_event_data_single_hover <- patient_event_data_single_hover()
         Patient_Event_Data_sub <- patient_event_data_single_hover
         EventsToHighlight <- input$HighlightEventSelect
-        #save(list = ls(), file = "PatientTimelinePlot_df.RData", envir = environment())
         if (length(EventsToHighlight) > 0) {
           Patient_Event_Data_sub$highlight <- ifelse(Patient_Event_Data_sub$Event_Age %in% EventsToHighlight,TRUE,FALSE)
         }
@@ -3703,12 +3456,9 @@ server <- function(input, output, session) {
         Patient_Event_Data_sub
       })
       
-      
-      
       observe({
         req(single_patient_swimmer_ylines())
         displaySumm <- input$displaySummaryRows
-        
         pat_event_opts <- single_patient_swimmer_ylines()
         sankey_events <- sankey_added_events()
         if (!displaySumm) { # Remove summary swimmer lines
@@ -3723,13 +3473,11 @@ server <- function(input, output, session) {
       })
       
       PatientTimelinePlot_react <- reactive({
-        
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           if (Patient %in% Patient_Table_df[,1]) {
-            #RemoveUnkNA_opt <- input$RemoveUnknownNA
             RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
             SwimmerTheme <- input$TimeLineTheme
@@ -3738,7 +3486,6 @@ server <- function(input, output, session) {
             yFont <- input$TimeLineYAxisSize
             eventsY <- input$SwimmerYlinesSelect
             Patient_Event_Data_sub <- PatientTimelinePlot_df()
-            #save(list = ls(), file = "PatientTimelinePlot_react.RData", envir = environment())
             eventsY_summ <- grep("Summary",eventsY,value = T)
             eventsY_reg <- grep("Summary",eventsY,value = T, invert = T)
             eventsY <- c(eventsY_summ,eventsY_reg)
@@ -3748,38 +3495,25 @@ server <- function(input, output, session) {
             }
             Patient_Event_Data_sub$EventStart <- round(Patient_Event_Data_sub$EventStart,2)
             Patient_Event_Data_sub$EventEnd <- round(Patient_Event_Data_sub$EventEnd,2)
-            #data <- timelinePlot_lyprep(data = Patient_Event_Data_sub, event_type_col = "EventType",
-            #                            start_col = "EventStart", stop_col = "EventEnd",
-            #                            highlight_col = "highlight", text_col = "text")
-            #
-            #
             if (length(eventsY) == length(unique(Patient_Event_Data_sub$Event))) {
-              #save(list = ls(), file = "eventhighlight.RData", envir = environment())
               plot2 <- timelinePlot(data = Patient_Event_Data_sub[,-1],event_col = "Event", event_type_col = "EventType",
                                     start_col = "EventStart", stop_col = "EventEnd",unit = "Years", plotly = TRUE,
                                     title_font = TitleFont, x_font = xFont, y_font = yFont,na.rm = RemoveUnkNA_opt,
                                     title = SwimmerTitle_in,svg_name = paste0(gsub(" ","_",Project_Name),"_Patient_",Patient,"_Timeline"),
                                     svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight")
-              #save(list = ls(), file = "full_timeline.RData", envir = environment())
               plot2
             }
             
           }
         }
-        
-        
       })
-      
       ## Render Patient timeline plot
       output$PatientTimelinePlot <- renderPlotly({
-        
         p <- PatientTimelinePlot_react()
         p
-        
       })
       
       ## Downloads
-      
       output$dnldCohortEventTab <- downloadHandler(
         filename = function() {
           paste0(gsub(" ","_",Project_Name),"_Timeline_Event_Data.txt")
@@ -3791,7 +3525,6 @@ server <- function(input, output, session) {
           write.table(Patient_Event_Data,file, sep = '\t', row.names = F)
         }
       )
-      
       output$dnldPatientTimelinePlot <- downloadHandler(
         filename = function() {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
@@ -3804,7 +3537,6 @@ server <- function(input, output, session) {
           ggsave(file,p,width = input$TimeLineWidth, height = input$TimeLineHeight, units = input$TimeLineUnits)
         }
       )
-      
       output$dnldPatientEventTab <- downloadHandler(
         filename = function() {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
@@ -3818,7 +3550,6 @@ server <- function(input, output, session) {
           write.table(df,file, sep = '\t', row.names = F)
         }
       )
-      
       ## Render download buttons for clinical data tables
       shiny::observe(
         lapply(names(wkbk_react_sub()), function(i) {
@@ -3844,8 +3575,7 @@ server <- function(input, output, session) {
         })
       )
       
-      ## Swim Summ --------------------------------------------------------------
-      
+      ## Swim Summ -------------------------------------------------------------
       wkbk_react_cutp <- reactiveVal()
       event_data_cutp <- reactiveVal()
       added_events <- reactiveVal()
@@ -3869,7 +3599,6 @@ server <- function(input, output, session) {
         plot_df_in[,xAxis] <- suppressWarnings(as.numeric(plot_df_in[,xAxis]))
         plot_df_in[,yAxis] <- suppressWarnings(as.numeric(plot_df_in[,yAxis]))
         plot_df <- plot_df_in
-        #save(list = ls(), file = "cutp_hi.RData", envir = environment())
         if (tab_sub != "Select all data") {
           plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
         } else {
@@ -3879,7 +3608,6 @@ server <- function(input, output, session) {
           filter(!is.na(!!sym(xAxis))) %>%
           arrange(!!sym(colnames(plot_df)[1]),!!sym(xAxis)) %>%
           as.data.frame()
-        
         if (!isTruthy(cutp_anno)) {
           if (isTruthy(unitCol) & isTruthy(unitSel)) {
             cutpoint_col_name <- paste0(tab_crit," ",unitSel," Above ",cutp)
@@ -3891,7 +3619,6 @@ server <- function(input, output, session) {
         }
         plot_df[,cutpoint_col_name] <- ifelse(as.numeric(plot_df[,yAxis]) >= cutp,cutpoint_col_name,NA)
         added_events <- c(added_events,paste0(dataTab,": ",cutpoint_col_name))
-        
         plot_df_new <- merge(plot_df,plot_df_in, all = T)
         plot_df2 <- plot_df %>%
           group_by(!!sym(colnames(plot_df)[1])) %>%
@@ -3913,12 +3640,10 @@ server <- function(input, output, session) {
           group_by(!!sym(colnames(event_data2)[1])) %>%
           arrange(Event %in% unique(plot_df2$Event), .by_group = TRUE) %>%
           as.data.frame()
-        
         wkbk[[dataTab]] <- plot_df_new
         wkbk_react_anno(wkbk)
         event_data(event_data3)
         added_events(added_events)
-        
       }, ignoreInit = TRUE)
       
       observeEvent(input$saveLinePlotBelCutP, {
@@ -3941,7 +3666,6 @@ server <- function(input, output, session) {
         plot_df_in[,xAxis] <- suppressWarnings(as.numeric(plot_df_in[,xAxis]))
         plot_df_in[,yAxis] <- suppressWarnings(as.numeric(plot_df_in[,yAxis]))
         plot_df <- plot_df_in
-        #save(list = ls(), file = "cutp_lo.RData", envir = environment())
         if (tab_sub != "Select all data") {
           plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
         } else {
@@ -3985,8 +3709,6 @@ server <- function(input, output, session) {
           group_by(!!sym(colnames(event_data2)[1])) %>%
           arrange(Event %in% unique(plot_df2$Event), .by_group = TRUE) %>%
           as.data.frame()
-        
-        
         wkbk[[dataTab]] <- plot_df_new
         wkbk_react_anno(wkbk)
         event_data(event_data3)
@@ -3994,30 +3716,24 @@ server <- function(input, output, session) {
         
       }, ignoreInit = TRUE)
       
-      
       PatientTimelineSummPlot_df <- reactive({
         req(patient_event_data_single())
-        
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
           pat_event_data <- patient_event_data_single()
           added_events <- added_events()
           sankey_added_events <- sankey_added_events()
-          
           pat_event_data <- pat_event_data[which(is.na(pat_event_data$EventTab) | pat_event_data$Event %in% added_events),]
           pat_event_data <- pat_event_data[which(!pat_event_data$Event %in% sankey_added_events),]
           pat_event_data
         }
-        
       })
       
       PatientTimelineSummPlot_react <- reactive({
-        
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           if (Patient %in% Patient_Table_df[,1]) {
-            #RemoveUnkNA_opt <- input$RemoveUnknownNA
             RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
             SwimmerTheme <- input$TimeLineTheme
@@ -4027,29 +3743,23 @@ server <- function(input, output, session) {
             Patient_Event_Data_sub <- PatientTimelineSummPlot_df()
             Patient_Event_Data_sub$EventStart <- round(Patient_Event_Data_sub$EventStart,2)
             Patient_Event_Data_sub$EventEnd <- round(Patient_Event_Data_sub$EventEnd,2)
-            
             plot2 <- timelinePlot(data = Patient_Event_Data_sub[,-1],event_col = "Event", event_type_col = "EventType",
                                   start_col = "EventStart", stop_col = "EventEnd", unit = "Years", plotly = TRUE,
                                   title_font = TitleFont, x_font = xFont, y_font = yFont,na.rm = RemoveUnkNA_opt,
                                   title = SwimmerTitle_in,svg_name = paste0(gsub(" ","_",Project_Name),"_Patient_",Patient,"_Timeline"),
                                   svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight")
             plot2
-            
           }
         }
-        
-        
       })
       
       output$PatientTimelineLineSummPlot <- renderPlotly({
-        
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           plot_title <- paste0("Clinical Course of Patient: ", as.character(Patient))
         }
-        
         if (isTruthy(input$LinePlotSubCrit)) {
           req(PatientTimelineSummPlot_react())
           req(PatientLinePlot_react())
@@ -4064,7 +3774,6 @@ server <- function(input, output, session) {
             p2 <- plotly::ggplotly(line_p)
             subply <- subplot(p1, p2, nrows = 2, shareY = TRUE, shareX = TRUE,
                               titleY = TRUE, titleX = TRUE, which_layout = 1)
-            #save(list = ls(), file = "SummaryTimeline_Plot_Env.RData", envir = environment())
             subply <- subply %>%
               layout(margin = list(t = 50))
           }
@@ -4075,15 +3784,12 @@ server <- function(input, output, session) {
         }
       })
       
-      
-      
       output$rendSummaryLinePlots <- renderUI({
         if (isTruthy(input$LinePlotSubCrit)) {
           shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelineLineSummPlot",height = "600px", width = "100%")), type = 6)
         } else {
           shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelineLineSummPlot",height = "300px", width = "100%")), type = 6)
         }
-        
       })
       
       ## Line Plot --------------------------------------------------------------
@@ -4102,7 +3808,6 @@ server <- function(input, output, session) {
       })
       
       observe({
-        
         req(input$LinePlotSub)
         req(input$PatientSelectionTab_rows_selected)
         if (input$LinePlotSub != "Select all data") {
@@ -4117,7 +3822,6 @@ server <- function(input, output, session) {
           choices <- sort(unique(df[which(df[,1] == Patient),input$LinePlotSub]))
           updateSelectizeInput(session,"LinePlotSubCrit",choices = choices, selected = choices[1], server = T)
         }
-        
       })
       observe({
         req(input$LinePlotSubCrit)
@@ -4126,7 +3830,6 @@ server <- function(input, output, session) {
       })
       
       observe({
-        
         req(wkbk_react_sub())
         req(input$LinePlotTable)
         dataTab <- input$LinePlotTable
@@ -4141,7 +3844,6 @@ server <- function(input, output, session) {
         updateSelectizeInput(session,"LinePlotX", choices = Choices, selected = LinePlotXPred)
         updateSelectizeInput(session,"LinePlotY", choices = Choices, selected = LinePlotYPred)
         updateSelectizeInput(session,"LinePunitCol", choices = Choices, selected = unitColPred)
-        
       })
       
       observe({
@@ -4153,7 +3855,6 @@ server <- function(input, output, session) {
       })
       
       PatientLinePlot_df <- reactive({
-        
         req(wkbk_react_sub())
         req(input$LinePlotTable)
         req(input$LinePlotSub)
@@ -4165,30 +3866,22 @@ server <- function(input, output, session) {
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
         yAxis <- input$LinePlotY
-        
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
         
         plot_df <- Clin_Supp_List[[dataTab]]
-        
         plot_df <- plot_df[which(plot_df[,1] == Patient),]
-        
         if (tab_sub != "Select all data") {
           plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
         }
         plot_df <- plot_df %>%
           relocate(any_of(c(colnames(plot_df)[1],tab_crit,xAxis,yAxis)))
         
-        #save(list = ls(), file = "lineplot.RData", envir = environment())
-        
-        
         plot_df
-        
       })
       
       output$rendLinePlotTitle <- renderUI({
-        
         dataTab <- input$LinePlotTable
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
@@ -4201,21 +3894,15 @@ server <- function(input, output, session) {
           plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab,"\ndata featuring ",yAxis," over ", xAxis)
         }
         textInput("LinePlotTitle","Title:",value = plotTitle)
-        
       })
       output$rendLinePlotXTitle <- renderUI({
-        
         textInput("LinePlotXTitle","X-Axis Title:",value = input$LinePlotX)
-        
       })
       output$rendLinePlotYTitle <- renderUI({
-        
         textInput("LinePlotYTitle","Y-Axis Title:",value = input$LinePlotY)
-        
       })
       
       PatientLinePlot_react <- reactive({
-        
         req(PatientLinePlot_df())
         req(input$LinePlotX)
         req(input$LinePlotY)
@@ -4231,14 +3918,10 @@ server <- function(input, output, session) {
         title_font <- input$LinePlotTitleSize
         unitCol <- input$LinePunitCol
         unitSel <- input$LinePunitSelect
-        
         LinePlotTheme <- input$LinePlotTheme
-        
-        
         if (isTruthy(unitCol) & isTruthy(unitSel)) {
           plot_df <- plot_df[which(plot_df[,unitCol] == unitSel),]
         }
-        
         unit_col <- grep("unit",colnames(plot_df),ignore.case = T, value = T)[1]
         if (isTruthy(unit_col)) {
           plot_df <- plot_df[,c(colnames(plot_df)[1],xAxis,yAxis,unit_col)]
@@ -4258,7 +3941,6 @@ server <- function(input, output, session) {
           }
           yaxlab <- paste0(tab_crit)
         }
-        
         plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
         plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
         p <- ggplot(data=plot_df, aes(x=!!sym(xAxis), y=!!sym(yAxis))) +
@@ -4276,9 +3958,7 @@ server <- function(input, output, session) {
           p <- p +
             geom_hline(yintercept = userCutP, linetype = "dashed", color = "red")
         }
-        #save(list = ls(), file = "Line_Plot_Env.RData", envir = environment())
         p
-        
       })
       
       output$dnldPatientLinePlot <- downloadHandler(
@@ -4291,9 +3971,7 @@ server <- function(input, output, session) {
           ggsave(file,pl,height = input$LinePlotHeight, width = input$LinePlotWidth)
         }
       )
-      
       output$PatientLinePlotTable <- DT::renderDataTable({
-        
         df <- PatientLinePlot_df()
         DT::datatable(df,
                       escape = F,
@@ -4306,14 +3984,12 @@ server <- function(input, output, session) {
                                      colReorder = TRUE),
                       rownames = F
         )
-        
       })
       
       # Clustering -------------------------------------------------------------
       ## Sankey ----------------------------------------------------------------
       observe({
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
-        #save(list = ls(), file = "event_data_tr_clusters_clean.RData",envir = environment())
       })
       observeEvent(event_data_tr_clusters_clean(),{
         req(event_data_tr_clusters_clean())
@@ -4325,11 +4001,9 @@ server <- function(input, output, session) {
         sankey_event_select <- ifelse(any(grepl("cluster",sankey_event_choices, ignore.case = T)),
                                       grep("cluster",sankey_event_choices,value = T, ignore.case = T)[1],
                                       sankey_event_choices[1])
-        #save(list = ls(), file = "sankeyEvent.RData", envir = environment())
         updateSelectInput(session,"sankeyEvent", choices = sankey_event_choices, selected = sankey_event_select)
       })
       observe({
-        #observeEvent(input$sankeyEvent,{
         req(event_data_tr_clusters_clean())
         req(input$sankeyEvent)
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
@@ -4337,14 +4011,12 @@ server <- function(input, output, session) {
         event_data_tr_clusters_clean_sub <- event_data_tr_clusters_clean[which(event_data_tr_clusters_clean$EventType == sankeyEvent),]
         sankey_line_choices <- unique(event_data_tr_clusters_clean_sub$Treatment_Line_Cluster)
         sankey_line_choices_sel <- ifelse((length(sankey_line_choices) > 4),4,length(sankey_line_choices))
-        #save(list = ls(), file = "sankeyXaxis.RData", envir = environment())
         updateSelectizeInput(session,"sankeyXaxis", choices = sankey_line_choices, selected = sankey_line_choices[c(1:sankey_line_choices_sel)], server = T)
       })
       
       sankey_clusters_cast <- reactive({
         req(event_data_tr_clusters_clean())
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
-        #save(list = ls(), file = "sankey_clusters_cast.RData", envir = environment())
         sankey_event_opts <- unique(event_data_tr_clusters_clean$Event)
         sankey_events_cast_full <- event_data_tr_clusters_clean %>%
           pivot_wider(id_cols = Name,
@@ -4363,7 +4035,6 @@ server <- function(input, output, session) {
         sankey_event <- input$sankeyEvent
         SankeyXgroups <- input$sankeyXaxis
         sankey_clusters_cast <- sankey_clusters_cast()
-        #save(list = ls(), file = "sankeyEvent_df_react_check.RData", envir = environment())
       })
       
       sankeyEvent_df_react <- reactive({
@@ -4378,7 +4049,6 @@ server <- function(input, output, session) {
         sankey_event <- input$sankeyEvent
         SankeyXgroups <- input$sankeyXaxis
         sankey_clusters_cast <- sankey_clusters_cast()
-        
         sankey_clusters_cast_sub <- sankey_clusters_cast[,c(colnames(sankey_clusters_cast)[1],SankeyXgroups)]
         if (cat_NA) {
           sankey_clusters_cast_sub[is.na(sankey_clusters_cast_sub)] <- "NA"
@@ -4411,7 +4081,6 @@ server <- function(input, output, session) {
       sankey_plot_react <- reactive({
         req(sankeyEvent_df_react())
         event_data_clusters_sub_wid_plot2 <- sankeyEvent_df_react()
-        
         if (sum(is.na(event_data_clusters_sub_wid_plot2$x))!=nrow(event_data_clusters_sub_wid_plot2)) {
           pl <- ggplot(event_data_clusters_sub_wid_plot2, aes(x = x,
                                                               next_x = next_x,
@@ -4441,16 +4110,12 @@ server <- function(input, output, session) {
             scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
           pl
         }
-        
       })
-      
-      
       output$SankeyPlot <- renderPlot({
         req(sankey_plot_react())
         pl <- sankey_plot_react()
         pl
       })
-      
       output$dnldSankeyTable <- downloadHandler(
         filename = function() {
           dataTab <- input$sankeyEvent
@@ -4483,7 +4148,6 @@ server <- function(input, output, session) {
           ggsave(file,pl,height = 10, width = 15)
         }
       )
-      
       output$SankeyPlotTable <- DT::renderDataTable({
         req(sankeyEvent_df_react())
         df <- sankeyEvent_df_react()
@@ -4499,9 +4163,7 @@ server <- function(input, output, session) {
                                      colReorder = TRUE),
                       rownames = F
         )
-        
       })
-      
       
       ## Heatmap ----------------------------------------------------------------
       observe({
@@ -4543,14 +4205,6 @@ server <- function(input, output, session) {
         heat_view <- input$heatView
         HeatFlip <- input$HeatFlip
         event_data_key <- event_data_key()
-        
-        # add in event_data_key???
-        
-        #save(list = ls(), file = "TreatClusterHeatmapdf_react.RData", envir = environment())
-        
-        # code is splitting up pre-existing strings with commas, also leaving white space before word
-        # maybe check if remove space before, then collapse the summary with space, and then when you sep with space you get the correct items
-        
         if (EventSum %in% cluster_df$EventType) {
           cluster_df_event <- cluster_df %>%
             filter(EventType == EventSum) %>%
@@ -4560,7 +4214,6 @@ server <- function(input, output, session) {
             rename("EventEnd_Cluster" = EventEnd) %>%
             select(Name,Event,Treatment_Line_Cluster,EventStart_Cluster,EventEnd_Cluster)
           cluster_event_df <- cluster_df_event
-          
           if (heat_view == "Clusters") {
             cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Treatment_Line_Cluster,
                                                      fun.aggregate = length, value.var = "EventEnd_Cluster")
@@ -4568,7 +4221,6 @@ server <- function(input, output, session) {
             cluster_event_df_cast <- reshape2::dcast(cluster_event_df, Event ~ Name,
                                                      fun.aggregate = length, value.var = "EventEnd_Cluster")
           }
-          #save(list = ls(), file = "heat_df.RData", envir = environment())
           rownames(cluster_event_df_cast) <- cluster_event_df_cast[,1]
           cluster_event_df_cast_mat <- as.matrix(cluster_event_df_cast[,-1])
           rownames(cluster_event_df_cast_mat) <- rownames(cluster_event_df_cast)
@@ -4611,14 +4263,9 @@ server <- function(input, output, session) {
         border_op <- input$border_op
         row_font <- input$heatmapFontRow
         col_font <- input$heatmapFontCol
-        
         color_lo <- input$HeatColorLow
         color_hi <- input$HeatColorHigh
-        #save(list = ls(), file = "TreatClusterHeatmap_react.RData", envir = environment())
-        
-        
         plot_df <- as.matrix(plot_df_in[which(rownames(plot_df_in) %in% y_vars),which(colnames(plot_df_in) %in% x_vars),drop = F])
-        
         if (isTruthy(plot_df)) {
           if (!is.null(dim(plot_df))) {
             if (capYN) {
@@ -4659,16 +4306,11 @@ server <- function(input, output, session) {
                                            row_names_gp = gpar(fontsize = row_font), column_names_gp = gpar(fontsize = col_font),
                                            rect_gp = cell_border,
                                            border = FALSE)
-              #pdf(NULL)
               draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
             }
           }
-          
         }
-        
-        
       })
-      
       output$TreatClusterHeatmap <- renderPlot({
         req(TreatClusterHeatmap_react())
         p <- TreatClusterHeatmap_react()
@@ -4676,13 +4318,10 @@ server <- function(input, output, session) {
           p_int <- InteractiveComplexHeatmap::htPositionsOnDevice(p)
           heatInteractive_react(p_int)
         }
-        #pdf(NULL)
         p
       })
-      
       if (heat_hover_avail) {
         heatInteractive_react <- reactiveVal(NULL)
-        
         hover_column <- shiny::reactiveVal(NULL)
         hover_row <- shiny::reactiveVal(NULL)
         shiny::observeEvent(input$heatmap_hover, {
@@ -4691,7 +4330,6 @@ server <- function(input, output, session) {
           hover_column(selection$column_label)
           hover_row(selection$row_label)
         })
-        
         output$HeatHoverInfo <- renderUI({
           req(heatInteractive_react())
           req(TreatClusterHeatmapdf_EventCount())
@@ -4711,7 +4349,6 @@ server <- function(input, output, session) {
           }
         })
       }
-      
       output$dnldTreatClusterHeatmap <- downloadHandler(
         filename = function() {
           event <- input$sankeyEvent
@@ -4726,9 +4363,7 @@ server <- function(input, output, session) {
       )
       
       # Duration ---------------------------------------------------------------
-      
       ## Boxplot ----------------------------------------------------------------
-      
       
       observe({
         req(event_data_key())
@@ -4743,18 +4378,14 @@ server <- function(input, output, session) {
         } else {
           event_opts <- unique(event_data_key[which(event_data_key$EventType == event_type),"EventSpecified"])
         }
-        
         updateSelectizeInput(session,"BoxplotXaxis", choices = event_opts, selected = event_opts[1])
-        
       })
       
       EventBoxPlotdf_react <- reactive({
-        
         req(event_data_key())
         req(event_data())
         req(param_data())
         req(input$BoxplotXaxis)
-        #req(GlobalAppTimeUnit_react())
         param <- param_data()
         event_data_key <- event_data_key()
         event <- event_data()
@@ -4801,7 +4432,6 @@ server <- function(input, output, session) {
         event_sub_event_bp
       })
       
-      
       EventBoxPlot_react <- reactive({
         req(EventBoxPlotdf_react())
         df <- EventBoxPlotdf_react()
@@ -4815,7 +4445,6 @@ server <- function(input, output, session) {
         Yaxis_font <- input$BPplot1YAxisSize              # Axis font size
         BPplottheme <- input$BPTheme
         VilOrBP <- input$ViolinOrBoxP
-        
         if (nrow(df) > 0) {
           p <- ggplot(df, aes(x = Event, y = Days))
           if (VilOrBP == "Box Plot") {
@@ -4854,20 +4483,13 @@ server <- function(input, output, session) {
               )
             )
           ply
-          
         }
-        
-        
       })
-      
       output$EventBoxPlot <- renderPlotly({
-        
         req(EventBoxPlot_react())
         p <- EventBoxPlot_react()
         p
-        
       })
-      
       output$EventBoxPlotTable <- DT::renderDataTable({
         req(EventBoxPlotdf_react())
         df <- EventBoxPlotdf_react()
@@ -4885,7 +4507,6 @@ server <- function(input, output, session) {
           )
         }
       })
-      
       output$dnldEventBoxPlotTable <- downloadHandler(
         filename = function() {
           dataTab <- input$BoxplotDataTable
@@ -4925,7 +4546,6 @@ server <- function(input, output, session) {
         req(input$durationHeatEventType)
         req(input$EventDurMaxSumHeat)
         req(param_data())
-        #req(GlobalAppTimeUnit_react())
         param <- param_data()
         event_data <- event_data()
         event_key <- event_data_key()
@@ -4933,9 +4553,6 @@ server <- function(input, output, session) {
         MaxOrSum <- input$EventDurMaxSumHeat
         heat_flip <- input$HeatFlipDist
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
-        
-        #save(list = ls(), file = "heat.RData", envir = environment())
-        
         if (dur_event == "All Treatment Events") {
           duration_event_tabs <- unique(param[which(!is.na(param[,"Event End Column"])),1])
           duration_events <- unique(event_key[which(event_key$EventTab %in% duration_event_tabs),"EventType"])
@@ -4978,7 +4595,6 @@ server <- function(input, output, session) {
                         values_from = EventDuration) %>%
             as.data.frame()
         }
-        
         rownames(event_data_dur) <- event_data_dur[,1]
         event_data_dur <- as.matrix(event_data_dur[,-1,drop = F])
         event_data_dur <- as.matrix(t(event_data_dur))
@@ -5012,26 +4628,17 @@ server <- function(input, output, session) {
         border_op <- input$border_opDist
         row_font <- input$heatmapDistFontRow
         col_font <- input$heatmapDistFontCol
-        
         color_lo <- input$HeatColorLowDist
         color_hi <- input$HeatColorHighDist
-        
-        #save(list = ls(), file = "dist_heatmap_inputs.RData", envir = environment())
-        
         plot_df <- as.matrix(plot_df_in[which(rownames(plot_df_in) %in% y_vars),which(colnames(plot_df_in) %in% x_vars),drop = F])
-        
-        
         if (isTruthy(plot_df)) {
           if (capYN) {
             if (!is.na(capN)) {
               plot_df[which(plot_df>=capN)] <- capN
             }
           }
-          
           plot_df[is.na(plot_df)] <- 0
-          
           if (all(areColors(c(color_lo, color_hi)))) {
-            
             if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
               col_fun = structure(c(color_lo,color_hi), names = c("0", as.character(max(plot_df, na.rm = T))))
               legendParam <- list(title = "Event Duration (Days)",
@@ -5043,7 +4650,6 @@ server <- function(input, output, session) {
                                   title_gp = gpar(fontsize = 12, fontface = 'bold'),
                                   labels_gp = gpar(fontsize = 12))
             }
-            
             if (border_op) {
               cell_border <- gpar(col = "black", lwd = 1)
             } else {
@@ -5060,10 +4666,7 @@ server <- function(input, output, session) {
             draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
           }
         }
-        
-        
       })
-      
       output$TreatDistHeatmap <- renderPlot({
         req(TreatDistHeatmap_react())
         p <- TreatDistHeatmap_react()
@@ -5073,10 +4676,8 @@ server <- function(input, output, session) {
         }
         p
       })
-      
       if (heat_hover_avail) {
         heatDistInteractive_react <- reactiveVal(NULL)
-        
         hoverDist_column <- shiny::reactiveVal(NULL)
         hoverDist_row <- shiny::reactiveVal(NULL)
         shiny::observeEvent(input$heatmapDist_hover, {
@@ -5085,7 +4686,6 @@ server <- function(input, output, session) {
           hoverDist_column(selection$column_label)
           hoverDist_row(selection$row_label)
         })
-        
         output$HeatHoverInfoDist <- renderUI({
           req(heatDistInteractive_react())
           req(TreatDistHeatmapdf_react())
@@ -5105,8 +4705,6 @@ server <- function(input, output, session) {
           }
         })
       }
-      
-      
       output$dnldTreatDistHeatmap <- downloadHandler(
         filename = function() {
           event <- input$durationHeatEventType
@@ -5129,7 +4727,6 @@ server <- function(input, output, session) {
       })
       
       DurationSwimmers_plot_df <- reactive({
-        
         req(event_data_key())
         req(event_data())
         req(input$BoxplotXaxis)
@@ -5139,25 +4736,19 @@ server <- function(input, output, session) {
         event_data <- event_data()
         event_type <- input$durationHeatEventType
         event_spec <- input$BoxplotXaxis
-        
-        #save(list = ls(), file = "DurationSwimmers_plot_df.RData", envir = environment())
-        
         if (event_type == "All Treatment Events") {
           event_selected <- event_spec
         } else {
           event_selected <- event_data_key[which(event_data_key$EventType == event_type & event_data_key$EventSpecified == event_spec),1]
         }
         event_sub_event <- event_data[which(event_data$Event == event_selected),]
-        
         Patient_Event_Data <- event_sub_event %>%
           arrange(Name,EventStart) %>%
           select(Name,Event,EventStart,EventEnd) %>%
           as.data.frame()
-        
         Patient_Event_Data_fl <- event_data %>%
           group_by(Name) %>%
           filter(Name %in% unique(Patient_Event_Data$Name)) %>%
-          #filter(any(full_event_name %in% Event)) %>%
           mutate(Event_New = case_when(
             EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
             EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
@@ -5177,9 +4768,7 @@ server <- function(input, output, session) {
           slice_head(n = 1) %>%
           unique() %>%
           as.data.frame()
-        
         Patient_Event_Data2 <- merge(Patient_Event_Data,Patient_Event_Data_fl,all = T)
-        
         Patient_Event_Data3 <- Patient_Event_Data2 %>%
           arrange(Name,EventStart) %>%
           group_by(Name) %>%
@@ -5201,11 +4790,8 @@ server <- function(input, output, session) {
           select(-EventStart,-EventEnd) %>%
           unique() %>%
           as.data.frame()
-        
         Patient_Event_Data3
-        
       })
-      
       
       observe({
         req(DurationSwimmers_plot_df())
@@ -5230,31 +4816,22 @@ server <- function(input, output, session) {
         req(input$swimmerSortDist)
         req(input$maxpatviewDist)
         ply_df <- DurationSwimmers_plot_df()
-        
         swimmSort <- input$swimmerSortDist
         maxpats <- input$maxpatviewDist
         patientsSpec <- input$swimmerPatSpecDist
         swimmerShowAll <- input$swimmerShowAllDist
         event_type <- input$durationHeatEventType
         event <- input$BoxplotXaxis
-        
-        
         if (event_type == "All Treatment Events") {
           full_event_name <- event
         } else {
           full_event_name <- paste0(event_type,": ",event)
         }
-        
-        
-        #save(list = ls(), file = "DurationSwimmers_plot_react.RData", envir = environment())
-        
         ply_df <- ply_df %>%
           mutate(EventTime = EventEnd_FromZero - EventStart_FromZero) %>%
           group_by(Name) %>%
           mutate(EventTime_Sum = sum(EventTime,na.rm = T)) %>%
           as.data.frame()
-        
-        
         if ((swimmerShowAll & maxpats == length(unique(ply_df$Name))) | !swimmerShowAll) {
           # sort to get correct head of patients
           if (swimmSort == "Duration - Ascending") {
@@ -5270,7 +4847,6 @@ server <- function(input, output, session) {
           } else if (swimmSort == "Alphabetical - Descending") {
             ply_df <- ply_df[order(ply_df$Name),]
           }
-          
           if (maxpats >= 1) {
             if (length(patientsSpec) > 0) {
               maxpats <- maxpats-length(patientsSpec)
@@ -5296,11 +4872,9 @@ server <- function(input, output, session) {
             } else if (swimmSort == "Alphabetical - Descending") {
               ply_df <- ply_df[order(ply_df$Name),]
             }
-            
             patientIDs <- unique(ply_df[,1])
             ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
             patients <- unique(ply_df$Index)
-            
             base_lines <- ply_df %>%
               group_by(Name) %>%
               summarize(
@@ -5317,7 +4891,6 @@ server <- function(input, output, session) {
               select(x = EventStart_FromZero, y = Index, Event_Details)
             main_events <- ply_df %>%
               filter(Event == full_event_name)
-            
             plot_ly() %>%
               # Add base duration lines
               add_segments(data = base_lines,
@@ -5375,30 +4948,20 @@ server <- function(input, output, session) {
                   filename = paste0(event_type,"_",event,"EventDuration_Swimmers",Sys.Date())
                 )
               )
-            
           }
-          
         }
-        
       })
-      
       output$DurationSwimmers <- renderPlotly({
         req(DurationSwimmers_plot_react())
         ply <- DurationSwimmers_plot_react()
         ply
       })
       
-      
-      
-      
-      
-      
       # Time-To-Event ----------------------------------------------------------
       
       observe({
         req(event_data_key())
         event_data_key <- event_data_key()
-        
         treat_resp_df <- unique(event_data_key[,c("Event","EventType")])
         treat_resp_choices_full <- unique(grep("^Full ",treat_resp_df$EventType,value = T))
         treat_resp_choices_full <- grep(" Summary$",treat_resp_choices_full,value = T)
@@ -5412,10 +4975,6 @@ server <- function(input, output, session) {
         treat_resp_choices_summ <- treat_resp_choices[treat_resp_choices_summ_names]
         treat_resp_choices <- c(treat_resp_choices[grep("Summary|Cluster",names(treat_resp_choices),invert = T)],
                                 treat_resp_choices_summ,treat_resp_choices_cls)
-        
-        #save(list = ls(), file = "tte_choices.RData", envir = environment())
-        
-        
         start_terms <- c("medication","drug","treatment","diagnosis")
         start_terms_found <- sapply(start_terms,function(x) {
           grep(x,names(treat_resp_choices),ignore.case = T)[1]
@@ -5428,18 +4987,13 @@ server <- function(input, output, session) {
         }
         tteSelected_terms_start <- treat_resp_choices[[tteSelected]]
         
-        tteEndSelected <- grep("Treatment",names(treat_resp_choices_summ),ignore.case = T, value = T)
-        #tteEndSelected <- grep("Treatment|Response",names(treat_resp_choices_summ),ignore.case = T, value = T)
+        tteEndSelected <- grep("Treatment",names(treat_resp_choices_summ),ignore.case = T, value = T)[1]
         if (length(tteEndSelected) > 0) {
           tteSelected_terms_end <- tteEndSelected
         } else {
           tteSelected_terms_end <- names(treat_resp_choices_summ)[1]
         }
         tteSelected_terms_end <- unname(unlist(treat_resp_choices_summ[tteEndSelected]))
-        
-        #save(list = ls(), file = "TTEstopEvent.RData", envir = environment())
-        
-        
         shinyWidgets::updateVirtualSelect(session = session,inputId = "TTEstartEvent",choices = treat_resp_choices, selected = tteSelected_terms_start)
         shinyWidgets::updateVirtualSelect(session = session,inputId = "TTEstopEvent",choices = treat_resp_choices, selected = tteSelected_terms_end)
         
@@ -5464,35 +5018,7 @@ server <- function(input, output, session) {
             FALSE
           }
         }
-        #biomarkerUIinput <- input$InputBiomarkerData
-        #if (isTruthy(biomarkerUIinput)) {
-        #  if (biomarkerUIinput == "Yes") {
-        #    TRUE
-        #  } else {
-        #    if (Data_Contains_Longitudinal_Biomarkers) {
-        #      TRUE
-        #    } else {
-        #      FALSE
-        #    }
-        #  }
-        #} else if (Data_Contains_Longitudinal_Biomarkers) {
-        #  TRUE
-        #} else {
-        #  FALSE
-        #}
       })
-      #output$BiomarkerData <- reactive({
-      #  biomarkerUIinput <- input$InputBiomarkerData
-      #  if (biomarkerUIinput == "Yes") {
-      #    TRUE
-      #  } else {
-      #    if (Data_Contains_Longitudinal_Biomarkers) {
-      #      TRUE
-      #    } else {
-      #      FALSE
-      #    }
-      #  }
-      #})
       outputOptions(output, "BiomarkerData", suspendWhenHidden = FALSE)
       
       
@@ -5502,8 +5028,6 @@ server <- function(input, output, session) {
         Patient_Event_Data <- event_data()
         start_events <- input$TTEstartEvent
         AndOr <- input$StartAndOr2
-        #save(list = ls(), file = "EventData_wStartPoint.RData", envir = environment())
-        
         if (AndOr == "'Or' Statement") {
           Patient_Event_Data <- Patient_Event_Data %>%
             group_by(Name) %>%
@@ -5523,13 +5047,9 @@ server <- function(input, output, session) {
             as.data.frame()
           Patient_Event_Data
         }
-        
-        
       })
       
       ### Stop
-      
-      
       observe({
         req(wkbk_react_anno_sub())
         req(input$KPstrataDataTable)
@@ -5552,7 +5072,6 @@ server <- function(input, output, session) {
         xAxisCol <- input$KPstrataCol
         Clin_Supp_List <- wkbk_react_anno_sub()
         sankey_clusters_cast <- sankey_clusters_cast()
-        #save(list = ls(), file = "KPstrataColGroups.RData", envir = environment())
         if (dataTab == "ShinyEvents Treatment Clusters") {
           req(sankey_clusters_cast())
           df <- sankey_clusters_cast
@@ -5581,23 +5100,16 @@ server <- function(input, output, session) {
             }
           }
         }
-        
-        
-        
       })
       
       cohort_EventSumm_df <- reactive({
-        
         req(EventData_wStartPoint())
-        
         Patient_Event_Data <- EventData_wStartPoint()
         req(input$TTEstartEvent)
         req(input$TTEstopEvent)
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         AndOrstop <- input$StopAndOr2
-        #save(list = ls(), file = "cohort_EventSumm_df.RData", envir = environment())
-        
         if (nrow(Patient_Event_Data) > 0) {
           if (AndOrstop == "'Or' Statement") {
             Patient_Event_Data <- Patient_Event_Data %>%
@@ -5611,8 +5123,6 @@ server <- function(input, output, session) {
               as.data.frame()
           }
         }
-        
-        
       })
       
       
@@ -5627,7 +5137,6 @@ server <- function(input, output, session) {
         AndOrstart <- input$StartAndOr2
         AndOrstop <- input$StopAndOr2
         Patient_Event_Data <- EventData_wStartPoint()
-        
         if (length(start_events) > 1) {
           start_events_text <- paste0("<b>",paste0(start_events,collapse = ", "),"</b>")
           if (AndOrstart == "'And' Statement") {
@@ -5650,7 +5159,6 @@ server <- function(input, output, session) {
           stop_events_text <- paste0("<b>",stop_events,"</b>")
           AndOrstop_text <- paste0(" this event:")
         }
-        
         fluidRow(
           column(12,
                  p(HTML("A total of <b>",length(unique(Patient_Event_Data[,1]))," Patients</b> were identified that had event information associated with",AndOrstart_text)),
@@ -5660,7 +5168,6 @@ server <- function(input, output, session) {
                  div(id = "ttepanel2", wellPanel(class = "scrolling-well",p(HTML(stop_events_text))))
           )
         )
-        
       })
       
       ## KP -------------------------------------------------------------------
@@ -5670,15 +5177,9 @@ server <- function(input, output, session) {
         Patient_Event_Data_sub_ETC3 <- cohort_EventSumm_df()
         req(input$TTEstartEvent)
         req(input$TTEstopEvent)
-        #req(GlobalAppTimeUnit_react())
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
-        
-        #save(list = ls(), file = "cohort_TTE_table_wInfo.RData", envir = environment())
-        
-        # need to tell app if time data is starting from 0 or min patient time
-        
         Patient_Event_Data_sub_ETC4 <- Patient_Event_Data_sub_ETC3
         Patient_event_info <- Patient_Event_Data_sub_ETC4 %>%
           filter(Event %in% c(start_events,stop_events)) %>%
@@ -5697,16 +5198,12 @@ server <- function(input, output, session) {
         Patient_Event_Data_sub_surv <- merge(Patient_event_info,Patient_Event_Data_sub_surv, all = T)
         Patient_Event_Data_sub_surv$status <- ifelse(is.infinite(Patient_Event_Data_sub_surv$End_Time_Point),0,1)
         Patient_Event_Data_sub_surv[is.infinite(Patient_Event_Data_sub_surv$End_Time_Point),c("Progression_Event","End_Time_Point")] <- NA
-        
-        
         Patient_Event_Data_sub_surv$time <- ifelse(is.na(Patient_Event_Data_sub_surv$End_Time_Point),
                                                    (Patient_Event_Data_sub_surv$Final_Time_Point-Patient_Event_Data_sub_surv$Start_Time_Point),
                                                    (Patient_Event_Data_sub_surv$End_Time_Point-Patient_Event_Data_sub_surv$Start_Time_Point))
-        
         Patient_Event_Data_sub_surv$time <- convert_time_units(Patient_Event_Data_sub_surv$time,AppTimeUnits,"days")
         rownames(Patient_Event_Data_sub_surv) <- Patient_Event_Data_sub_surv[,1]
         Patient_Event_Data_sub_surv
-        
       })
       
       cohort_TTE_table <- reactive({
@@ -5725,17 +5222,14 @@ server <- function(input, output, session) {
       })
       
       cohort_TTE_table_strata <- reactive({
-        
         req(wkbk_react_anno_sub())
         req(cohort_TTE_table())
-        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
         kp_dt <- input$KPstrataDataTable
         strata_col <- input$KPstrataCol
         strata_groups <- input$KPstrataColGroups
         Clin_Supp_List <- wkbk_react_anno_sub()
-        #save(list = ls(), file = "cohort_TTE_table_strata.RData", envir = environment())
         if (isTruthy(input$KPstrataDataTable)) {
           if (isTruthy(strata_col)) {
             if (kp_dt == "ShinyEvents Treatment Clusters") {
@@ -5767,14 +5261,11 @@ server <- function(input, output, session) {
         }
       })
       
-      
-      
       observe({
         req(cohort_TTE_table_strata())
         req(input$KPstrataCol)
         plot_df <- cohort_TTE_table_strata()
         strata_col <- input$KPstrataCol
-        
         if (ncol(plot_df) == 4) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
@@ -5783,10 +5274,7 @@ server <- function(input, output, session) {
             }
           }
         }
-        
-        
       })
-      
       
       KPplotHRtab_react <- reactive({
         req(cohort_TTE_table_strata())
@@ -5794,7 +5282,6 @@ server <- function(input, output, session) {
         plot_df <- cohort_TTE_table_strata()
         strata_col <- input$KPstrataCol
         ref_var <- input$KPplotHRtab_RefSelect
-        #save(list = ls(), file = "KPplotHRtab_react.RData", envir = environment())
         if (ncol(plot_df) == 4) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
@@ -5817,10 +5304,8 @@ server <- function(input, output, session) {
         ref_var <- input$KPplotHRtab_RefSelect
         strata_col <- input$KPstrataCol
         strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
-        
         tab_vars <- tab[["xlevels"]][[1]]
         ref_var <- tab_vars[1]
-        
         Hazard_Ratio <- as.numeric(formatC(unname(exp(tab$coefficients))))
         tab_summ <- summary(tab)
         tab_summ_coeff <- tab_summ$coefficients
@@ -5839,7 +5324,6 @@ server <- function(input, output, session) {
                              coxph_hr_df)
         colnames(coxph_hr_df) <- c("Characteristic","Hazard Ratio","95% Confidence Interval","P.Value")
         coxph_hr_df
-        
       })
       
       output$KPplotSummary <- renderPrint({
@@ -5865,8 +5349,6 @@ server <- function(input, output, session) {
         } else if (AppTimeUnits == "Days") {
           updateRadioButtons(session,"SurvYearOrMonth", selected = "Days")
         }
-        
-        
       })
       
       observe({
@@ -5882,7 +5364,6 @@ server <- function(input, output, session) {
       
       cohort_TTE_table_KP_react <- reactive({
         req(cohort_TTE_table_strata())
-        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table_strata()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
         strata_col <- input$KPstrataCol
@@ -5891,11 +5372,6 @@ server <- function(input, output, session) {
         xBreaks <- input$SurvXaxisBreaks
         SurvXaxis <- input$SurvXaxis
         ShowConfInt <- input$ShowConfInt
-        
-        
-        #save(list = ls(), file = "cohort_TTE_table_KP_react.RData", envir = environment())
-        
-        
         if (nrow(plot_df) > 1) {
           strata_col <- input$KPstrataCol
           showMedSurv <- input$ShowMedSurvLine
@@ -5906,15 +5382,11 @@ server <- function(input, output, session) {
             showMedSurv <- "none"
           }
           dOm <- input$SurvYearOrMonth
-          
           scale_vec <- c("Days" = 1,"Years" = 365.25,"Months" = 30.4375)
-          
           scale <- scale_vec[[dOm]]
           xlab <- dOm
           xBreaks <- input$SurvXaxisBreaks
-          
           xBreaks <- xBreaks*scale_vec[[dOm]]
-          
           if (max(plot_df$time) < xBreaks) {
             xBreaks <- NULL
           }
@@ -5930,13 +5402,11 @@ server <- function(input, output, session) {
             xaxlim <- NULL
           }
           fit <- NULL
-          #save(list = ls(), file = "cohort_TTE_table_KP_react.RData", envir = environment())
           if (ncol(plot_df) == 4) {
             if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
               colnames(plot_df)[which(colnames(plot_df) == strata_col)] <- "Feature"
               form <- paste0("Surv(time,status) ~ Feature")
               fit <- eval(substitute(survfit(as.formula(form),data = plot_df, type="kaplan-meier")))
-              #names(fit[["strata"]]) <- gsub("^Feature=",paste0(strata_col,"="),names(fit[["strata"]]))
               if (isTruthy(names(fit[["strata"]]))) {
                 names(fit[["strata"]]) <- gsub("^Feature="," ",names(fit[["strata"]]))
                 names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
@@ -5959,7 +5429,6 @@ server <- function(input, output, session) {
                                             submain = "Based on Kaplan-Meier estimates",
                                             caption = "created with survminer",
                                             pval = pvalSel,
-                                            #conf.int <- FALSE,
                                             conf.int = ShowConfInt,
                                             ggtheme = theme_bw(),
                                             font.title = c(16, "bold"),
@@ -5991,9 +5460,7 @@ server <- function(input, output, session) {
             ggsurv
           }
         }
-        
       })
-      
       output$KPplot <- renderPlot({
         p <- cohort_TTE_table_KP_react()
         p
@@ -6001,11 +5468,9 @@ server <- function(input, output, session) {
       
       KPplotTable_out <- reactive({
         req(cohort_TTE_table_wInfo())
-        #req(GlobalAppTimeUnit_react())
         plot_df <- cohort_TTE_table_wInfo()
         plot_df_strat <- cohort_TTE_table_strata()
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
-        #save(list = ls(), file = "KPplotTable_out.RData", envir = environment())
         if (isTruthy(plot_df_strat)) {
           strata_col <- input$KPstrataCol
           plot_df <- merge(plot_df,plot_df_strat,all = T)
@@ -6024,7 +5489,6 @@ server <- function(input, output, session) {
           plot_df
         }
       })
-      
       output$KPplotTable <- DT::renderDataTable({
         req(KPplotTable_out())
         plot_df <- KPplotTable_out()
@@ -6042,7 +5506,6 @@ server <- function(input, output, session) {
             formatRound(columns = 3, digits = 4)
         }
       })
-      
       output$dnldKPplotTable <- downloadHandler(
         filename = function() {
           paste0(gsub(" ","_",Project_Name),"_KP_Table_",Sys.Date(),".txt")
@@ -6053,7 +5516,6 @@ server <- function(input, output, session) {
           write.table(plot_df,file, sep = '\t', row.names = F)
         }
       )
-      
       output$dnldKPplot <- downloadHandler(
         filename = function() {
           paste0(gsub(" ","_",Project_Name),"_KP_Plot_",Sys.Date(),".svg")
@@ -6066,23 +5528,16 @@ server <- function(input, output, session) {
         }
       )
       
-      
       ## Swim --------------------------------------------------------------
       
-      
       swimmer_plot_df <- reactive({
-        
         req(cohort_EventSumm_df())
         Patient_Event_Data <- cohort_EventSumm_df()
-        
         req(input$TTEstartEvent)
         req(input$TTEstopEvent)
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
-        
-        
         if (nrow(Patient_Event_Data) > 0) {
-          
           Patient_Event_Data2 <- Patient_Event_Data %>%
             group_by(Name) %>%
             mutate(swimmer_event = case_when(
@@ -6093,9 +5548,7 @@ server <- function(input, output, session) {
             )) %>%
             relocate(swimmer_event, .after = Name) %>%
             ungroup()
-          
           event_types <- c("First Recorded Time Point", "Start Event", "Progression Event", "Final Recorded Time Point")
-          
           Patient_Event_Data3 <- Patient_Event_Data2 %>%
             filter(!is.na(swimmer_event)) %>%
             arrange(Name,EventStart) %>%
@@ -6119,8 +5572,6 @@ server <- function(input, output, session) {
             unique() %>%
             as.data.frame()
           NonProg_Pats <- Patient_Event_Data3[which(Patient_Event_Data3$swimmer_event == "Progression Event" & is.na(Patient_Event_Data3$Event_Details)),1]
-          
-          
           Patient_Event_Data3 <- Patient_Event_Data3 %>%
             group_by(Name) %>%
             fill(Event_Details,EventTime,EventTime_FromZero, .direction = "up") %>%
@@ -6134,9 +5585,7 @@ server <- function(input, output, session) {
             mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
             ungroup() %>%
             as.data.frame()
-          
           Patient_Event_Data3[which(Patient_Event_Data3[,1] %in% NonProg_Pats & Patient_Event_Data3$swimmer_event == "Progression Event"),c(3,4,5)] <- NA
-          
           Patient_Event_Data3_cast <- Patient_Event_Data3 %>%
             mutate(row_index = row_number()) %>%
             pivot_wider(
@@ -6149,12 +5598,9 @@ server <- function(input, output, session) {
             summarize_all(~ max(., na.rm = TRUE)) %>%
             as.data.frame()
           Patient_Event_Data3_cast[] <- Map(function(x) replace(x, is.infinite(x), NA), Patient_Event_Data3_cast)
-          
           Patient_Event_Data3_cast$Index <- as.numeric(factor(Patient_Event_Data3_cast[,1]))
-          
           Patient_Event_Data3_cast_det <- merge(Patient_Event_Data3_cast,Patient_Event_Data3[,-c(4,5)], all = T)
           colnames(Patient_Event_Data3_cast_det)[which(colnames(Patient_Event_Data3_cast_det) == "swimmer_event")] <- "Event"
-          
           if (ncol(Patient_Event_Data3_cast_det) == 8) {
             ply_df <- Patient_Event_Data3_cast_det
             colnames(ply_df) <- c("Name","First_Time_Point","Start_Time_Point","Prog_Time_Point","Final_Time_Point","Index","Event","Event_Details")
@@ -6172,7 +5618,6 @@ server <- function(input, output, session) {
         }
       })
       
-      
       observe({
         req(swimmer_plot_df())
         ply_df <- swimmer_plot_df()
@@ -6186,12 +5631,10 @@ server <- function(input, output, session) {
         req(swimmer_plot_df())
         req(input$swimmerSort)
         ply_df <- swimmer_plot_df()
-        
         swimmSort <- input$swimmerSort
         maxpats <- input$maxpatview
         patientsSpec <- input$swimmerPatSpec
         swimmerShowAll <- input$swimmerShowAll
-        
         if ((swimmerShowAll & maxpats == length(unique(ply_df$Name))) | !swimmerShowAll) {
           # sort to get correct head of patients
           if (swimmSort == "Time - Ascending") {
@@ -6203,7 +5646,6 @@ server <- function(input, output, session) {
           } else if (swimmSort == "Alphabetical - Descending") {
             ply_df <- ply_df[order(ply_df$Name),]
           }
-          
           if (maxpats >= 1) {
             if (length(patientsSpec) > 0) {
               maxpats <- maxpats-length(patientsSpec)
@@ -6270,7 +5712,6 @@ server <- function(input, output, session) {
                                line = list(color = 'tomato', width = 4),
                                showlegend = FALSE)
               }
-              
               # First Time Point marker (line)
               p <- add_trace(p,
                              x = df_patient$First_Time_Point[1],
@@ -6281,7 +5722,6 @@ server <- function(input, output, session) {
                              text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
                              hoverinfo = 'text',
                              showlegend = FALSE)
-              
               # Start_Time_Point marker (Open Circle)
               p <- add_trace(p,
                              x = df_patient$Start_Time_Point[1],
@@ -6300,7 +5740,6 @@ server <- function(input, output, session) {
                                }
                              })(),
                              name = "Start Event")
-              
               # Progression Event marker (X symbol)
               if (!is.na(df_patient$Prog_Time_Point[1])) {
                 p <- add_trace(p,
@@ -6320,7 +5759,6 @@ server <- function(input, output, session) {
                                  }
                                })(),
                                name = "Progression Event")
-                
                 # Final Time Point marker (line)
                 p <- add_trace(p,
                                x = df_patient$Final_Time_Point[1],
@@ -6352,7 +5790,6 @@ server <- function(input, output, session) {
                                name = "Continued Response")
               }
             }
-            
             # Customize layout
             p_out <- layout(p,
                             xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
@@ -6367,17 +5804,10 @@ server <- function(input, output, session) {
                   filename = paste0("Time_To_Event_Swimmers_",Sys.Date())
                 )
               )
-            
             p_out
-            
           }
         }
-        
-        
-        
-        
       })
-      
       output$swimmer_plot <- renderPlotly({
         req(swimmer_plot_react())
         p <- swimmer_plot_react()
@@ -6391,12 +5821,10 @@ server <- function(input, output, session) {
         plot_df_strat <- cohort_TTE_table_strata()
         swimm_df <- swimmer_plot_df()
         strata_col <- input$KPstrataCol
-        #save(list = ls(), file = "swimm_df_out.RData", envir = environment())
         plot_df <- plot_df[,c("Name","Start_Event","Progression_Event")]
         swimm_df <- unique(swimm_df[,c(1:5)])
         plot_df <- merge(plot_df,plot_df_strat,all = T)
         plot_df <- merge(plot_df,swimm_df, all = T)
-        
         plot_df <- plot_df %>%
           select(any_of(c("Name","Start_Event","Progression_Event",strata_col,
                           "First_Time_Point","Start_Time_Point","Prog_Time_Point","Final_Time_Point"))) %>%
@@ -6404,7 +5832,6 @@ server <- function(input, output, session) {
         colnames(plot_df) <- gsub("_"," ",colnames(plot_df))
         plot_df
       })
-      
       output$swimmer_plotTable <- DT::renderDataTable({
         req(swimmer_plotTable_out())
         plot_df <- swimmer_plotTable_out()
@@ -6425,7 +5852,6 @@ server <- function(input, output, session) {
             formatRound(columns = names(num_cols[which(num_cols==TRUE)]), digits = 3)
         }
       })
-      
       output$dnldswimmer_plotTable <- downloadHandler(
         filename = function() {
           paste0(gsub(" ","_",Project_Name),"_KP_Table_",Sys.Date(),".txt")
@@ -6437,10 +5863,7 @@ server <- function(input, output, session) {
         }
       )
       
-      
       # Cohort Summary ---------------------------------------------------------
-      
-      
       
       observe({
         req(CohortEventSumm_Table())
@@ -6459,7 +5882,6 @@ server <- function(input, output, session) {
       
       ## Render Patient Selection Table
       output$CohortEventSummaryTable <- DT::renderDataTable({
-        
         req(CohortEventSumm_Table())
         req(input$SummaryOptions)
         Patient_Table_df <- CohortEventSumm_Table()
@@ -6473,9 +5895,7 @@ server <- function(input, output, session) {
                       selection = list(mode = 'single', selected = 1),
                       rownames = F
         )
-        
       })
-      
       output$dlndCohortEventSummaryTable <- downloadHandler(
         filename = function() {
           paste0(gsub(" ","_",Project_Name),"_Event_Summary_",Sys.Date(),".txt")
@@ -6504,11 +5924,8 @@ server <- function(input, output, session) {
         event_data_key <- event_data_key()
         Patient_Event_Data <- event_data()
         events_to_plot <- input$SummaryOptions
-        
         Patient_Event_Data_summ <- Patient_Event_Data[which(Patient_Event_Data$Event %in% events_to_plot),]
-        
         summ_text_cols <- grep("Summary$",colnames(Patient_Event_Data_summ),value = T)
-        
         if (length(summ_text_cols) > 0) {
           Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
             mutate(Event_Details = coalesce(!!!syms(summ_text_cols))) %>%
@@ -6517,12 +5934,10 @@ server <- function(input, output, session) {
           Patient_Event_Data_summ <- Patient_Event_Data_summ %>%
             mutate(Event_Details = NA)
         }
-        
         Patient_Event_Data_summ2 <- Patient_Event_Data_summ %>%
           arrange(Name,EventStart) %>%
           select(-c(EventType,EventTab,EventColumn)) %>%
           as.data.frame()
-        
         Patient_Event_Data_fl <- Patient_Event_Data %>%
           group_by(Name) %>%
           mutate(Event_New = case_when(
@@ -6540,11 +5955,7 @@ server <- function(input, output, session) {
           select(Name,Event,EventStart,EventEnd,Event_Details) %>%
           unique() %>%
           as.data.frame()
-        
         Patient_Event_Data_summ3 <- merge(Patient_Event_Data_summ2,Patient_Event_Data_fl,all = T)
-        
-        #save(list = ls(), file = "Big_Genie_Fail.RData", envir = environment())
-        
         Patient_Event_Data_summ3 <- Patient_Event_Data_summ3 %>%
           arrange(Name,EventStart) %>%
           group_by(Name) %>%
@@ -6561,13 +5972,10 @@ server <- function(input, output, session) {
           mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
           ungroup() %>%
           as.data.frame()
-        
         Patient_Event_Data_summ3$Index <- as.numeric(factor(Patient_Event_Data_summ3$Name))
-        
         ply_df <- Patient_Event_Data_summ3
         ply_df
       })
-      
       
       observe({
         req(summ_swimmer_plot_df())
@@ -6592,13 +6000,10 @@ server <- function(input, output, session) {
         req(input$swimmerSortSumm)
         req(input$maxpatviewSumm)
         ply_df <- summ_swimmer_plot_df()
-        
         swimmSort <- input$swimmerSortSumm
         maxpats <- input$maxpatviewSumm
         patientsSpec <- input$swimmerPatSpecSumm
         swimmerShowAllSumm <- input$swimmerShowAllSumm
-        
-        
         if ((swimmerShowAllSumm & maxpats == length(unique(ply_df$Name))) | !swimmerShowAllSumm) {
           # sort to get correct head of patients
           if (swimmSort == "Time - Ascending") {
@@ -6610,7 +6015,6 @@ server <- function(input, output, session) {
           } else if (swimmSort == "Alphabetical - Descending") {
             ply_df <- ply_df[order(ply_df$Name),]
           }
-          
           if (maxpats >= 1) {
             if (length(patientsSpec) > 0) {
               maxpats <- maxpats-length(patientsSpec)
@@ -6635,33 +6039,26 @@ server <- function(input, output, session) {
             patientIDs <- unique(ply_df[,1])
             ply_df$Index <- as.numeric(factor(ply_df$Name, levels = patientIDs))
             patients <- unique(ply_df$Index)
-            
-            
             event_types <- unique(ply_df$Event)
             event_types <- event_types[which(!event_types %in% c("First Recorded Time Point","Final Recorded Time Point"))]
-            
             symbol_palette_base <- c("circle", "square", "diamond", "x", "triangle-up", "star", "cross", "triangle-down", "hourglass", "diamond-wide","star-triangle-up","diamond-tall")
             if (length(event_types) > length(symbol_palette_base)) {
-              #library(listviewer)
               vals <- schema(F)$traces$scatter$attributes$marker$symbol$values
               symbol_palette <- sample(vals,length(event_types))
             } else {
               symbol_palette <- symbol_palette_base[c(1:length(event_types))]
             }
             names(symbol_palette) <- event_types
-            
             qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
             col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
             color_palette <- sample(col_vector, length(event_types))
             names(color_palette) <- event_types
-            
             req(length(event_types)>0)
             showLegend_list <- lapply(rep(TRUE,length(event_types)),function(x){x})
             names(showLegend_list) <- paste0("showLegend",seq(1:length(event_types)))
             p <- plot_ly()
             for (patient in patients) {
               df_patient <- ply_df[ply_df$Index == patient, ]
-              
               p <- p %>%
                 add_segments(
                   x = df_patient$FirstEventTime_FromZero[1], xend = df_patient$FinalEventTime_FromZero[1],
@@ -6688,7 +6085,6 @@ server <- function(input, output, session) {
                              text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
                              hoverinfo = 'text',
                              showlegend = FALSE)
-              
               for (event_seq in seq_along(event_types)) {
                 event <- event_types[event_seq]
                 if (event %in% unique(df_patient$Event)) {
@@ -6711,9 +6107,7 @@ server <- function(input, output, session) {
                                  name = event)
                 }
               }
-              
             }
-            
             p_out <- layout(p,
                             xaxis = list(title = 'Time (Years)', zeroline = FALSE, titlefont = list(size = 20), tickfont = list(size = 15)),
                             yaxis = list(title = 'Patients', tickvals = patients, ticktext = patientIDs,
@@ -6729,16 +6123,9 @@ server <- function(input, output, session) {
                 )
               )
             p_out
-            
           }
-          
         }
-        
-        
-        
-        
       })
-      
       output$summ_swimmer_plot <- renderPlotly({
         req(summ_swimmer_plot_react())
         ply <- summ_swimmer_plot_react()
@@ -6747,19 +6134,16 @@ server <- function(input, output, session) {
       
       ##  Mol Anno --------------------------------------------------------
       
-      
       observe({
         req(event_data_key())
         event_data_key <- event_data_key()
         event_anno_df <- unique(event_data_key[,c("Event","EventType")])
-        
         event_anno_df <- unique(event_data_key[,c("Event","EventType")])
         event_anno_choices_full <- unique(grep("^Full ",event_anno_df$EventType,value = T))
         event_anno_choices_full <- grep(" Summary$",event_anno_choices_full,value = T)
         event_anno_choices_full <- paste0(event_anno_choices_full," ")
         event_anno_choices_full_all <- grep(paste0(event_anno_choices_full,collapse = "|"),event_anno_df$EventType,value = T)
         event_anno_df <- event_anno_df[which(!event_anno_df$EventType %in% event_anno_choices_full_all),]
-        
         event_anno_choices <- split(event_anno_df[,"Event"], event_anno_df[,"EventType"])
         event_anno_choices_cls <- event_anno_choices[grep("Cluster Line",names(event_anno_choices))]
         event_anno_choices_summ_names <- grep("Summary",names(event_anno_choices), value = T)
@@ -6783,7 +6167,6 @@ server <- function(input, output, session) {
         shinyWidgets::updateVirtualSelect(session = session,inputId = "EOIEventSelect",choices = event_anno_choices, selected = NULL)
       })
       
-      
       output$EOIEventSelect_gt1 <- reactive({
         EOIEventSelect <- input$EOIEventSelect
         if (length(EOIEventSelect) > 1) {
@@ -6800,8 +6183,6 @@ server <- function(input, output, session) {
         event_data <- event_data()
         ref_event <- input$RefEventSelect
         GroupRefEventSelect <- input$GroupRefEventSelect
-        #save(list = ls(), file = "ref_event_df.RData", envir = environment())
-        
         ref_event_data <- event_data[which(event_data$Event %in% ref_event),]
         if (GroupRefEventSelect) {
           ref_event_data2 <- ref_event_data %>%
@@ -6853,10 +6234,7 @@ server <- function(input, output, session) {
         eoi_event <- input$EOIEventSelect
         andor <- input$EOIEventAndOr
         AddAnnoWindow <- input$AddAnnoWindow
-        #save(list = ls(), file = "eoi_event_df.RData", envir = environment())
-        
         eoi_event_data <- event_data[which(event_data$Event %in% eoi_event),]
-        
         if (andor == "'And' Statement") {
           eoi_event_data <- eoi_event_data %>%
             group_by(Name) %>%
@@ -6919,23 +6297,17 @@ server <- function(input, output, session) {
         AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
         GlobalAppTimeUnit <- tolower(GlobalAppTimeUnit_react())
         EOIEventColName <- input$EOIEventColName
-        
-        #save(list = ls(), file = "ref_eoi_merge_df.RData", envir = environment())
-        
         ref_eoi_event_data <- merge(ref_event_df,eoi_event_df, all = T)
-        
         if (AddAnnoWindow) {
           if (!isTruthy(EOIEventColName)) {
             EOIEventColName <- "CustomEventOfInterest"
           }
           eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-          
           df_list <- list(ref_event_df)
           newcolname2_b <- paste0(eoi_name,"_MinTimeDiffBefore_RefEvent")
           newcolname_b <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore_RefEvent")
           newcolname2_a <- paste0(eoi_name,"_MinTimeDiffAfter_RefEvent")
           newcolname_a <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter_RefEvent")
-          
           if (!is.na(AddAnnoWindowNumBefore)) {
             if (AddAnnoWindowNumBefore > 0) {
               ref_eoi_event_data_b <- ref_eoi_event_data[which(ref_eoi_event_data$EventStart_EOI < ref_eoi_event_data$EventStart_Ref),]
@@ -6996,18 +6368,6 @@ server <- function(input, output, session) {
               EventStart_EOI < EventStart_Ref ~ "Before",
               # REFS EOIS
               EventStart_EOI > EventStart_Ref ~ "After",
-              ## EOIS EOIE REFS REFE
-              #EventStart_EOI < EventStart_Ref & EventEnd_EOI < EventStart_Ref ~ "Before",
-              ## REFS EOIS EOIE REFE
-              #EventStart_EOI >= EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI <= EventEnd_Ref ~ "During",
-              ## REFS REFE EOIS EOIE
-              #EventStart_EOI > EventEnd_Ref ~ "After",
-              ## EOIS REFS EOIE REFE
-              #EventStart_EOI < EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI < EventEnd_Ref ~ "Before&During",
-              ## REFS EOIS REFE EOIE
-              #EventStart_EOI > EventStart_Ref & EventStart_EOI < EventEnd_Ref & EventEnd_EOI > EventEnd_Ref ~ "During&After",
-              ## EOIS REFS REFE EOIE
-              #EventStart_EOI < EventStart_Ref & EventEnd_EOI > EventEnd_Ref ~ "Before&During&After"
             )) %>%
             mutate(!!sym(newcolname2) := round(EventStart_EOI-EventStart_Ref,4)) %>%
             mutate(!!sym(newcolname3) := ifelse(is.na(!!sym(newcolname)),as.character(FALSE),as.character(TRUE))) %>%
@@ -7073,7 +6433,6 @@ server <- function(input, output, session) {
           write.table(df,file, sep = '\t', row.names = F)
         }
       )
-      
       output$rend_anno_log <- renderUI({
         if (length(log_history()) == 0) return(NULL)
         tagList(
@@ -7084,185 +6443,9 @@ server <- function(input, output, session) {
           )
         )
       })
-      
       log_history <- reactiveVal(list())
       
-      #observeEvent(input$SaveAnnotation, {
-      #  #ref_eoi_merge_df_cast_list <- reactive({
-      #  req(ref_eoi_merge_df())
-      #  wkbk <- wkbk_react_anno_sub()
-      #  ref_eoi_event_data2 <- ref_eoi_merge_df()
-      #  GroupRefEventSelect <- input$GroupRefEventSelect
-      #  EOIEventColName <- input$EOIEventColName
-      #  if (!isTruthy(EOIEventColName)) {
-      #    EOIEventColName <- "CustomEventOfInterest"
-      #  }
-      #  EOIEventSelect <- input$EOIEventSelect
-      #  EOIEventSelect <- gsub(":","_",EOIEventSelect)
-      #  eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-      #  
-      #  
-      #  AddAnnoWindow <- input$AddAnnoWindow
-      #  AddAnnoWindowNumBefore <- input$AddAnnoWindowNumBefore
-      #  AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
-      #  
-      #  #save(list = ls(), file = "SaveAnnotation.RData", envir = environment())
-      #  
-      #  if (AddAnnoWindow) {
-      #    newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore")
-      #    newcolname2 <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter")
-      #    newcolname3 <- paste0(eoi_name,"_MinTimeDiffBefore")
-      #    newcolname4 <- paste0(eoi_name,"_MinTimeDiffAfter")
-      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname,"_RefEvent"))] <- newcolname
-      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname2,"_RefEvent"))] <- newcolname2
-      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname3,"_RefEvent"))] <- newcolname3
-      #    colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(newcolname4,"_RefEvent"))] <- newcolname4
-      #    name_glue_grp <- "{.value}_{EventType_Ref}"
-      #    name_glue_solo <- "{.value}_{Event_Ref}"
-      #  } else {
-      #    newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
-      #    newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
-      #    newcolname3 <- paste0(newcolname,"_EventPresent")
-      #    newcolname4 <- NULL
-      #    name_glue_grp <- "{EventType_Ref}_{.value}"
-      #    name_glue_solo <- "{Event_Ref}_{.value}"
-      #  }
-      #  
-      #  # this may cause issues
-      #  ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
-      #  
-      #  if (GroupRefEventSelect) {
-      #    updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab_Ref), function(tab) {
-      #      df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab_Ref == tab),]
-      #      df_sub2 <- df_sub %>%
-      #        pivot_wider(id_cols = Name,
-      #                    names_from = EventType_Ref,
-      #                    values_from = any_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
-      #                    names_glue = name_glue_grp
-      #        )
-      #      wkbk_df <- wkbk[[tab]]
-      #      colnames(df_sub2)[1] <- colnames(wkbk_df)[1]
-      #      wkbk_df_anno <- merge(wkbk_df,df_sub2,all.x = T)
-      #      return(wkbk_df_anno)
-      #    })
-      #    names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab_Ref)
-      #    wkbk_edit <- lapply(names(wkbk),function(df_name) {
-      #      if (df_name %in% names(updated_dfs)) {
-      #        return(updated_dfs[[df_name]])
-      #      } else {
-      #        return(wkbk[[df_name]])
-      #      }
-      #    })
-      #    names(wkbk_edit) <- names(wkbk)
-      #    wkbk_react_anno_sub(wkbk_edit)
-      #  } else {
-      #    updated_dfs <- lapply(unique(ref_eoi_event_data2$EventTab), function(tab) {
-      #      df_sub <- ref_eoi_event_data2[which(ref_eoi_event_data2$EventTab == tab),]
-      #      updated_dfs_et <- do.call(rbind,lapply(unique(df_sub$EventType), function(event_type) {
-      #        df_sub_et <- df_sub[which(df_sub$EventType == event_type),]
-      #        df_sub_et2 <- df_sub_et[,which(colnames(df_sub_et) %in% c(colnames(df_sub_et)[1],"Event",newcolname,newcolname2,newcolname3,newcolname4))]
-      #        df_sub_et3 <- df_sub_et2 %>%
-      #          pivot_wider(id_cols = Name,
-      #                      names_from = Event,
-      #                      values_from = all_of(c(newcolname,newcolname2,newcolname3,newcolname4)),
-      #                      names_glue = name_glue_solo
-      #          )
-      #        return(df_sub_et3)
-      #      }))
-      #      wkbk_df <- wkbk[[tab]]
-      #      colnames(updated_dfs_et)[1] <- colnames(wkbk_df)[1]
-      #      wkbk_df_anno <- merge(wkbk_df,updated_dfs_et,all.x = T)
-      #      return(wkbk_df_anno)
-      #    })
-      #    names(updated_dfs) <- unique(ref_eoi_event_data2$EventTab)
-      #    wkbk_edit <- lapply(names(wkbk),function(df_name) {
-      #      if (df_name %in% names(updated_dfs)) {
-      #        return(updated_dfs[[df_name]])
-      #      } else {
-      #        return(wkbk[[df_name]])
-      #      }
-      #    })
-      #    names(wkbk_edit) <- names(wkbk)
-      #    wkbk_react_anno_sub(wkbk_edit)
-      #  }
-      #  
-      #  event_tabs <- unique(ref_eoi_event_data2$EventTab)
-      #  event_tabs <- ifelse(length(event_tabs) == 1,paste0("<b>",event_tabs,"</b> data table "),paste0("The data tables of <b>",paste0(event_tabs,collapse = ", ","</b> ")))
-      #  event_types_uniq <- unique(ref_eoi_event_data2$EventType)
-      #  if (length(event_types_uniq) > 1) {
-      #    event_types <- paste0(unique(ref_eoi_event_data2$EventType),collapse = ", ")
-      #    event_type_text <- paste0("<b>Reference Events:</b> ",event_types)
-      #  } else {
-      #    event_type_text <- paste0("<b>Reference Event:</b> ",event_types_uniq)
-      #  }
-      #  if (length(EOIEventSelect) > 1) {
-      #    eoi_text <- paste0("<b>Events of Interest:</b> ",eoi_name)
-      #  } else {
-      #    eoi_text <- paste0("<b>Event of Interest:</b> ",eoi_name)
-      #  }
-      #  eventTab_text <- paste0(event_tabs, " now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
-      #  
-      #  if (AddAnnoWindow) {
-      #    # Build window-related message
-      #    if (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0) {
-      #      new_entry <- tagList(
-      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
-      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
-      #        tags$ul(
-      #          tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
-      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
-      #        ),
-      #        tags$hr()
-      #      )
-      #    }
-      #    if (!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) {
-      #      new_entry <- tagList(
-      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
-      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
-      #        tags$ul(
-      #          tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
-      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
-      #        ),
-      #        tags$hr()
-      #      )
-      #    }
-      #    if ((!is.na(AddAnnoWindowNumAfter) && AddAnnoWindowNumAfter > 0) && (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0)) {
-      #      new_entry <- tagList(
-      #        tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
-      #        tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
-      #        tags$ul(
-      #          tags$li(paste0("within ", AddAnnoWindowNumBefore, " days before the reference event start")),
-      #          tags$li(paste0("within ", AddAnnoWindowNumAfter, " days after the reference event start")),
-      #          tags$li("The minimum time difference between the EOI start before and after the reference event start")
-      #        ),
-      #        tags$hr()
-      #      )
-      #    }
-      #  } else {
-      #    # Simpler before/during/after logic
-      #    new_entry <- tagList(
-      #      tags$p(HTML(paste0(event_type_text,"<br>",eoi_text)), style = "margin-bottom:5px"),
-      #      tags$p(HTML(paste0(eventTab_text)), style = "margin-bottom:-3px"),
-      #      tags$ul(
-      #        tags$li("If the EOI start occured before or after the reference event start"),
-      #        tags$li("The time difference between the two events"),
-      #        tags$li("A TRUE or FALSE statement if the EOI occurred or did not occur")
-      #      ),
-      #      tags$hr()
-      #    )
-      #  }
-      #  
-      #  # Append to history
-      #  current_log <- log_history()
-      #  log_history(append(list(new_entry),current_log))
-      #  
-      #  showNotification("Event Annotation Saved!", type = "message")
-      #  
-      #  
-      #}, ignoreInit = TRUE)
-      
       observeEvent(input$SaveAnnotation, {
-        #ref_eoi_merge_df_cast_list <- reactive({
         req(ref_eoi_merge_df())
         wkbk <- wkbk_react_anno_sub()
         ref_eoi_event_data2 <- ref_eoi_merge_df()
@@ -7274,14 +6457,9 @@ server <- function(input, output, session) {
         EOIEventSelect <- input$EOIEventSelect
         EOIEventSelect <- gsub(":","_",EOIEventSelect)
         eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
-        
-        
         AddAnnoWindow <- input$AddAnnoWindow
         AddAnnoWindowNumBefore <- input$AddAnnoWindowNumBefore
         AddAnnoWindowNumAfter <- input$AddAnnoWindowNumAfter
-        
-        #save(list = ls(), file = "SaveAnnotation.RData", envir = environment())
-        
         if (AddAnnoWindow) {
           newcolname <- paste0(eoi_name,"_Within",AddAnnoWindowNumBefore,"DaysBefore")
           newcolname2 <- paste0(eoi_name,"_Within",AddAnnoWindowNumAfter,"DaysAfter")
@@ -7301,9 +6479,7 @@ server <- function(input, output, session) {
           name_glue_grp <- "{EventType_Ref}_{.value}"
           name_glue_solo <- "{Event_Ref}_{.value}"
         }
-        
         ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
-        
         if (GroupRefEventSelect) {
           ref_eoi_event_data2 <- ref_eoi_event_data2 %>%
             select(-any_of(c("Event_Ref","Event_EOI"))) %>%
@@ -7343,7 +6519,6 @@ server <- function(input, output, session) {
                 )
               return(df_typ2)
             }))
-            
           })
           event_anno_df <- Reduce(function(dtf1, dtf2) merge(dtf1, dtf2, all = TRUE),event_anno_dfs2)
           wkbk_edit <- lapply(wkbk,function(df) {
@@ -7366,7 +6541,6 @@ server <- function(input, output, session) {
           eoi_text <- paste0("<b>Event of Interest:</b> ",eoi_name)
         }
         eventTab_text <- paste0("App data now includes columns annotating the occurrence of the event of interest (EOI) start relative to the reference event (Ref) start:")
-        
         if (AddAnnoWindow) {
           # Build window-related message
           if (!is.na(AddAnnoWindowNumBefore) && AddAnnoWindowNumBefore > 0) {
@@ -7416,229 +6590,16 @@ server <- function(input, output, session) {
             tags$hr()
           )
         }
-        
         # Append to history
         current_log <- log_history()
         log_history(append(list(new_entry),current_log))
-        
         showNotification("Event Annotation Saved!", type = "message")
-        
-        
       }, ignoreInit = TRUE)
-      
       output$annotation_log <- renderUI({
         tagList(log_history())
       })
       
-      #MolecularAnnoTable_reactiveVal <- reactiveVal()
-      
-      
-      #observe({
-      #  req(event_data())
-      #  event_data <- event_data()
-      #  table_names <- unique(event_data[,"EventTab"])[which(!is.na(unique(event_data[,"EventTab"])))]
-      #  table_select_ref <- ifelse(any(grepl("molecular",table_names,ignore.case = T)),grep("molecular",table_names,ignore.case = T, value = T)[1],
-      #                             table_names[1])
-      #  table_names <- c(table_names,"ShinyEvents Treatment Clusters")
-      #  updateSelectizeInput(session,"RefDataTable", choices = table_names, selected = table_select_ref, server = T)
-      #  updateSelectizeInput(session,"EOIDataTable", choices = table_names, selected = table_names[which(table_names!=table_select_ref)][1], server = T)
-      #})
-      
-      #observe({
-      #  req(wkbk_react_sub())
-      #  req(event_data())
-      #  req(input$RefDataTable)
-      #  wkbk <- wkbk_react_sub()
-      #  event_data <- event_data()
-      #  reftable <- input$RefDataTable
-      #  
-      #  if (reftable == "ShinyEvents Treatment Clusters") {
-      #    req(sankey_clusters_cast())
-      #    df <- sankey_clusters_cast()
-      #    ref_events <- unique(event_data[which(event_data[,"EventType"] %in% colnames(df)),"Event"])
-      #  } else {
-      #    RefDataTableCols <- colnames(wkbk[[reftable]])
-      #    ref_events <- unique(event_data[which(event_data[,"EventTab"] == reftable),"Event"])
-      #  }
-      #  
-      #  updateSelectizeInput(session,"RefEvent", choices = ref_events, selected = ref_events, server = T)
-      #})
-      
-      #observe({
-      #  req(wkbk_react_sub())
-      #  req(event_data())
-      #  req(input$EOIDataTable)
-      #  wkbk <- wkbk_react_sub()
-      #  event_data <- event_data()
-      #  eoitable <- input$EOIDataTable
-      #  reset <- input$SaveAnnotation
-      #  
-      #  if (eoitable == "ShinyEvents Treatment Clusters") {
-      #    req(sankey_clusters_cast())
-      #    df <- sankey_clusters_cast()
-      #    eoi_events <- unique(event_data[which(event_data[,"EventType"] %in% colnames(df)),"Event"])
-      #  } else {
-      #    eoiDataTableCols <- colnames(wkbk[[eoitable]])
-      #    eoi_events <- unique(event_data[which(event_data[,"EventTab"] == eoitable),"Event"])
-      #  }
-      #  updateSelectizeInput(session,"EOIEvent", choices = eoi_events, selected = NULL, server = T)
-      #})
-      
-      #MolecularAnnoTable_reactiveVal <- reactiveVal()
-      #MolecularAnnoTable_react <- reactive({
-      #  req(wkbk_react_sub())
-      #  req(event_data())
-      #  req(input$RefDataTable)
-      #  req(input$RefEvent)
-      #  req(input$EOIDataTable)
-      #  req(paramEvent_data())
-      #  param <- paramEvent_data()
-      #  event_data_key <- event_data_key()
-      #  wkbk <- wkbk_react_sub()
-      #  event_data <- event_data()
-      #  RefDataTable <- input$RefDataTable
-      #  RefEvent <- input$RefEvent
-      #  EOIDataTable <- input$EOIDataTable
-      #  EOIEvent <- input$EOIEvent
-      #  newcolname <- input$NewColName
-      #  andor <- input$EOIEventAndOr
-      #  sankey_clusters_cast <- sankey_clusters_cast()
-      #  reactive_val_df <- MolecularAnnoTable_reactiveVal()
-      #  
-      #  RefEventSelect <- input$RefEventSelect
-      #  GroupRefEventSelect <- input$GroupRefEventSelect
-      #  EOIEventSelect <- input$EOIEventSelect
-      #  EOIEventColName <- input$EOIEventColName
-      #  
-      #  
-      #  newcolname <- ifelse(isTruthy(newcolname),newcolname,"ReferenceEvent_RelativeTo_NewEvent")
-      #  newcolname2 <- paste0(newcolname,"_TimeDiff")
-      #  newcolname3 <- paste0(newcolname,"_EventPresent")
-      #  save(list = ls(), file = "eoi_anno.RData", envir = environment())
-      #  if (!isTruthy(reactive_val_df)) {
-      #    if (RefDataTable == "ShinyEvents Treatment Clusters") {
-      #      req(sankey_clusters_cast())
-      #      ref_df <- sankey_clusters_cast
-      #    } else {
-      #      ref_df <- wkbk[[RefDataTable]]
-      #    }
-      #    #ref_df <- wkbk[[RefDataTable]]
-      #  } else {
-      #    ref_df <- reactive_val_df
-      #  }
-      #  
-      #  if (EOIDataTable == "ShinyEvents Treatment Clusters") {
-      #    req(sankey_clusters_cast())
-      #    eoi_df <- sankey_clusters_cast
-      #  } else {
-      #    eoi_df <- wkbk[[EOIDataTable]]
-      #  }
-      #  if (isTruthy(EOIEvent)) {
-      #    ref_event <- event_data[which(event_data$Event %in% RefEvent),]
-      #    ref_event <- ref_event %>%
-      #      group_by(Name) %>%
-      #      mutate(First_RefEventStart = min(EventStart, na.rm = T)) %>%
-      #      select(Name,First_RefEventStart) %>%
-      #      unique() %>%
-      #      as.data.frame()
-      #    if (andor == "'And' Statement") {
-      #      eoi_event <- event_data %>%
-      #        group_by(Name) %>%
-      #        filter(all(EOIEvent %in% Event)) %>%
-      #        filter(Event %in% EOIEvent) %>%
-      #        as.data.frame()
-      #      
-      #    } else {
-      #      eoi_event <- event_data[which(event_data$Event %in% EOIEvent),]
-      #    }
-      #    eoi_event2 <- eoi_event %>%
-      #      group_by(Name) %>%
-      #      slice_min(order_by = data.frame(EventStart,EventEnd)) %>%
-      #      select(Name,EventStart,EventEnd)%>%
-      #      unique() %>%
-      #      as.data.frame()
-      #    
-      #    ref_eoi <- merge(ref_event,eoi_event2,all = T)
-      #    ref_eoi2 <- ref_eoi %>%
-      #      mutate(!!sym(newcolname) := case_when(
-      #        First_RefEventStart >= EventStart & First_RefEventStart <= EventEnd ~ "During",
-      #        First_RefEventStart < EventStart & First_RefEventStart < EventEnd ~ "Before",
-      #        First_RefEventStart > EventStart & First_RefEventStart > EventEnd ~ "After"
-      #      )) %>%
-      #      mutate(!!sym(newcolname2) := case_when(
-      #        !!sym(newcolname) == "During" ~ 0,
-      #        !!sym(newcolname) == "Before" ~ round(First_RefEventStart-EventStart,4),
-      #        !!sym(newcolname) == "After" ~ round(First_RefEventStart-EventEnd,4)
-      #      )) %>%
-      #      mutate(!!sym(newcolname3) := case_when(
-      #        !!sym(newcolname) %in% c("Before","During","After") ~ as.character(TRUE),
-      #        is.na(!!sym(newcolname)) ~ as.character(FALSE)
-      #      ))
-      #    colnames(ref_eoi2)[1] <- colnames(ref_df)[1]
-      #    ref_df_eoi <- merge(ref_eoi2[,c(colnames(ref_eoi2)[1],newcolname,newcolname2,newcolname3)],ref_df, all.y = T)
-      #    ref_df_eoi
-      #  } else {
-      #    ref_df
-      #  }
-      #})
-      
-      #observeEvent(input$SaveAnnotation, {
-      #  req(wkbk_react_sub())
-      #  req(input$RefDataTable)
-      #  wkbk <- wkbk_react_sub()
-      #  RefDataTable <- input$RefDataTable
-      #  ref_df <- wkbk[[RefDataTable]]
-      #  new_df <- MolecularAnnoTable_react()
-      #  new_cols <- setdiff(colnames(new_df),colnames(ref_df))
-      #  new_df <- new_df %>%
-      #    relocate(any_of(new_cols), .after = !!sym(colnames(new_df)[1]))
-      #  updateTextInput(session,"NewColName",value = "", placeholder = "Molecular Anno Before_After")
-      #  MolecularAnnoTable_reactiveVal(new_df)
-      #})
-      
-      #observeEvent(input$SaveAnnotation, {
-      #  req(wkbk_react_sub())
-      #  req(input$RefDataTable)
-      #  wkbk <- wkbk_react_sub()
-      #  RefDataTable <- input$RefDataTable
-      #  
-      #  if (!isTruthy(MolecularAnnoTable_reactiveVal())) {
-      #    new_df <- wkbk[[RefDataTable]]
-      #  } else {
-      #    new_df <- MolecularAnnoTable_reactiveVal()
-      #  }
-      #  
-      #  wkbk[[RefDataTable]] <- new_df
-      #  wkbk_react_anno(wkbk)
-      #  
-      #})
-      
-      #output$MolecularAnnoTable <- DT::renderDataTable({
-      #  req(MolecularAnnoTable_react())
-      #  df <- MolecularAnnoTable_react()
-      #  df[is.na(df)] <- "NA"
-      #  DT::datatable(df,
-      #                extensions = 'Scroller',
-      #                options = list(lengthMenu = c(5,10,25,50,100, 1000),
-      #                               pageLength = 10,
-      #                               scrollX = T),
-      #                rownames = F
-      #  )
-      #})
-      
-      #output$dlndMolecularAnnoTable <- downloadHandler(
-      #  filename = function() {
-      #    ref_table <- input$RefDataTable
-      #    paste0(gsub(" ","_",Project_Name),"_",ref_table,"_MolAnno_",Sys.Date(),".txt")
-      #  },
-      #  content = function(file) {
-      #    df <- MolecularAnnoTable_react()
-      #    write.table(df,file, sep = '\t', row.names = F)
-      #  }
-      #)
-      
       ## Mol Breakdown ----------------------------------------------------------
-      
       
       output$rendMolecularBreakdownTabs <- renderUI({
         feats <- input$FilterTabCountFeatures
@@ -7707,8 +6668,7 @@ server <- function(input, output, session) {
         df_name <- input$TableToFilter
         wkbk <- wkbk_react_anno_sub()
         df <- wkbk[[df_name]]
-        df_m <- cbind(data.frame(Row_Index = rownames(df)),
-                      df)
+        df_m <- cbind(data.frame(Row_Index = rownames(df)),df)
         df_m2 <- reshape2::melt(df_m,id.vars = "Row_Index")
         df_m2 <- df_m2[,-1]
         df_m2[is.na(df_m2)] <- "NA"
@@ -7736,8 +6696,7 @@ server <- function(input, output, session) {
         df_name <- input$TableToFilterMain
         wkbk <- wkbk_raw_react()
         df <- wkbk[[df_name]]
-        df_m <- cbind(data.frame(Row_Index = rownames(df)),
-                      df)
+        df_m <- cbind(data.frame(Row_Index = rownames(df)),df)
         df_m2 <- reshape2::melt(df_m,id.vars = "Row_Index")
         df_m2 <- df_m2[,-1]
         df_m2[is.na(df_m2)] <- "NA"
@@ -7760,10 +6719,8 @@ server <- function(input, output, session) {
       
       observe({
         req(input$TableToFilter)
-        #req(wkbk_raw_react())
         req(wkbk_react_anno_sub())
         df_name <- input$TableToFilter
-        #wkbk <- wkbk_raw_react()
         wkbk <- wkbk_react_anno_sub()
         df <- wkbk[[df_name]]
         updateSelectizeInput(session,"FilterTableIDcol", choices = colnames(df), selected = colnames(df)[1], server = T)
@@ -7793,7 +6750,6 @@ server <- function(input, output, session) {
                                    placeholder = 'Please select an option below',
                                    onInitialize = I('function() { this.setValue(""); }')
                                  ), server = T)
-            #}
           }
         }
       })
@@ -7804,8 +6760,6 @@ server <- function(input, output, session) {
         id_col <- input$FilterTableIDcol
         df <- wkbk[[df_name]]
         filters <- input$TableFilterInput
-        #save(list = ls(), file = "breakdown_table.RData", envir = environment())
-        
         if (isTruthy(filters)) {
           req(TableFilterInput_df())
           tree_df <- TableFilterInput_df()
@@ -7831,7 +6785,6 @@ server <- function(input, output, session) {
           filter_keys4 <- lapply(names(filter_keys3), function(x) {
             filter_vals <- filter_keys3[[x]]
             keys <- which(df[,x] %in% filter_vals)
-            #keys <- rownames(df[which(df[,x] %in% filter_vals),])
             return(keys)
           })
           # Intersect the filter rows to get rows that match all filters
@@ -7853,7 +6806,6 @@ server <- function(input, output, session) {
                                      scrollX = T),
                       rownames = F
         )
-        
       })
       output$dlndMolecularCountTable <- downloadHandler(
         filename = function() {
@@ -7883,12 +6835,8 @@ server <- function(input, output, session) {
         }
         df <- df[which(!is.na(df[,id_col])),]
         feats_tab <- feat_breakdown(df,id_col,ref_feat,feats, shiny = T)
-        
-        #save(list = ls(), file = "OR_Err.RData", envir = environment())
-        
         if (ORtest) {
           if (isTruthy(or_col)) {
-            #or_col <- paste0(id_col," ",or_col)
             or_col <- paste0(ref_feat," ",or_col)
             feats_tab <- perform_fishers_test(feats_tab,or_col)
             if (input$ORtest) {
@@ -7897,7 +6845,6 @@ server <- function(input, output, session) {
             }
           }
         }
-        
         feats_tab
       })
       output$rendBreakdownHeader <- renderUI({
@@ -7943,49 +6890,21 @@ server <- function(input, output, session) {
         switch_main_navbar <- function(navbar_id, navbar_selected){
           shiny::updateNavbarPage(session = session, inputId = navbar_id, selected = navbar_selected)
         }
-        
         Homepage_server("ShinyEvents1", homepage_tutorial_text_list, switch_main_tab, switch_main_navbar)
         Tutorial_server("ShinyEvents1", homepage_tutorial_text_list)
-        
         observe({
           print("this is stupid")
           updateNavbarPage(session = session, inputId = "shinyevents_tabs", selected = "patient_visual_analytics")
           updateTabsetPanel(session = session, inputId = "PatientMainPanel", selected = "2")
         })%>% bindEvent(input$tabselect_test)
       }
-      
-      
     }
-    
-    
-    
   })
-  
   on.exit(options(warn=0))
-  
 }
-
-
-
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
