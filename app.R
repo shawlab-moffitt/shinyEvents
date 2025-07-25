@@ -6756,7 +6756,7 @@ server <- function(input, output, session) {
         event_anno_df <- unique(event_data_key[,c("Event","EventType")])
         event_anno_choices_full <- unique(grep("^Full ",event_anno_df$EventType,value = T))
         event_anno_choices_full <- grep(" Summary$",event_anno_choices_full,value = T)
-        treat_resp_choices_full <- paste0(treat_resp_choices_full," ")
+        event_anno_choices_full <- paste0(event_anno_choices_full," ")
         event_anno_choices_full_all <- grep(paste0(event_anno_choices_full,collapse = "|"),event_anno_df$EventType,value = T)
         event_anno_df <- event_anno_df[which(!event_anno_df$EventType %in% event_anno_choices_full_all),]
         
