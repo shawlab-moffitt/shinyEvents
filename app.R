@@ -257,6 +257,7 @@ DataInput_tab_contents <- shiny::sidebarLayout(
     ),
   ),
   mainPanel(
+    uiOutput("rendDataLodedHelpText"),
     tabsetPanel(id = "PreProcessingTabs")
   )
 )
@@ -1859,10 +1860,8 @@ server <- function(input, output, session) {
           } else {
             wkbk <- list(InputData = eventDataInput_raw)
           }
-          
           incProgress(0.2, detail = "Formatting patient selection table")
           pat_anno <- event_count_df(event_data_processed)
-          
           if (!is.na(eventtype_in)) {
             event_new <- apply(event_data_processed,1,function(x) {
               event <- x[["Event"]]
@@ -1879,7 +1878,6 @@ server <- function(input, output, session) {
             })
             event_data_processed$Event <- event_new
           }
-          
           incProgress(0.2, detail = "Summarizing event clusters")
           if (!all(grepl("EventSummary",colnames(event_data_processed)))) {
             if (isTruthy(EventDataTreatmentEvents) | isTruthy(EventDataResponseEvents)) {
@@ -1937,12 +1935,10 @@ server <- function(input, output, session) {
       output$EventDataFileIn_found <- reactive({
         if (!AllFilesReady) {
           EventDataFileInput <- input$EventDataFileInput
-          if (!is.null(EventDataFileInput) & !is.null(input$LoadExampleData)) {
-            if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
-              TRUE
-            } else {
-              FALSE
-            }
+          if (input$LoadExampleData > 0) {
+            TRUE
+          } else if (isTruthy(EventDataFileInput)) {
+            TRUE
           } else {
             FALSE
           }
@@ -2957,14 +2953,23 @@ server <- function(input, output, session) {
       })
       
       ## Render UI ----------------------------------------------------
+      output$rendDataLodedHelpText <- renderUI({
+        if (!AllFilesReady) {
+          if (!is.null(input$LoadExampleData)) {
+            if (input$LoadExampleData == 0 & !isTruthy(input$EventDataFileInput)) {
+              h3(HTML("<b>← Upload event data or load an example dataset to get started</b>"),style="margin-top:180px")
+            }
+          }
+        }
+      })
       observe({
         if (!AllFilesReady) {
-          if (!is.null(input$EventDataFileInput) & !is.null(input$LoadExampleData)) {
+          if (!is.null(input$LoadExampleData)) {
             if (isTruthy(input$EventDataFileInput) | input$LoadExampleData > 0) {
               appendTab(inputId = "PreProcessingTabs",
                         tab = tabPanel("Input Data Formatting",
                                        # Event data input
-                                       conditionalPanel(condition = "output.EventDataFileIn_found",
+                                       conditionalPanel(condition = "output.EventDataFileIn_found || input.LoadExampleData > 0",
                                                         wellPanel(
                                                           fluidRow(
                                                             column(4,
@@ -3030,7 +3035,6 @@ server <- function(input, output, session) {
             }
           }
         }
-        
       })
       
       inserted_tabs <- reactiveVal(character())
