@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250724")
+version_id <- paste0("v1.0.20250725")
 
 # lite swap able
 
@@ -2021,8 +2021,12 @@ server <- function(input, output, session) {
       output$EventDataFileIn_found <- reactive({
         if (!AllFilesReady) {
           EventDataFileInput <- input$EventDataFileInput
-          if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
-            TRUE
+          if (!is.null(EventDataFileInput) & !is.null(input$LoadExampleData)) {
+            if (isTruthy(EventDataFileInput) | input$LoadExampleData > 0) {
+              TRUE
+            } else {
+              FALSE
+            }
           } else {
             FALSE
           }
@@ -2033,9 +2037,12 @@ server <- function(input, output, session) {
       output$SuppDataInput1_found <- reactive({
         if (!AllFilesReady) {
           SuppDataInput1 <- input$SuppDataInput1
-          if (SuppDataInput1) {
-            #if (isTruthy(SuppDataInput1)) {
-            TRUE
+          if (!is.null(SuppDataInput1)) {
+            if (SuppDataInput1) {
+              TRUE
+            } else {
+              FALSE
+            }
           } else {
             FALSE
           }
@@ -2145,7 +2152,7 @@ server <- function(input, output, session) {
         print(input$TreatmentWarn)
       })
       
-      process_input_react <- reactiveVal(TRUE)
+      process_input_react <- reactiveVal(NULL)
       
       observeEvent(input$ProcessInputData, {
         EventDataTreatmentEvents <- input$EventDataTreatmentEvents
@@ -2179,11 +2186,12 @@ server <- function(input, output, session) {
           process_input_react(TRUE)
         }
         
-      })
+      }, ignoreInit = TRUE)
       
       observeEvent(input$TreatmentWarn, {
         process_input_react(input$TreatmentWarn)
-      })
+      }, ignoreInit = TRUE)
+      
       
       observeEvent(process_input_react(), {
       #observeEvent(input$TreatWarn, {
@@ -2206,7 +2214,7 @@ server <- function(input, output, session) {
           
           SuppEventColumnLink <- input$SuppEventColumnLink
           SuppDataFileInput1 <- input$SuppDataFileInput1
-          TreatmentWarn <- input$TreatmentWarn
+          #TreatmentWarn <- input$TreatmentWarn
           
           
           
@@ -2381,6 +2389,8 @@ server <- function(input, output, session) {
           paramEvent_data(paramEvent)
           
           tabs_trigger(tabs_trigger()+1)
+          
+          process_input_react(NULL)
           
           #  }
           #}
@@ -3165,79 +3175,81 @@ server <- function(input, output, session) {
       ## Render UI ----------------------------------------------------
       observe({
         if (!AllFilesReady) {
-          if (isTruthy(input$EventDataFileInput) | input$LoadExampleData > 0) {
-            appendTab(inputId = "PreProcessingTabs",
-                      tab = tabPanel("Input Data Formatting",
-                                     # Event data input
-                                     conditionalPanel(condition = "output.EventDataFileIn_found",
-                                                      wellPanel(
-                                                        fluidRow(
-                                                          column(4,
-                                                                 tags$b(tags$u(h3("Step 2:"))),
-                                                                 h3("Select Required Event Data Columns:")
+          if (!is.null(input$EventDataFileInput) & !is.null(input$LoadExampleData)) {
+            if (isTruthy(input$EventDataFileInput) | input$LoadExampleData > 0) {
+              appendTab(inputId = "PreProcessingTabs",
+                        tab = tabPanel("Input Data Formatting",
+                                       # Event data input
+                                       conditionalPanel(condition = "output.EventDataFileIn_found",
+                                                        wellPanel(
+                                                          fluidRow(
+                                                            column(4,
+                                                                   tags$b(tags$u(h3("Step 2:"))),
+                                                                   h3("Select Required Event Data Columns:")
+                                                            ),
+                                                            column(3,
+                                                                   selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
+                                                                   selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
+                                                            ),
+                                                            column(3,
+                                                                   selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
+                                                                   selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
+                                                            ),
+                                                            column(2,
+                                                                   selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
+                                                                   selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
+                                                            )
                                                           ),
-                                                          column(3,
-                                                                 selectizeInput("EventDataPatientIDcol","Patient ID Column", choices = NULL, selected = 1),
-                                                                 selectizeInput("EventDataEventcol","Event Name Column", choices = NULL, selected = 1)#,
-                                                          ),
-                                                          column(3,
-                                                                 selectizeInput("EventDataEventStartcol","Event Start Time Column", choices = NULL, selected = 1),
-                                                                 selectizeInput("EventDataEventEndcol","Event End Time Column", choices = NULL, selected = 1)
-                                                          ),
-                                                          column(2,
-                                                                 selectizeInput("EventDataEventStartUnits","Start Time Units", choices = c("Days","Months","Years","Hours")),
-                                                                 selectizeInput("EventDataEventEndUnits","End Time Units", choices = c("Days","Months","Years","Hours"))
+                                                          hr(),
+                                                          tags$b(tags$u(h3("Step 3:"))),
+                                                          h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
+                                                          fluidRow(
+                                                            column(4,
+                                                                   selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
+                                                                                  options = list(
+                                                                                    placeholder = 'Please select',
+                                                                                    onInitialize = I('function() { this.setValue(""); }')
+                                                                                  ))#,
+                                                                   #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
+                                                                   #               options = list(
+                                                                   #                 placeholder = 'Please select',
+                                                                   #                 onInitialize = I('function() { this.setValue(""); }')
+                                                                   #               ))
+                                                            ),
+                                                            column(4,
+                                                                   virtualSelectInput(
+                                                                     inputId = "EventDataTreatmentEvents",
+                                                                     label = "Select Treatment Defining Events:",
+                                                                     choices = NULL,
+                                                                     showValueAsTags = TRUE,
+                                                                     search = TRUE,
+                                                                     multiple = TRUE
+                                                                   )
+                                                            ),
+                                                            column(4,
+                                                                   virtualSelectInput(
+                                                                     inputId = "EventDataResponseEvents",
+                                                                     label = "Select Response Defining Events:",
+                                                                     choices = NULL,
+                                                                     showValueAsTags = TRUE,
+                                                                     search = TRUE,
+                                                                     multiple = TRUE
+                                                                   )
+                                                            )
                                                           )
                                                         ),
-                                                        hr(),
-                                                        tags$b(tags$u(h3("Step 3:"))),
-                                                        h4("Select Event Grouping or Summary Columns and Treatment and/or Response Associated Events:"),
-                                                        fluidRow(
-                                                          column(4,
-                                                                 selectizeInput("EventDataEventTypecol","Event Category/Type Column", choices = NULL, selected = 1,
-                                                                                options = list(
-                                                                                  placeholder = 'Please select',
-                                                                                  onInitialize = I('function() { this.setValue(""); }')
-                                                                                ))#,
-                                                                 #selectizeInput("EventDataEventSummary","Event Summary Column", choices = NULL, selected = 1,
-                                                                 #               options = list(
-                                                                 #                 placeholder = 'Please select',
-                                                                 #                 onInitialize = I('function() { this.setValue(""); }')
-                                                                 #               ))
-                                                          ),
-                                                          column(4,
-                                                                 virtualSelectInput(
-                                                                   inputId = "EventDataTreatmentEvents",
-                                                                   label = "Select Treatment Defining Events:",
-                                                                   choices = NULL,
-                                                                   showValueAsTags = TRUE,
-                                                                   search = TRUE,
-                                                                   multiple = TRUE
-                                                                 )
-                                                          ),
-                                                          column(4,
-                                                                 virtualSelectInput(
-                                                                   inputId = "EventDataResponseEvents",
-                                                                   label = "Select Response Defining Events:",
-                                                                   choices = NULL,
-                                                                   showValueAsTags = TRUE,
-                                                                   search = TRUE,
-                                                                   multiple = TRUE
-                                                                 )
-                                                          )
-                                                        )
-                                                      ),
-                                                      p(),
-                                                      h3("Input Data Preivew"),
-                                                      #h3("Event Data Preivew"),
-                                                      div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
-                                     ),
-                                     value = "Input Data Formatting"
-                      ),
-                      select = TRUE,
-                      session = session
-            )
-            
+                                                        p(),
+                                                        h3("Input Data Preivew"),
+                                                        #h3("Event Data Preivew"),
+                                                        div(DT::dataTableOutput("EventDataInputPreview"), style = "font-size:12px")
+                                       ),
+                                       value = "Input Data Formatting"
+                        ),
+                        select = TRUE,
+                        session = session
+              )
+              
+            }
           }
         }
         
