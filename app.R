@@ -2586,11 +2586,12 @@ server <- function(input, output, session) {
             filter_keys <- lapply(filters, function(x) {
               if (!x$text[[1]] %in% unique(tree_df$variable_N)) {
                 id <- x[["id"]][[1]]
+                col <- as.character(tree_df[which(tree_df$var_val_id == id),"variable"])
                 val <- x[["text"]][[1]]
                 if (val == "NA") {
                   val <- NA
                 }
-                col <- gsub(paste0("_",val,"$"),"",id)
+                #col <- gsub(paste0("_",val,"$"),"",id)
                 return(c(col = col,val = val))
               }
             })
@@ -6755,19 +6756,37 @@ server <- function(input, output, session) {
         df_name <- input$TableToFilter
         wkbk <- wkbk_react_anno_sub()
         df <- wkbk[[df_name]]
-        df_m <- cbind(data.frame(Row_Index = rownames(df)),df)
+        #save(list = ls(), file = "TableFilterInput_df.RData", envir = environment())
+        
+        var_n <- sapply(colnames(df),function(x) {
+          return(length(unique(df[,x])))
+        })
+        var_n_df <- data.frame(variable = names(var_n),N = var_n)
+        
+        df_m <- cbind(data.frame(Row_Index = rownames(df)),
+                      df)
         df_m2 <- reshape2::melt(df_m,id.vars = "Row_Index")
         df_m2 <- df_m2[,-1]
         df_m2[is.na(df_m2)] <- "NA"
-        df_m2_levels <- unique(df_m2[,1])
-        df_m3 <- df_m2 %>%
+        df_m2_uniq <- unique(df_m2)
+        df_m2_uniq <- merge(df_m2_uniq,var_n_df, sort = F)
+        df_m2_uniq$variable_N <- paste0(df_m2_uniq$variable," (",df_m2_uniq$N,")")
+        df_m2_uniq$var_val_id <- paste0(df_m2_uniq$variable,"_",df_m2_uniq$value)
+        df_m2_uniq <- df_m2_uniq %>%
           group_by(variable) %>%
-          mutate(variable_N = paste0(variable," (",length(unique(value)),")")) %>%
-          mutate(var_val_id = paste0(variable,"_",value)) %>%
-          unique() %>%
-          arrange(value, .by_group = TRUE) %>%
+          arrange(value, .by_group = T) %>%
           as.data.frame()
-        df_m3
+        df_m2_uniq
+        #df_m2_levels <- unique(df_m2[,1])
+        #df_m2_levels <- unique(df_m2[,2])
+        #df_m3 <- df_m2 %>%
+        #  group_by(variable) %>%
+        #  mutate(variable_N = paste0(variable," (",length(unique(value)),")")) %>%
+        #  mutate(var_val_id = paste0(variable,"_",value)) %>%
+        #  unique() %>%
+        #  arrange(value, .by_group = TRUE) %>%
+        #  as.data.frame()
+        #df_m3
       })
       
       output$rendTableFilterInput <- renderUI({
@@ -6783,19 +6802,29 @@ server <- function(input, output, session) {
         df_name <- input$TableToFilterMain
         wkbk <- wkbk_raw_react()
         df <- wkbk[[df_name]]
-        df_m <- cbind(data.frame(Row_Index = rownames(df)),df)
+        df_m <- cbind(data.frame(Row_Index = rownames(df)),
+                      df)
         df_m2 <- reshape2::melt(df_m,id.vars = "Row_Index")
         df_m2 <- df_m2[,-1]
         df_m2[is.na(df_m2)] <- "NA"
-        df_m2_levels <- unique(df_m2[,1])
-        df_m3 <- df_m2 %>%
+        df_m2_uniq <- unique(df_m2)
+        df_m2_uniq <- merge(df_m2_uniq,var_n_df, sort = F)
+        df_m2_uniq$variable_N <- paste0(df_m2_uniq$variable," (",df_m2_uniq$N,")")
+        df_m2_uniq$var_val_id <- paste0(df_m2_uniq$variable,"_",df_m2_uniq$value)
+        df_m2_uniq <- df_m2_uniq %>%
           group_by(variable) %>%
-          mutate(variable_N = paste0(variable," (",length(unique(value)),")")) %>%
-          mutate(var_val_id = paste0(variable,"_",value)) %>%
-          unique() %>%
-          arrange(value, .by_group = TRUE) %>%
+          arrange(value, .by_group = T) %>%
           as.data.frame()
-        df_m3
+        df_m2_uniq
+        #df_m2_levels <- unique(df_m2[,1])
+        #df_m3 <- df_m2 %>%
+        #  group_by(variable) %>%
+        #  mutate(variable_N = paste0(variable," (",length(unique(value)),")")) %>%
+        #  mutate(var_val_id = paste0(variable,"_",value)) %>%
+        #  unique() %>%
+        #  arrange(value, .by_group = TRUE) %>%
+        #  as.data.frame()
+        #df_m3
       })
       output$rendTableFilterMainInput <- renderUI({
         req(TableFilterMainInput_df())
@@ -6854,11 +6883,12 @@ server <- function(input, output, session) {
           filter_keys <- lapply(filters, function(x) {
             if (!x$text[[1]] %in% unique(tree_df$variable_N)) {
               id <- x[["id"]][[1]]
+              col <- as.character(tree_df[which(tree_df$var_val_id == id),"variable"])
               val <- x[["text"]][[1]]
               if (val == "NA") {
                 val <- NA
               }
-              col <- gsub(paste0("_",val,"$"),"",id)
+              #col <- gsub(paste0("_",val,"$"),"",id)
               return(c(col = col,val = val))
             }
           })
