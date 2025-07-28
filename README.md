@@ -12,21 +12,6 @@ By making it easier to work with layered time-based data, ShinyEvents helps conn
 An online version is available below for research purposes only.
 https://shawlab-moffitt.shinyapps.io/shinyevents/
 
-# :warning: Data Use Disclaimer - Please read before uploading any files
-
-## Warning Regarding Personal Health Information (PHI):
-The online version of the application is for research purposes and not designed for handling or processing personal health information (PHI).
-
-## Do not upload any files containing PHI or sensitive personal data.
-For working with protected data, we strongly recommend downloading and running the tool locally on a secure environment.
-
-## No Data Storage:
-Any data uploaded to this server is used temporarily during the session and is not stored, saved, or shared. Once your session ends or the page is refreshed, all uploaded data is automatically deleted.
-
-## For Research Use Only:
-This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.
-
-### By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies.
 
 # shinyEvents Setup
 
@@ -151,10 +136,21 @@ The patient selection table is used in the app interface to select patients when
 
 Once the patient selection table is written to file and placed in the app.R folder with the parameter file and supplementary data and optional event data, users can edit the top of the app.R script to fill in the patient selection data file name on the line that contains `Patient_Annotation_File <- ''`.
 
-# Application Setup
+# :warning: Data Use Disclaimer - Please read before uploading any files
 
-# shinyEvents Application Key Features
+## Warning Regarding Personal Health Information (PHI):
+The online version of the application is for research purposes and not designed for handling or processing personal health information (PHI).
 
+## Do not upload any files containing PHI or sensitive personal data.
+For working with protected data, we strongly recommend downloading and running the tool locally on a secure environment.
+
+## No Data Storage:
+Any data uploaded to this server is used temporarily during the session and is not stored, saved, or shared. Once your session ends or the page is refreshed, all uploaded data is automatically deleted.
+
+## For Research Use Only:
+This tool is provided solely for research and exploratory purposes. It is not intended for clinical, diagnostic, or production use.
+
+### By using this application, you agree to these terms and acknowledge that you are responsible for ensuring your data complies with all applicable privacy laws and institutional policies.
 
 # Application sessionInfo()
 
