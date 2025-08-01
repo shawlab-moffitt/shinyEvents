@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250725")
+version_id <- paste0("v1.0.20250801")
 
 # lite swap able
 
@@ -5142,6 +5142,7 @@ server <- function(input, output, session) {
               df <- df[complete.cases(df),]
               groupChoices <- unique(df[,xAxisCol])
               groupChoices <- groupChoices[!is.na(groupChoices)]
+              groupChoices[is.logical(groupChoices)] <- as.character(groupChoices)
               updateSelectizeInput(session,"KPstrataColGroups",choices = groupChoices,
                                    selected = groupChoices[1], server = T)
             }
@@ -5155,6 +5156,7 @@ server <- function(input, output, session) {
               df <- df[complete.cases(df),]
               groupChoices <- unique(df[,xAxisCol])
               groupChoices <- groupChoices[!is.na(groupChoices)]
+              groupChoices[is.logical(groupChoices)] <- as.character(groupChoices)
               updateSelectizeInput(session,"KPstrataColGroups",choices = groupChoices,
                                    selected = groupChoices[1], server = T)
             }
@@ -5302,6 +5304,7 @@ server <- function(input, output, session) {
             }
             if (strata_col %in% colnames(df)) {
               df_sub <- df[,c(colnames(df)[1],strata_col)]
+              df_sub <- df_sub[complete.cases(df_sub),]
               colnames(df_sub)[1] <- colnames(plot_df)[1]
               if (input$KPshowOtherGroup) {
                 req(input$KPotherGroupName)
@@ -6802,6 +6805,10 @@ server <- function(input, output, session) {
         df_name <- input$TableToFilterMain
         wkbk <- wkbk_raw_react()
         df <- wkbk[[df_name]]
+        var_n <- sapply(colnames(df),function(x) {
+          return(length(unique(df[,x])))
+        })
+        var_n_df <- data.frame(variable = names(var_n),N = var_n)
         df_m <- cbind(data.frame(Row_Index = rownames(df)),
                       df)
         df_m2 <- reshape2::melt(df_m,id.vars = "Row_Index")
