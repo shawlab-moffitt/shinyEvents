@@ -1353,8 +1353,8 @@ CohortLevel_tab_contents <- sidebarLayout(
                                       textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
                      ),
                      hr(),
-                     materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event start",
-                                    value = FALSE, status = "success", inline = T),
+                     div(materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event start",
+                                        value = FALSE, status = "success", inline = T), style = "margin-top:-20px;margin-bottom:-20px"),
                      conditionalPanel(condition = "input.AddAnnoWindow == true",
                                       h5("Time Window (Days)"),
                                       fluidRow(
@@ -6274,6 +6274,8 @@ server <- function(input, output, session) {
         event_data <- event_data()
         ref_event <- input$RefEventSelect
         GroupRefEventSelect <- input$GroupRefEventSelect
+        event_data_key <- event_data_key()
+        #save(list = ls(), file = "ref_event_df.RData", envir = environment())
         ref_event_data <- event_data[which(event_data$Event %in% ref_event),]
         if (GroupRefEventSelect) {
           ref_event_data2 <- ref_event_data %>%
@@ -6289,10 +6291,17 @@ server <- function(input, output, session) {
             group_by(Name, Event) %>%
             slice_min(order_by = EventStart) %>%
             select(Name,Event,EventType,EventTab,EventStart) %>%
+            unique()
+          ref_event_data3 <- merge(ref_event_data2,event_data_key[,c("Event","EventSpecified")], all.x = T, sort = F)
+          ref_event_data4 <- ref_event_data3 %>%
+            relocate(Name) %>%
+            group_by(Name,EventStart) %>%
+            mutate(Event = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
+            select(-EventSpecified) %>%
             unique() %>%
             rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
             as.data.frame()
-          ref_event_data2
+          ref_event_data4
         }
       })
       output$RefEventTableOut <- DT::renderDataTable({
@@ -6325,6 +6334,8 @@ server <- function(input, output, session) {
         eoi_event <- input$EOIEventSelect
         andor <- input$EOIEventAndOr
         AddAnnoWindow <- input$AddAnnoWindow
+        event_data_key <- event_data_key()
+        #save(list = ls(), file = "eoi_event_df.RData", envir = environment())
         eoi_event_data <- event_data[which(event_data$Event %in% eoi_event),]
         if (andor == "'And' Statement") {
           eoi_event_data <- eoi_event_data %>%
@@ -6333,24 +6344,29 @@ server <- function(input, output, session) {
             filter(Event %in% eoi_event) %>%
             as.data.frame()
         }
+        
         if (AddAnnoWindow) {
           eoi_event_data2 <- eoi_event_data %>%
             group_by(Name) %>%
-            arrange(EventStart, .by_group = TRUE) %>%
-            select(Name,Event,EventStart) %>%
-            rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
-            unique() %>%
-            as.data.frame()
+            arrange(EventStart, .by_group = TRUE)
         } else {
           eoi_event_data2 <- eoi_event_data %>%
             group_by(Name) %>%
-            slice_min(order_by = EventStart) %>%
-            select(Name,Event,EventStart) %>%
-            rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
-            unique() %>%
-            as.data.frame()
+            slice_min(order_by = EventStart)
         }
-        eoi_event_data2
+        eoi_event_data3 <- eoi_event_data2 %>%
+          select(Name,Event,EventType,EventStart) %>%
+          unique()
+        eoi_event_data4 <- merge(eoi_event_data3,event_data_key[,c("Event","EventSpecified")],all.x = T, sort = F)
+        eoi_event_data5 <- eoi_event_data4 %>%
+          relocate(Name) %>%
+          group_by(Name,EventStart) %>%
+          mutate(Event = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
+          select(-EventType,-EventSpecified) %>%
+          unique() %>%
+          rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
+          as.data.frame()
+        eoi_event_data5
       })
       output$EOIEventTableOut <- DT::renderDataTable({
         req(eoi_event_df())
@@ -6451,8 +6467,8 @@ server <- function(input, output, session) {
           }
           eoi_name <- ifelse(length(EOIEventSelect) > 1,EOIEventColName,EOIEventSelect)
           newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
-          newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
-          newcolname3 <- paste0(newcolname,"_EventPresent")
+          newcolname2 <- paste0(eoi_name,"_RefEvent_TimeDiff")
+          newcolname3 <- paste0(eoi_name,"_RefEvent_EventPresent")
           ref_eoi_event_data2 <- ref_eoi_event_data %>%
             mutate(!!sym(newcolname) := case_when(
               # EOIS REFS
@@ -6563,12 +6579,15 @@ server <- function(input, output, session) {
           name_glue_grp <- "{.value}_{EventType_Ref}"
           name_glue_solo <- "{.value}_{Event_Ref}"
         } else {
-          newcolname <- paste0(eoi_name,"_BeforeOrAfter_RefEvent")
-          newcolname2 <- paste0(eoi_name,"_ReferenceEvent_TimeDiff")
-          newcolname3 <- paste0(newcolname,"_EventPresent")
+          newcolname <- paste0(eoi_name,"_BeforeOrAfter")
+          newcolname2 <- paste0(eoi_name,"_TimeDiff")
+          newcolname3 <- paste0("EventPresent_",eoi_name)
           newcolname4 <- NULL
-          name_glue_grp <- "{EventType_Ref}_{.value}"
-          name_glue_solo <- "{Event_Ref}_{.value}"
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(eoi_name,"_BeforeOrAfter_RefEvent"))] <- newcolname
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(eoi_name,"_RefEvent_TimeDiff"))] <- newcolname2
+          colnames(ref_eoi_event_data2)[which(colnames(ref_eoi_event_data2) == paste0(eoi_name,"_RefEvent_EventPresent"))] <- newcolname3
+          name_glue_grp <- "{.value}_{EventType_Ref}"
+          name_glue_solo <- "{.value}_{Event_Ref}"
         }
         ref_eoi_event_data2$EventTab_Ref[which(is.na(ref_eoi_event_data2$EventTab_Ref))] <- "InputData"
         if (GroupRefEventSelect) {
