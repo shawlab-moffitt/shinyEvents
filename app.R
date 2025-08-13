@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250801")
+version_id <- paste0("v1.0.20250813")
 
 # lite swap able
 
@@ -304,6 +304,10 @@ if (!app_lite) {
                                                         max-height: 82px;
                                                         overflow-y: auto;
                                                         }
+                                                        .vscomp-options-container {
+                                                        max-height: 200px !important;
+                                                        overflow-y: auto !important;
+                                                        }
                                                         .selectize-dropdown {
                                                         width: 500px !important;
                                                         }
@@ -399,6 +403,10 @@ if (!app_lite) {
                                                         .vscomp-value {
                                                         max-height: 82px;
                                                         overflow-y: auto;
+                                                        }
+                                                        .vscomp-options-container {
+                                                        max-height: 200px !important;
+                                                        overflow-y: auto !important;
                                                         }
                                                         .selectize-dropdown {
                                                         width: 500px !important;
