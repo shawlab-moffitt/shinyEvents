@@ -6303,9 +6303,11 @@ server <- function(input, output, session) {
           ref_event_data3 <- merge(ref_event_data2,event_data_key[,c("Event","EventSpecified")], all.x = T, sort = F)
           ref_event_data4 <- ref_event_data3 %>%
             relocate(Name) %>%
+            group_by(Name,EventStart,EventType) %>%
+            mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
             group_by(Name,EventStart) %>%
-            mutate(Event = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
-            select(-EventSpecified) %>%
+            mutate(Event = paste0(unique(EventTemp),collapse = ", ")) %>%
+            select(-EventSpecified,-EventTemp) %>%
             unique() %>%
             rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
             as.data.frame()
@@ -6368,9 +6370,11 @@ server <- function(input, output, session) {
         eoi_event_data4 <- merge(eoi_event_data3,event_data_key[,c("Event","EventSpecified")],all.x = T, sort = F)
         eoi_event_data5 <- eoi_event_data4 %>%
           relocate(Name) %>%
+          group_by(Name,EventStart,EventType) %>%
+          mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
           group_by(Name,EventStart) %>%
-          mutate(Event = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
-          select(-EventType,-EventSpecified) %>%
+          mutate(Event = paste0(unique(EventTemp),collapse = ", ")) %>%
+          select(-EventType,-EventSpecified,-EventTemp) %>%
           unique() %>%
           rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
           as.data.frame()
