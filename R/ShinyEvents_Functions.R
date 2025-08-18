@@ -236,7 +236,7 @@ feat_breakdown <- function(df = NULL,id_col = NULL,ref_feat = NULL,feats = NULL,
     })))
   } else {
     feats_tabs <- as.data.frame(data.table::rbindlist(lapply(feats,function(x) {
-      df2 <- unique(df[,c(id_col,x)])
+      df2 <- unique(df2[,c(id_col,x)])
       vec <- df2[,x]
       if (suppressWarnings(all(is.na(as.numeric(vec)))) | any(is.logical(df2[,x]))) {
         x_df <- as.data.frame(table(vec, useNA = "ifany"))
