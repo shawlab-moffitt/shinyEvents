@@ -794,6 +794,8 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
         
       })
       event_data_list_tab <- unique(as.data.frame(data.table::rbindlist(event_data_list_sub)))
+      event_data_list_tab$EventEnd <- ifelse(is.na(event_data_list_tab$EventEnd),event_data_list_tab$EventStart,event_data_list_tab$EventEnd)
+      event_data_list_tab$EventStart <- ifelse(is.na(event_data_list_tab$EventStart),event_data_list_tab$EventEnd,event_data_list_tab$EventStart)
       event_data_list_tab <- event_data_list_tab[complete.cases(event_data_list_tab),]
       event_data_list_tab <- event_data_list_tab[order(event_data_list_tab[,1]),]
       return(event_data_list_tab)
