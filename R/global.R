@@ -7,6 +7,7 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(DT))
+suppressPackageStartupMessages(library(colourpicker))
 suppressPackageStartupMessages(library(stringr))
 suppressPackageStartupMessages(library(plotly))
 suppressPackageStartupMessages(library(ggrepel))
@@ -33,4 +34,5 @@ suppressPackageStartupMessages(library(shinyalert))
 suppressPackageStartupMessages(library(ggsankey))
 suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(InteractiveComplexHeatmap))
+
 

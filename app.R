@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250813")
+version_id <- paste0("v1.0.20250922")
 
 # lite swap able
 
@@ -536,6 +536,7 @@ PatientLevel_tab_contents <- sidebarLayout(
                p(),
                conditionalPanel(condition = "input.PatientMainPanel == '1'",
                                 uiOutput("rendTimeLineTitle"),
+                                ColorPalSelect_UI("PatTimelineColorPal"),
                                 h4("Font Sizes"),
                                 fluidRow(
                                   column(4,
@@ -562,6 +563,7 @@ PatientLevel_tab_contents <- sidebarLayout(
                                 )
                ),
                conditionalPanel(condition = "input.PatientMainPanel == '2'",
+                                ColorPalSelect_UI("PatTimelineSummColorPal"),
                                 conditionalPanel(condition = "output.BiomarkerData",
                                                  selectInput("LinePlotTheme","Select Theme:",
                                                              choices = c("Void" = "theme_void","BW" = "theme_bw","Minimal" = "theme_minimal",
@@ -834,10 +836,21 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                 tabPanel("Figure Settings",
                          p(),
                          conditionalPanel(condition = "input.treatAnalytics == '1'",
+                                          conditionalPanel(condition = "input.treatAnalyticsCls == '1'",
+                                                           ColorPalSelect_UI("SankeyColorPal"),
+                                                           ),
                                           conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
                                                            h4("Heatmap Color Scheme"),
-                                                           textInput("HeatColorLow","Low:", value = "white"),
-                                                           textInput("HeatColorHigh","High:", value = "red"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    colourInput("HeatColorLow","Low:","#FFFFFF"),
+                                                             ),
+                                                             column(6,
+                                                                    colourInput("HeatColorHigh","High:","#FF0000"),
+                                                             )
+                                                           ),
+                                                           #textInput("HeatColorLow","Low:", value = "white"),
+                                                           #textInput("HeatColorHigh","High:", value = "red"),
                                                            fluidRow(
                                                              column(6,
                                                                     numericInput("heatmapFontCol", "Column Font Size:",
@@ -856,10 +869,22 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                          ),
                          conditionalPanel(condition = "input.treatAnalytics == '2'",
                                           conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
-                                                           selectInput("BPTheme","Theme:",
-                                                                       choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
-                                                                                   "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
-                                                                                   "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
+                                                           #selectInput("BPTheme","Theme:",
+                                                           #            choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
+                                                           #                        "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
+                                                           #                        "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
+                                                           #textInput("BoxPlotColor","Boxplot Color:", value = "cadetblue"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    selectInput("BPTheme","Theme:",
+                                                                                choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
+                                                                                            "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
+                                                                                            "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
+                                                             ),
+                                                             column(6,
+                                                                    colourInput("BoxPlotColor","Boxplot Color:","#5F9EA0"),
+                                                             )
+                                                           ),
                                                            h4("Font Sizes"),
                                                            fluidRow(
                                                              column(4,
@@ -887,8 +912,16 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                           ),
                                           conditionalPanel(condition = "input.treatAnalyticsDur == '2'",
                                                            h4("Heatmap Color Scheme"),
-                                                           textInput("HeatColorLowDist","Low:", value = "white"),
-                                                           textInput("HeatColorHighDist","High:", value = "red"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    colourInput("HeatColorLowDist","Low:","#FFFFFF"),
+                                                             ),
+                                                             column(6,
+                                                                    colourInput("HeatColorHighDist","High:","#FF0000"),
+                                                             )
+                                                           ),
+                                                           #textInput("HeatColorLowDist","Low:", value = "white"),
+                                                           #textInput("HeatColorHighDist","High:", value = "red"),
                                                            fluidRow(
                                                              column(6,
                                                                     numericInput("heatmapDistFontCol", "Column Font Size:",
@@ -905,6 +938,17 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                            )
                                           ),
                                           conditionalPanel(condition = "input.treatAnalyticsDur == '3'",
+                                                           h4("Swimmers Plot Color Scheme"),
+                                                           fluidRow(
+                                                             column(6,
+                                                                    colourInput("SwimFullLine","Full Duration:","#5F9EA0"),
+                                                             ),
+                                                             column(6,
+                                                                    colourInput("SwimDurLine","Event Duration:","#FF6347"),
+                                                             )
+                                                           ),
+                                                           #textInput("SwimFullLine","Full Duration:", value = "cadetblue"),
+                                                           #textInput("SwimDurLine","Event Duration:", value = "tomato"),
                                                            h4("Figure Download Parameters"),
                                                            fluidRow(
                                                              column(6,
@@ -1151,6 +1195,7 @@ tte_tab_contents <- sidebarLayout(
                                                    checkboxInput("ShowMedSurvLine","Show Median Survival Line",value = F)
                                             )
                                           ),
+                                          ColorPalSelect_UI("KPplotColorPal"),
                                           h4("Kaplan Meier Plot Download Parameters"),
                                           fluidRow(
                                             column(4,
@@ -1165,6 +1210,17 @@ tte_tab_contents <- sidebarLayout(
                                           )
                          ),
                          conditionalPanel(condition = "input.ttetabs == '1'",
+                                          h4("Figure Colors"),
+                                          fluidRow(
+                                            column(6,
+                                                   colourInput("kpSwimPatBaseLine","Base Line:","#5F9EA0"),
+                                                   colourInput("kpSwimEventLine","Event Line:","#FF6347")
+                                                   ),
+                                            column(6,
+                                                   colourInput("kpSwimStartEvent","Start Event:","#228B22"),
+                                                   colourInput("kpSwimProgEvent","Progression Event:","#8B1A1A")
+                                                   )
+                                          ),
                                           h4("Swimmers Plot Download Parameters"),
                                           fluidRow(
                                             column(6,
@@ -1321,6 +1377,7 @@ CohortLevel_tab_contents <- sidebarLayout(
                               checkboxInput("swimmerShowAllSumm","Show All",value = FALSE)
                        )
                      ),
+                     ColorPalSelect_UI("SwimSummColorPal"),
                      numericInput("SwimmPlotHeight","Plot Height (px)",value = 800, step = 25, min = 0),
                      h4("Download Parameters"),
                      fluidRow(
@@ -1692,6 +1749,21 @@ server <- function(input, output, session) {
           PatientAnno_file_react(query[['patient']])
         }
       })
+      
+      # Color Pal Reacts ------------------------------------------------------
+      colPalSelected <- ColorPalSelect_server("PatTimelineColorPal")
+      PatTimelineSummColorPal_sel <- ColorPalSelect_server("PatTimelineSummColorPal")
+      SankeyColorPal_sel <- ColorPalSelect_server("SankeyColorPal")
+      KPplotColorPal_sel <- ColorPalSelect_server("KPplotColorPal")
+      SwimSummColorPal_sel <- ColorPalSelect_server("SwimSummColorPal")
+
+      #observe({
+      #  #colPalSelected <- ColorPalSelect_server("PatTimelineColorPal")
+      #  #print(colPalSelected())
+      #  print(colPalSelected$PalSelect_react())
+      #  print(colPalSelected$ColorPalRev_react())
+      #})
+      
       # Front end event data input --------------------------------------------------------
       observe({
         ProjectName_react(input$UserProjectName)
@@ -3491,6 +3563,13 @@ server <- function(input, output, session) {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
+          colorPal <- colPalSelected()
+          if (colorPal == "Standard colors") {
+            colorPal <- NULL 
+          }
+          svgW <- input$TimeLineWidth
+          svgH <- input$TimeLineHeight
+          Project_Name <- ProjectName_react()
           if (Patient %in% Patient_Table_df[,1]) {
             RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
@@ -3510,11 +3589,12 @@ server <- function(input, output, session) {
             Patient_Event_Data_sub$EventStart <- round(Patient_Event_Data_sub$EventStart,2)
             Patient_Event_Data_sub$EventEnd <- round(Patient_Event_Data_sub$EventEnd,2)
             if (length(eventsY) == length(unique(Patient_Event_Data_sub$Event))) {
+              #save(list = ls(), file = "PatientTimelinePlot_react.RData", envir = environment())
               plot2 <- timelinePlot(data = Patient_Event_Data_sub[,-1],event_col = "Event", event_type_col = "EventType",
                                     start_col = "EventStart", stop_col = "EventEnd",unit = "Years", plotly = TRUE,
                                     title_font = TitleFont, x_font = xFont, y_font = yFont,na.rm = RemoveUnkNA_opt,
                                     title = SwimmerTitle_in,svg_name = paste0(gsub(" ","_",Project_Name),"_Patient_",Patient,"_Timeline"),
-                                    svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight")
+                                    svg_height = svgH, svg_width = svgW, highlight_col = "highlight", col_pal = colorPal)
               plot2
             }
             
@@ -3747,6 +3827,10 @@ server <- function(input, output, session) {
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
+          colorPal <- PatTimelineSummColorPal_sel()
+          if (colorPal == "Standard colors") {
+            colorPal <- NULL 
+          }
           if (Patient %in% Patient_Table_df[,1]) {
             RemoveUnkNA_opt <- TRUE
             SwimmerTitle_in <- ifelse(!isTruthy(input$TimeLineTitle),paste0("Clinical Course of Patient: ", as.character(Patient)),input$TimeLineTitle)
@@ -3761,7 +3845,7 @@ server <- function(input, output, session) {
                                   start_col = "EventStart", stop_col = "EventEnd", unit = "Years", plotly = TRUE,
                                   title_font = TitleFont, x_font = xFont, y_font = yFont,na.rm = RemoveUnkNA_opt,
                                   title = SwimmerTitle_in,svg_name = paste0(gsub(" ","_",Project_Name),"_Patient_",Patient,"_Timeline"),
-                                  svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight")
+                                  svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight", col_pal = colorPal  )
             plot2
           }
         }
@@ -4009,9 +4093,6 @@ server <- function(input, output, session) {
         req(event_data_tr_clusters_clean())
         event_data_tr_clusters_clean <- event_data_tr_clusters_clean()
         sankey_event_choices <- unique(event_data_tr_clusters_clean$EventType)
-        #sankey_event_choices_full <- grep("^Full ",sankey_event_choices,value = T)
-        #sankey_event_choices_full <- grep(" Summary$",sankey_event_choices_full,value = T)
-        #sankey_event_choices <- sankey_event_choices[which(!sankey_event_choices %in% sankey_event_choices_full)]
         sankey_event_select <- ifelse(any(grepl("cluster",sankey_event_choices, ignore.case = T)),
                                       grep("cluster",sankey_event_choices,value = T, ignore.case = T)[1],
                                       sankey_event_choices[1])
@@ -4102,6 +4183,23 @@ server <- function(input, output, session) {
       sankey_plot_react <- reactive({
         req(sankeyEvent_df_react())
         event_data_clusters_sub_wid_plot2 <- sankeyEvent_df_react()
+        colorPal <- SankeyColorPal_sel()
+        #save(list = ls(), file = "sankey_plot_react.RData", envir = environment())
+        if (colorPal == "Standard colors") {
+          colorPal <- NULL 
+        }
+        if (!is.null(colorPal)) {
+          uniq_cols_needed <- length(unique(event_data_clusters_sub_wid_plot2[,"node"]))
+          if (colorPal %in% palette.pals()) {
+            if (uniq_cols_needed > length(palette.colors(palette = colorPal))) {
+              new_cols <- palette.colors(n = uniq_cols_needed, palette = colorPal, recycle = TRUE)
+            } else {
+              new_cols <- palette.colors(n = uniq_cols_needed, palette = colorPal)
+            }
+          } else {
+            new_cols <- hcl.colors(n = uniq_cols_needed, palette = colorPal)
+          }
+        }
         if (sum(is.na(event_data_clusters_sub_wid_plot2$x))!=nrow(event_data_clusters_sub_wid_plot2)) {
           withProgress(message = "Processing", value = 0, {
             incProgress(0.5, detail = "Generating Sankey Plot")
@@ -4112,6 +4210,10 @@ server <- function(input, output, session) {
                                                                 fill = factor(node),
                                                                 label = paste0(node, " = ", n))) +
               theme_minimal()
+            if (!is.null(colorPal)) {
+              pl <- pl +
+                scale_fill_manual(values = new_cols)
+            }
             pl <- pl + geom_sankey(flow.alpha = 0.5,          # This Creates the transparency of your node
                                    node.color = "black",      # This is your node color
                                    show.legend = FALSE)       # This determines if you want your legend to show
@@ -4487,16 +4589,17 @@ server <- function(input, output, session) {
         Xaxis_font <- input$BPplot1XAxisSize              # Axis font size
         Yaxis_font <- input$BPplot1YAxisSize              # Axis font size
         BPplottheme <- input$BPTheme
+        bpCol <- input$BoxPlotColor
         VilOrBP <- input$ViolinOrBoxP
         if (nrow(df) > 0) {
           withProgress(message = "Processing", value = 0, {
             incProgress(0.5, detail = "Rendering Box Plot")
             p <- ggplot(df, aes(x = Event, y = Days))
             if (VilOrBP == "Box Plot") {
-              p <- p + geom_boxplot(fill = "#5F9EA0")
+              p <- p + geom_boxplot(fill = bpCol)
             }
             if (VilOrBP == "Violin Plot") {
-              p <- p + geom_violin(fill = "#5F9EA0") +
+              p <- p + geom_violin(fill = bpCol) +
                 stat_summary(fun=median, geom="crossbar", width=0.5, color="black")
             }
             p <- p +
@@ -4885,6 +4988,8 @@ server <- function(input, output, session) {
         swimmerShowAll <- input$swimmerShowAllDist
         event_type <- input$durationHeatEventType
         event <- input$BoxplotXaxis
+        fullLineCol <- input$SwimFullLine
+        durLineCol <- input$SwimDurLine
         if (event_type == "All Treatment Events") {
           full_event_name <- event
         } else {
@@ -4964,19 +5069,19 @@ server <- function(input, output, session) {
               add_segments(data = base_lines,
                            x = ~First, xend = ~Final,
                            y = ~Index, yend = ~Index,
-                           line = list(color = '#5F9EA0', width = 4),
+                           line = list(color = fullLineCol, width = 4),
                            showlegend = FALSE) %>%
               # Add base start markers with hover text
               add_markers(data = start_events,
                           x = ~x, y = ~y,
-                          marker = list(symbol = 'line-ns', size = 10, color = '#5F9EA0'),
+                          marker = list(symbol = 'line-ns', size = 10, color = fullLineCol),
                           text = ~Event_Details,
                           hoverinfo = 'text',
                           showlegend = FALSE) %>%
               # Add base end markers with hover text
               add_markers(data = end_events,
                           x = ~x, y = ~y,
-                          marker = list(symbol = 'line-ns', size = 10, color = '#5F9EA0'),
+                          marker = list(symbol = 'line-ns', size = 10, color = fullLineCol),
                           text = ~Event_Details,
                           hoverinfo = 'text',
                           showlegend = FALSE) %>%
@@ -4984,21 +5089,21 @@ server <- function(input, output, session) {
               add_segments(data = main_events,
                            x = ~EventStart_FromZero, xend = ~EventEnd_FromZero,
                            y = ~Index, yend = ~Index,
-                           line = list(color = 'tomato', width = 6),
+                           line = list(color = durLineCol, width = 6),
                            text = ~Event_Details,
                            hoverinfo = 'text',
                            name = event) %>%
               # Carboplatin start marker
               add_markers(data = main_events,
                           x = ~EventStart_FromZero, y = ~Index,
-                          marker = list(symbol = 'circle', size = 10, color = 'tomato'),
+                          marker = list(symbol = 'circle', size = 10, color = durLineCol),
                           text = ~Event_Details,
                           hoverinfo = 'text',
                           showlegend = FALSE) %>%
               # Carboplatin end marker
               add_markers(data = main_events,
                           x = ~EventEnd_FromZero, y = ~Index,
-                          marker = list(symbol = 'circle', size = 10, color = 'tomato'),
+                          marker = list(symbol = 'circle', size = 10, color = durLineCol),
                           text = ~Event_Details,
                           hoverinfo = 'text',
                           showlegend = FALSE) %>%
@@ -5447,6 +5552,11 @@ server <- function(input, output, session) {
         xBreaks <- input$SurvXaxisBreaks
         SurvXaxis <- input$SurvXaxis
         ShowConfInt <- input$ShowConfInt
+        colorPal <- KPplotColorPal_sel()
+        
+        if (colorPal == "Standard colors") {
+          colorPal <- NULL 
+        }
         if (nrow(plot_df) > 1) {
           strata_col <- input$KPstrataCol
           showMedSurv <- input$ShowMedSurvLine
@@ -5495,10 +5605,30 @@ server <- function(input, output, session) {
             pvalSel <- FALSE
             legpos <- "none"
           }
+          #save(list = ls(), file = "cohort_TTE_table_KP_react.RData", envir = environment())
           if (isTruthy(fit)) {
+            if (!is.null(colorPal)) {
+              if (!is.null(fit[["strata"]])) {
+                uniq_cols_needed <- length(fit[["strata"]])
+              } else {
+                uniq_cols_needed <- 1
+              }
+              if (colorPal %in% palette.pals()) {
+                if (uniq_cols_needed > length(palette.colors(palette = colorPal))) {
+                  new_cols <- palette.colors(n = uniq_cols_needed, palette = colorPal, recycle = TRUE)
+                } else {
+                  new_cols <- palette.colors(n = uniq_cols_needed, palette = colorPal)
+                }
+              } else {
+                new_cols <- hcl.colors(n = uniq_cols_needed, palette = colorPal)
+              }
+            } else {
+              new_cols <- NULL
+            }
             ggsurv <- survminer::ggsurvplot(fit, data = plot_df, risk.table = TRUE,
                                             xscale = scale,
                                             break.time.by=xBreaks,
+                                            palette = new_cols,
                                             xlab = xlab,
                                             ylab = "Event Free Survival Probability",
                                             submain = "Based on Kaplan-Meier estimates",
@@ -5716,6 +5846,10 @@ server <- function(input, output, session) {
         maxpats <- input$maxpatview
         patientsSpec <- input$swimmerPatSpec
         swimmerShowAll <- input$swimmerShowAll
+        baseLineCol <- input$kpSwimPatBaseLine
+        eventLineCol <- input$kpSwimEventLine
+        startCol <- input$kpSwimStartEvent
+        progCol <- input$kpSwimProgEvent
         if ((swimmerShowAll & maxpats == length(unique(ply_df$Name))) | !swimmerShowAll) {
           # sort to get correct head of patients
           if (swimmSort == "Time - Ascending") {
@@ -5768,7 +5902,7 @@ server <- function(input, output, session) {
                                y = c(patient, patient),
                                type = 'scatter',
                                mode = 'lines',
-                               line = list(color = '#5F9EA0', width = 4),
+                               line = list(color = baseLineCol, width = 4),
                                showlegend = FALSE)
                 
                 # Line segment: Start_Time_Point to Final_Time_Point
@@ -5778,14 +5912,14 @@ server <- function(input, output, session) {
                                  y = c(patient, patient),
                                  type = 'scatter',
                                  mode = 'lines',
-                                 line = list(color = 'tomato', width = 4),
+                                 line = list(color = eventLineCol, width = 4),
                                  showlegend = FALSE)
                   p <- add_trace(p,
                                  x = c(df_patient$Prog_Time_Point[1], df_patient$Final_Time_Point[1]),
                                  y = c(patient, patient),
                                  type = 'scatter',
                                  mode = 'lines',
-                                 line = list(color = '#5F9EA0', width = 4),
+                                 line = list(color = baseLineCol, width = 4),
                                  showlegend = FALSE)
                 } else {
                   p <- add_trace(p,
@@ -5793,7 +5927,7 @@ server <- function(input, output, session) {
                                  y = c(patient, patient),
                                  type = 'scatter',
                                  mode = 'lines',
-                                 line = list(color = 'tomato', width = 4),
+                                 line = list(color = eventLineCol, width = 4),
                                  showlegend = FALSE)
                 }
                 # First Time Point marker (line)
@@ -5802,7 +5936,7 @@ server <- function(input, output, session) {
                                y = patient,
                                type = 'scatter',
                                mode = 'markers',
-                               marker = list(symbol = 'line-ns', size = 15, color = "#5F9EA0"),
+                               marker = list(symbol = 'line-ns', size = 15, color = baseLineCol),
                                text = df_patient$Event_Details[df_patient$Event == "First Recorded Time Point"],
                                hoverinfo = 'text',
                                showlegend = FALSE)
@@ -5812,7 +5946,7 @@ server <- function(input, output, session) {
                                y = patient,
                                type = 'scatter',
                                mode = 'markers',
-                               marker = list(symbol = 'circle', size = 15, color = "#228B22"),
+                               marker = list(symbol = 'circle', size = 15, color = startCol),
                                text = df_patient$Event_Details[df_patient$Event == "Start Event"],
                                hoverinfo = 'text',
                                showlegend = (function(){
@@ -5831,7 +5965,7 @@ server <- function(input, output, session) {
                                  y = patient,
                                  type = 'scatter',
                                  mode = 'markers',
-                                 marker = list(symbol = 'x', size = 15, color = "#8B1A1A"),
+                                 marker = list(symbol = 'x', size = 15, color = progCol),
                                  text = df_patient$Event_Details[df_patient$Event == "Progression Event"],
                                  hoverinfo = 'text',
                                  showlegend = (function(){
@@ -5849,7 +5983,7 @@ server <- function(input, output, session) {
                                  y = patient,
                                  type = 'scatter',
                                  mode = 'markers',
-                                 marker = list(symbol = 'line-ns', size = 15, color = "#5F9EA0"),
+                                 marker = list(symbol = 'line-ns', size = 15, color = baseLineCol),
                                  text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
                                  hoverinfo = 'text',
                                  showlegend = FALSE)
@@ -5860,7 +5994,7 @@ server <- function(input, output, session) {
                                  y = patient,
                                  type = 'scatter',
                                  mode = 'markers',
-                                 marker = list(symbol = 'triangle-right', size = 20, color = 'tomato'),
+                                 marker = list(symbol = 'triangle-right', size = 20, color = eventLineCol),
                                  text = df_patient$Event_Details[df_patient$Event == "Final Recorded Time Point"],
                                  hoverinfo = 'text',
                                  showlegend = (function(){
@@ -6096,6 +6230,13 @@ server <- function(input, output, session) {
         maxpats <- input$maxpatviewSumm
         patientsSpec <- input$swimmerPatSpecSumm
         swimmerShowAllSumm <- input$swimmerShowAllSumm
+        colorPal <- SwimSummColorPal_sel()
+        #save(list = ls(), file = "summ_swimmer_plot_react.RData", envir = environment())
+        
+        if (colorPal == "Standard colors") {
+          colorPal <- NULL 
+        }
+        
         if ((swimmerShowAllSumm & maxpats == length(unique(ply_df$Name))) | !swimmerShowAllSumm) {
           # sort to get correct head of patients
           if (swimmSort == "Time - Ascending") {
@@ -6135,6 +6276,7 @@ server <- function(input, output, session) {
               patients <- unique(ply_df$Index)
               event_types <- unique(ply_df$Event)
               event_types <- event_types[which(!event_types %in% c("First Recorded Time Point","Final Recorded Time Point"))]
+              # keep all same shape and change transparency
               symbol_palette_base <- c("circle", "square", "diamond", "x", "triangle-up", "star", "cross", "triangle-down", "hourglass", "diamond-wide","star-triangle-up","diamond-tall")
               if (length(event_types) > length(symbol_palette_base)) {
                 vals <- schema(F)$traces$scatter$attributes$marker$symbol$values
@@ -6143,10 +6285,24 @@ server <- function(input, output, session) {
                 symbol_palette <- symbol_palette_base[c(1:length(event_types))]
               }
               names(symbol_palette) <- event_types
-              qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-              col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-              color_palette <- sample(col_vector, length(event_types))
-              names(color_palette) <- event_types
+              if (!is.null(colorPal)) {
+                uniq_cols_needed <- length(event_types)
+                if (colorPal %in% palette.pals()) {
+                  if (uniq_cols_needed > length(palette.colors(palette = colorPal))) {
+                    color_palette <- palette.colors(n = uniq_cols_needed, palette = colorPal, recycle = TRUE)
+                  } else {
+                    color_palette <- palette.colors(n = uniq_cols_needed, palette = colorPal)
+                  }
+                } else {
+                  color_palette <- hcl.colors(n = uniq_cols_needed, palette = colorPal)
+                }
+                names(color_palette) <- event_types
+              } else {
+                qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+                col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+                color_palette <- sample(col_vector, length(event_types))
+                names(color_palette) <- event_types
+              }
               req(length(event_types)>0)
               showLegend_list <- lapply(rep(TRUE,length(event_types)),function(x){x})
               names(showLegend_list) <- paste0("showLegend",seq(1:length(event_types)))
@@ -6484,7 +6640,7 @@ server <- function(input, output, session) {
           ref_eoi_event_data2 <- ref_eoi_event_data %>%
             mutate(!!sym(newcolname) := case_when(
               # EOIS REFS
-              EventStart_EOI < EventStart_Ref ~ "Before",
+              EventStart_EOI <= EventStart_Ref ~ "Before",
               # REFS EOIS
               EventStart_EOI > EventStart_Ref ~ "After",
             )) %>%
@@ -7010,7 +7166,7 @@ server <- function(input, output, session) {
         req(breakdown_counting_df())
         id_col <- input$FilterTableIDcol
         ref_feat <- input$FilterTabRefFeature
-        if (!is.null(ref_feat) | ref_feat == "No Reference") {
+        if (!is.null(ref_feat) | ref_feat != "No Reference") {
           p(HTML(paste0("Count of unique <b>",id_col,"</b> identifiers by the reference feature: <b>",ref_feat,"</b> across selected features")))
         } else {
           p(HTML(paste0("Count of unique <b>",id_col,"</b> identifiers across selected features")))

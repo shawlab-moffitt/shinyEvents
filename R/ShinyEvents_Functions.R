@@ -40,7 +40,7 @@ timelinePlot_lyprep <- function(data = NULL, event_type_col = NULL, start_col = 
 
 timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, start_col = NULL, stop_col = NULL, unit = "years",
                          plotly = FALSE, hover_text = "text", title = "Timeline Plot", title_font = 16, x_font = 14, y_font = 14, na.rm = TRUE,
-                         svg_name = "plot", svg_height = 8, svg_width = 8, dot_size = 3, highlight_col = NULL) {
+                         svg_name = "plot", svg_height = 8, svg_width = 8, dot_size = 3, highlight_col = NULL, col_pal = NULL) {
   
   if (is.null(data)) stop("Must provide event data")
   data <- as.data.frame(data)
@@ -61,6 +61,20 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   # Get x axis min and max
   allAges <- c(data[,start_col],data[,stop_col])
   
+  uniq_cols_needed <- length(unique(data[,event_type_col]))
+  if (!is.null(col_pal)) {
+    if (col_pal %in% palette.pals()) {
+      if (uniq_cols_needed > length(palette.colors(palette = col_pal))) {
+        new_cols <- palette.colors(n = uniq_cols_needed, palette = col_pal, recycle = TRUE)
+      } else {
+        new_cols <- palette.colors(n = uniq_cols_needed, palette = col_pal)
+      }
+    } else {
+      new_cols <- hcl.colors(n = uniq_cols_needed, palette = col_pal)
+    }
+  }
+  
+  
   if (plotly) {
     if (!hover_text %in% colnames(data)) {
       data <- timelinePlot_lyprep(data = data, event_type_col = event_type_col, start_col = start_col, stop_col = stop_col,
@@ -71,6 +85,10 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
   } else {
     plot2 <- ggplot2::ggplot(data, ggplot2::aes(x=!!ggplot2::sym(start_col), y=index, label = !!ggplot2::sym(event_col),
                                                 color = !!ggplot2::sym(event_type_col)))
+  }
+  if (!is.null(col_pal)) {
+    plot2 <- plot2 +
+      scale_color_manual(values = new_cols)
   }
   
   g <- ggplot2::ggplot_build(plot2)
@@ -90,18 +108,15 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
       plot2 <- plot2 +
         geom_vline(xintercept = highlight_col)
     }
-    
   }
   
   plot2 <- plot2 +
     ## Add end time points
     ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(start_col), y=index),size=dot_size)+
-    #ggplot2::geom_point(ggplot2::aes(x=!!ggplot2::sym(stop_col), y=index),size=dot_size)+
     ## draw lines - inherits start time point x,y
     ggplot2::geom_segment(ggplot2::aes(xend = !!ggplot2::sym(stop_col), yend = index), linewidth = 2, lineend = "butt") +
     ## x and y labels
     ggplot2::xlab(unit) +
-    #ggplot2::xlab(paste0("Age (",unit,")")) +
     ggplot2::ylab('') +
     ggplot2::theme_minimal() +
     ## adjust x & y axis to accommodate the event lables
@@ -109,7 +124,6 @@ timelinePlot <- function(data = NULL,event_col = NULL, event_type_col = NULL, st
                                 labels = stringr::str_wrap(unique(data[,event_col]), width = 100), # event label
                                 trans = "reverse") +
     ggplot2::scale_x_continuous(limits=c(min(allAges, na.rm = T), max(allAges, na.rm = T)))
-  
   
   
   plot2 <- plot2 +
@@ -200,7 +214,8 @@ feat_breakdown <- function(df = NULL,id_col = NULL,ref_feat = NULL,feats = NULL,
   
   if (!is.null(ref_feat)) {
     feats_tabs <- as.data.frame(data.table::rbindlist(lapply(feats, function(x) {
-      if (suppressWarnings(all(is.na(as.numeric(df2[,x])))) | any(is.logical(df2[,x]))) {
+      if (suppressWarnings(length(which(is.na(as.numeric(df2[,x])))) > (length(df2[,x])*0.8)) | any(is.logical(df2[,x]))) {
+        #if (suppressWarnings(all(is.na(as.numeric(df2[,x])))) | any(is.logical(df2[,x]))) {
         df3 <- df2 %>%
           select(!!sym(id_col),!!sym(ref_feat),!!sym(x)) %>%
           unique() %>%
@@ -238,7 +253,8 @@ feat_breakdown <- function(df = NULL,id_col = NULL,ref_feat = NULL,feats = NULL,
     feats_tabs <- as.data.frame(data.table::rbindlist(lapply(feats,function(x) {
       df2 <- unique(df2[,c(id_col,x)])
       vec <- df2[,x]
-      if (suppressWarnings(all(is.na(as.numeric(vec)))) | any(is.logical(df2[,x]))) {
+      if (suppressWarnings(length(which(is.na(as.numeric(vec)))) > (length(vec)*0.8)) | any(is.logical(df2[,x]))) {
+        #if (suppressWarnings(all(is.na(as.numeric(vec)))) | any(is.logical(df2[,x]))) {
         x_df <- as.data.frame(table(vec, useNA = "ifany"))
         x_df[,1] <- as.character(x_df[,1])
         x_df <- rbind(c("Total (non-NA)",sum(x_df[which(!is.na(x_df[,1])),2])),
@@ -276,7 +292,6 @@ feat_breakdown <- function(df = NULL,id_col = NULL,ref_feat = NULL,feats = NULL,
   }
   return(feats_tabs)
 }
-
 
 perform_fishers_test <- function(df, reference_col) {
   feat_cols <- colnames(df)[-1]
@@ -839,3 +854,63 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
   }
 }
 
+
+ColorPalSelect_UI <- function(id) {
+  ns <- NS(id)
+  qual_cols <- palette.pals()
+  qual_cols <- qual_cols[qual_cols!="R3"]
+  names(qual_cols) <- sapply(qual_cols, function(pal) { paste0(pal," (",length(palette.colors(palette = pal)),")")})
+  seq_cols <- hcl.pals("sequential")
+  div_cols <- hcl.pals("diverging")
+  ColorOptList <- list("Standard colors",Qualitative = qual_cols,Sequential = seq_cols, Diverging = div_cols)
+  fluidRow(
+    column(6,
+           shiny::selectInput(ns("PalSelect"),
+                              label = tooltip(
+                                trigger = list(
+                                  "Select Color Palette:",
+                                  bsicons::bs_icon("info-circle")
+                                ),
+                                "If finite, number of possible colors in palette shown in parentheses."
+                              ),
+                              choices = ColorOptList, selected = "Standard colors")
+    ),
+    column(6,
+           shiny::actionButton(ns("PalSelect_mod"),"Available Palettes", icon = icon("palette"), width = "100%",
+                               style = "background-color: #2c3e50; border-color: #2c3e50; margin-top:30px")
+    )
+  )
+}
+
+
+
+ColorPalSelect_server <- function(id){
+  shiny::moduleServer(id, 
+                      function(input, output, session){
+                        observeEvent(input$PalSelect_mod, {
+                          showModal(modalDialog(
+                            title = "Available Color Palettes",
+                            size = "l",
+                            easyClose = TRUE,
+                            tabsetPanel(id = "ColorPalPanels",
+                                        tabPanel("Qualitative",
+                                                 tags$img(src = "QualitativePaletteColors_R.png", height = "450px", width = "100%")
+                                        ),
+                                        tabPanel("Sequential",
+                                                 tags$img(src = "SequentialHCLColors_R.png", height = "1000px", width = "100%")
+                                        ),
+                                        tabPanel("Diverging",
+                                                 tags$img(src = "DivergingHCLColors_R.png", height = "800px", width = "100%")
+                                        )
+                            )
+                          ))
+                        })
+                        
+                        #PalSelect_react <- reactive({input$PalSelect})
+                        #ColorPalRev_react <- reactive({input$ColorPalRev})
+                        #return(list(PalSelect_react = PalSelect_react,
+                        #            ColorPalRev_react = ColorPalRev_react))
+                        return(reactive(input$PalSelect))
+                      }
+  )
+}
