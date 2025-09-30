@@ -139,8 +139,10 @@ Once the patient selection table is written to file and placed in the app.R fold
 # User Feedback
 “Real world data is messy- as a clinician, countless hours are spent cleaning and characterizing these large datasets. Better organization, quality control, and data visualization are key, and ShinyEvents tackles this head on. Personally, I have been using ShinyEvents to help better curate multiple large, multi-institutional oncologic databases. This tool has helped identify data gaps and inconsistencies needed for rapid and efficient QC. Data visualization with Swimmer plots allows for clear visualization of complex treatment and surgical courses. Built-in survival analyses (Kaplan Meier, Cox proportional model, etc) allow for streamlined hypothesis testing and allow for efficient linkage of clinal, pathologic, and genomic variables with meaningful clinical endpoints. Having utilized ShinyEvents for 3 months, I have already been able to generate data and results for numerous conference abstracts and multiple grant applications. I’m confident this tool will help simplify and accelerate clinical and translational biomedical research.” 
 * Dr. Kendrick Yim, MD, Genitourinary Fellow, Moffitt Cancer Center.
+  
 “ShinyEvents has played a key role in helping us quickly screen pancreatic patient information for our project. This step enabled us to prioritize samples to move forward with the analysis."
 * Dr Dae Won Kim, MD, Associate Member, Gastrointestinal Oncologist, Moffitt Cancer Center.
+  
 “ShinyEvents has been easy to use and instrumental in the validation of candidate predictive and prognostic biomarkers developed by our group for patients with clear cell renal cell carcinoma. The app allows us to easily visualize both cohort wide survival outcomes and granular individual clinical data in the same platform.”
 * Dr. Mitchell Hayes, Instructor in Urology, Moffitt Cancer Center.
 
