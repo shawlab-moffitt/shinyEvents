@@ -411,107 +411,21 @@ sort_spelled_numbers <- function(input) {
 }
 
 
-#interval_overlap <- function(start1, stop1, start2, stop2, cluster_window = 0.083) {
-#  return(start1 <= (stop2 + cluster_window) & (start2 - cluster_window) <= stop1)
-#}
-#
-## gives numeric vector of clusters in the order of event rows
-#assign_clusters <- function(sub_df, col1 = "EventStart", col2 = "EventEnd", cluster_window = 1) {
-#  cluster_window <- cluster_window/12
-#  n <- nrow(sub_df)
-#  cluster <- rep(NA, n)
-#  cluster_id <- 1
-#  indices <- 1:(n - 1)
-#  if (n > 1) {
-#    for (i in indices) {
-#      if (is.na(cluster[i])) {
-#        cluster[i] <- cluster_id
-#        for (j in (i + 1):n) {
-#          if (interval_overlap(sub_df[, col1][i], sub_df[, col2][i],
-#                               sub_df[, col1][j], sub_df[, col2][j],
-#                               cluster_window)) {
-#            cluster[j] <- cluster_id
-#          } else if (is.na(cluster[j]) &&
-#                     max(c(sub_df[, col1][cluster == cluster_id], sub_df[, col2][cluster == cluster_id]), na.rm = TRUE) + cluster_window >= sub_df[, col1][j]) {
-#            # If the j-th row is not assigned to any cluster and it's within cluster_window of the current cluster's maximum start
-#            cluster[j] <- cluster_id
-#          }
-#        }
-#        cluster_id <- cluster_id + 1
-#      }
-#    }
-#  } else {
-#    cluster <- 1
-#  }
-#  cluster[length(cluster)] <- ifelse(is.na(cluster[length(cluster)]), cluster_id, cluster[length(cluster)])
-#  return(cluster)
-#}
-
-#interval_overlap <- function(start1, stop1, start2, stop2, cluster_window = 0.083) {
-#  # Check if start interval 1 happens before or shortly after stop interval 2 + window buffer
-#  ## Is interval 1 starting before interval 2 has definitely ended (with some leniency)?
-#  # Check if start interval 2 - window buffer happens before or shortly after stop interval 1
-#  ## Did interval 2 begin before interval 1 definitely ended (with some leniency)?
-#  ## Checks that stop interval 1 happens after or shortly before start interval 2
-#  return(start1 <= (stop2 + cluster_window) & stop1 >= (start2 - cluster_window))
-#  #return(start1 <= (stop2 + cluster_window) & (start2 - cluster_window) <= stop1)
-#}
-
-interval_overlap <- function(start1, start2, cluster_window = 0.083) {
-  return(start2 >= (start1 - cluster_window) & start2 <= (start1 + cluster_window))
-}
-
-assign_clusters <- function(sub_df, col1 = "EventStart", col2 = "EventEnd", cluster_window = 1) {
-  cluster_window <- cluster_window / 12  # convert months to years
-  n <- nrow(sub_df)
-  cluster <- rep(NA, n)
-  cluster_id <- 1
-  indices <- 1:(n - 1)
-  
-  if (n > 1) {
-    for (i in indices) {
-      if (is.na(cluster[i])) {
-        cluster[i] <- cluster_id
-        for (j in (i + 1):n) {
-          start1 <- sub_df[[col1]][i]
-          stop1 <- sub_df[[col2]][i]
-          start2 <- sub_df[[col1]][j]
-          stop2 <- sub_df[[col2]][j]
-          # Add to cluster if event times are within the 'window' of the reference event time
-          if (interval_overlap(sub_df[[col1]][i],sub_df[[col1]][j],cluster_window)) {
-            #if (interval_overlap(sub_df[[col1]][i], sub_df[[col2]][i],
-            #                     sub_df[[col1]][j], sub_df[[col2]][j],
-            #                     cluster_window)) {
-            cluster[j] <- cluster_id
-          } else if (is.na(cluster[j])) {
-            # if not by reference event, look for latest start event time in current cluster and check if event is within 'window' of that time
-            max_start <- max(sub_df[[col1]][cluster == cluster_id], na.rm = TRUE)
-            if (max_start + cluster_window >= sub_df[[col1]][j]) {
-              cluster[j] <- cluster_id
-            }
-          }
-        }
-        cluster_id <- cluster_id + 1
-      }
-    }
-  } else {
-    cluster <- 1
-  }
-  
-  # Handle last row if unassigned
-  if (is.na(cluster[n])) {
-    cluster[n] <- cluster_id
-  }
-  
+assign_clusters <- function(sub_df, col1 = "EventStart", cluster_window = 1) {
+  cluster_window <- cluster_window / 12
+  starts <- sub_df[[col1]]
+  diffs <- c(0, diff(starts))
+  cluster <- cumsum(diffs > cluster_window) + 1
   return(cluster)
 }
 
-# applies cluster identification to all patients - find event clusters and overall clusters
+
+
 apply_find_clusters_to_patients <- function(event_data, event_summary = "Treatment",
                                             name_col = "Name", event_col = "Event", eventtype_col = "EventType",
                                             eventtab_col = "EventTab", eventcolumn_col = "EventColumn",
                                             eventstart_col = "EventStart", eventend_col = "EventEnd",
-                                            new_col = "EventCluster", cluster_window = 1, verbose = TRUE) {
+                                            cluster_window = 1, verbose = TRUE) {
   event_data_sub <- event_data
   # Split data by patient
   patient_groups <- split(event_data_sub, event_data_sub[[1]])
@@ -522,36 +436,27 @@ apply_find_clusters_to_patients <- function(event_data, event_summary = "Treatme
   patient_groups_cat_out <- lapply(seq_along(patient_groups),function(x) {
     # subset patient data
     patient_data <- patient_groups[[x]]
+    patient_data <- patient_data %>%
+      arrange(!!sym(name_col),!!sym(eventstart_col),!!sym(eventend_col)) %>%
+      as.data.frame()
     if (all(patient_data$Event == patient_data$EventType)) {
-      patient_data3 <- patient_data %>%
-        arrange(!!sym(name_col),!!sym(eventstart_col),!!sym(eventend_col)) %>%
-        as.data.frame()
-      
       # Get overall treatment/response event summary
-      overall_cls <- assign_clusters(sub_df = patient_data3, col1 = eventstart_col, col2 = eventend_col, cluster_window = cluster_window)
-      
+      overall_cls <- assign_clusters(sub_df = patient_data3, col1 = eventstart_col, cluster_window = cluster_window)
       patient_data4 <- patient_data3 %>%
-        mutate(event_col_save = !!sym(event_col)) %>%
         # format treatment/response event summary column
-        #mutate(!!sym(event_col) := paste0(event_summary," Summary Cluster"),
-        mutate(!!sym(event_col) := paste0(event_summary," Summary Cluster ",overall_cls),
+        mutate(event_col_save = !!sym(event_col),
+               !!sym(event_col) := paste0(event_summary," Summary Cluster ",overall_cls),
                !!sym(eventtype_col) := paste0("Full ",event_summary," Summary")) %>%
-        # Group by patient and event cluster
-        #group_by(!!sym(name_col),!!sym(event_col)) %>%
-        group_by(!!sym(event_col)) %>%
         # reformat event event data
         mutate(EventSummary = paste0(unique(event_col_save), collapse = "\n"),
-        #mutate(EventSummary = paste0(unique(EventSummary), collapse = "\n"),
                !!sym(eventtab_col) := NA,
                !!sym(eventcolumn_col) := NA,
                !!sym(eventstart_col) := min(!!sym(eventstart_col),na.rm = T),
-               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T)) %>%
+               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T), .by = !!sym(event_col)) %>%
         select(-event_col_save) %>%
-        unique() %>%
+        distinct() %>%
         as.data.frame()
       patient_data5 <- patient_data4
-      #patient_data5 <- data.table::rbindlist(list(patient_data4,patient_data3), fill = T)
-      #patient_data5 <- rbind(patient_data4,patient_data3)
       if (verbose) setTxtProgressBar(pb, x)
       return(patient_data5)
     } else {
@@ -559,73 +464,52 @@ apply_find_clusters_to_patients <- function(event_data, event_summary = "Treatme
       # get patient clusters
       pat_cls <- lapply(seq_along(patient_groups_cat),function(y) {
         df <- patient_groups_cat[[y]]
-        df <- df[order(df[,eventstart_col]),]
-        cls <- assign_clusters(sub_df = df, col1 = eventstart_col, col2 = eventend_col, cluster_window = cluster_window)
-        df$EventCluster <- paste0(df[,eventtype_col]," Cluster ",cls)
-        #df$EventCluster <- paste0(df[,eventtype_col]," Cluster")
+        cls <- assign_clusters(sub_df = df, col1 = eventstart_col, cluster_window = cluster_window)
+        df$EventCluster <- cls
         return(df)
       })
-      patient_data2 <- do.call(rbind,pat_cls)
+      patient_data2 <- as.data.frame(rbindlist(pat_cls))
+      patient_data2$EventCluster <- paste0(patient_data2[,eventtype_col]," Cluster ",patient_data2$EventCluster)
       # Format event summary column
       patient_data3 <- patient_data2 %>%
-        # group by patient name and event type/category
-        group_by(!!sym(eventtype_col)) %>%
-        #group_by(!!sym(name_col),!!sym(eventtype_col)) %>%
         # remove event type from event name - simplify event name
-        mutate(!!sym(event_col) := gsub(unique(paste0(!!sym(eventtype_col),": ")),"",!!sym(event_col))) %>%
-        ungroup() %>%
-        # Group by event cluster
-        group_by(EventCluster) %>%
+        mutate(!!sym(event_col) := gsub(unique(paste0(!!sym(eventtype_col),": ")),"",!!sym(event_col)), .by = !!sym(eventtype_col)) %>%
         # Format event summary column of events in cluster
-        mutate(EventSummary = paste0(c(unique(!!sym(eventtype_col)),paste0("  ",sort(unique(!!sym(event_col))), collapse = "\n")), collapse = "\n")) %>%
-        ungroup() %>%
-        # replace event name with event cluster name
-        mutate(!!sym(event_col) := EventCluster) %>%
-        select(-EventCluster) %>%
-        # add 'summary' to event type/category column
-        mutate(!!sym(eventtype_col) := paste0(!!sym(eventtype_col)," Summary")) %>%
-        # group by patient and event column
-        group_by(!!sym(event_col)) %>%
-        #group_by(!!sym(name_col),!!sym(event_col)) %>%
-        # reformat raw event data including min and max event cluster time
-        mutate(!!sym(eventtab_col) := NA,
+        mutate(EventSummary = paste0(c(unique(!!sym(eventtype_col)),paste0("  ",sort(unique(!!sym(event_col))), collapse = "\n")), collapse = "\n"),
+               !!sym(eventtab_col) := NA,
                !!sym(eventcolumn_col) := NA,
                !!sym(eventstart_col) := min(!!sym(eventstart_col),na.rm = T),
-               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T)) %>%
-        unique() %>%
-        # reorder by name, start time and end time
+               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T), .by = EventCluster) %>%
+        # replace event name with event cluster name
+        mutate(!!sym(event_col) := EventCluster,
+               !!sym(eventtype_col) := paste0(!!sym(eventtype_col)," Summary")) %>%
+        select(-EventCluster) %>%
+        distinct() %>%
         arrange(!!sym(name_col),!!sym(eventstart_col),!!sym(eventend_col)) %>%
         as.data.frame()
-      
       # Get overall treatment/response event summary
-      overall_cls <- assign_clusters(sub_df = patient_data3, col1 = eventstart_col, col2 = eventend_col, cluster_window = cluster_window)
-      
+      overall_cls <- assign_clusters(sub_df = patient_data3, col1 = eventstart_col, cluster_window = cluster_window)
       patient_data4 <- patient_data3 %>%
         # format treatment/response event summary column
-        #mutate(!!sym(event_col) := paste0(event_summary," Summary Cluster"),
         mutate(!!sym(event_col) := paste0(event_summary," Summary Cluster ",overall_cls),
                !!sym(eventtype_col) := paste0("Full ",event_summary," Summary")) %>%
-        # Group by patient and event cluster
-        #group_by(!!sym(name_col),!!sym(event_col)) %>%
-        group_by(!!sym(event_col)) %>%
         # reformat event event data
         mutate(EventSummary = paste0(unique(EventSummary), collapse = "\n"),
-               #!!sym(eventtab_col) := NA,
-               #!!sym(eventcolumn_col) := NA,
                !!sym(eventstart_col) := min(!!sym(eventstart_col),na.rm = T),
-               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T)) %>%
-        unique() %>%
+               !!sym(eventend_col) := max(!!sym(eventend_col),na.rm = T), .by = !!sym(event_col)) %>%
+        distinct() %>%
         as.data.frame()
-      patient_data5 <- rbind(patient_data4,patient_data3)
+      patient_data5 <- as.data.frame(rbindlist(list(patient_data4,patient_data3)))
       if (verbose) setTxtProgressBar(pb, x)
       return(patient_data5)
     }
-    
   })
   if (verbose) close(pb)
   clustered_data <- do.call(rbind,patient_groups_cat_out)
   return(clustered_data)
 }
+
+
 
 eventDataSummary <- function(event_data = NULL, event_summary = "Treatment",
                              event_col = "Event", eventtype_col = "EventType",
@@ -652,7 +536,7 @@ convert_time_units <- function(x, unit_in, unit_out) {
   return(converted_numbers)
 }
 
-
+# Added optional sort, saved 0.02 secs
 data_to_event <- function(df = NULL,
                           table_name = NULL,
                           event_name = NULL,
@@ -661,7 +545,8 @@ data_to_event <- function(df = NULL,
                           event_start_col = NULL,
                           event_end_col = NULL,
                           event_start_units = NULL,
-                          event_end_units = NULL) {
+                          event_end_units = NULL,
+                          sort = FALSE) {
   if (length(event_name) > 1) {
     event_name_splt <- event_name
   } else {
@@ -691,82 +576,13 @@ data_to_event <- function(df = NULL,
   }
   df_event_data[,"EventStart"] <- convert_time_units(df_event_data[,"EventStart"],event_start_units,"years")
   df_event_data[,"EventEnd"] <- convert_time_units(df_event_data[,"EventEnd"],event_end_units,"years")
-  df_event_data <- df_event_data %>%
-    arrange(EventStart,EventEnd)
+  if (sort) {
+    df_event_data <- df_event_data %>%
+      arrange(EventStart,EventEnd)
+  }
   return(df_event_data)
 }
 
-
-
-#getEventData <- function(param = NULL,data = NULL, summary = TRUE, cluster_window = 1, verbose = TRUE) {
-#  if (is.null(param)) stop("Must provide file parameter data.")
-#  if (is.null(data)) stop("Must provide list of data frames.")
-#  param_cols <- c("Data Table Name","Data File","Event Name","Column Defined Event","Event Category","Event Start Column",
-#                  "Event End Column","Treatment","Response","Event Start Time Units","Event End Time Units")
-#  if (!all(colnames(param) == param_cols)) {
-#    stop("Please check parameter file header names or column order.")
-#  }
-#  param <- param[which(!is.na(param[,"Event Name"])),]
-#  #Event_End <- ifelse(is.na(param[row,"Event End Column"]),Event_Start,param[row,"Event End Column"])
-#  param[,"Event End Column"] <- ifelse(is.na(param[,"Event End Column"]),param[,"Event Start Column"],param[,"Event End Column"])
-#  param[,"Event Start Time Units"] <- ifelse(is.na(param[,"Event Start Time Units"]),"years",param[,"Event Start Time Units"])
-#  param[,"Event End Time Units"] <- ifelse(is.na(param[,"Event End Time Units"]),"years",param[,"Event End Time Units"])
-#  if (verbose) message("Formatting Event Data")
-#  
-#  event_data_list <- lapply(seq_along(data),function(data_tab) {
-#    table_name <- names(data)[data_tab]
-#    df <- data[[data_tab]]
-#    if (table_name %in% param[,1]) {
-#      param_sub <- param[which(param[,1] == table_name),]
-#      event_data_list_sub <- apply(param_sub,1,function(row) {
-#        data_to_event(df, table_name, event_name = row[[3]], col_defined_event = row[[4]],
-#                      event_category = row[[5]], event_start_col = row[[6]], event_end_col = row[[7]],
-#                      event_start_units = row[[10]], event_end_units = row[[11]])
-#        
-#      })
-#      event_data_list_tab <- unique(as.data.frame(data.table::rbindlist(event_data_list_sub)))
-#      event_data_list_tab <- event_data_list_tab[complete.cases(event_data_list_tab),]
-#      event_data_list_tab <- event_data_list_tab[order(event_data_list_tab[,1]),]
-#      return(event_data_list_tab)
-#    }
-#  })
-#  
-#  event_data <- unique(as.data.frame(data.table::rbindlist(event_data_list)))
-#  event_data <- event_data[complete.cases(event_data),]
-#  event_data <- event_data[order(event_data[,1]),]
-#  
-#  if (!summary) {
-#    return(event_data)
-#  } else {
-#    if (verbose) message("Summarizing Event Data")
-#    
-#    treatment_events <- unique(param[which(param$Treatment == TRUE),])
-#    treatment_events <- ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
-#                               paste0(treatment_events$`Event Category`,": "))
-#    response_events <- unique(param[which(param$Response == TRUE),])
-#    response_events <- ifelse(response_events$`Column Defined Event` == FALSE,response_events$`Event Name`,
-#                              paste0(response_events$`Event Category`,": "))
-#    event_data_tr <- event_data[grepl(paste(treatment_events,collapse = "|"),event_data$Event),]
-#    event_data_re <- event_data[grepl(paste(response_events,collapse = "|"),event_data$Event),]
-#    
-#    if (verbose) message("Summarizing Treatment Event Data")
-#    event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = verbose, cluster_window = cluster_window)
-#    if (verbose) message("Summarizing Response Event Data")
-#    event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = verbose, cluster_window = cluster_window)
-#    event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-#    
-#    event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
-#    event_data_cls <- event_data_cls %>%
-#      group_by(Name) %>%
-#      arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-#    
-#    event_data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data), fill = T)
-#    event_data_cls_all <- event_data_cls_all[order(event_data_cls_all[,1]),]
-#    event_data_cls_all <- as.data.frame(event_data_cls_all)
-#    
-#    return(event_data_cls_all)
-#  }
-#}
 
 
 
@@ -779,11 +595,9 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
     stop("Please check parameter file header names or column order.")
   }
   param <- param[which(!is.na(param[,"Event Name"])),]
-  #Event_End <- ifelse(is.na(param[row,"Event End Column"]),Event_Start,param[row,"Event End Column"])
   param[,"Event End Column"] <- ifelse(is.na(param[,"Event End Column"]),param[,"Event Start Column"],param[,"Event End Column"])
   param[,"Event Start Time Units"] <- ifelse(is.na(param[,"Event Start Time Units"]),"years",param[,"Event Start Time Units"])
   param[,"Event End Time Units"] <- ifelse(is.na(param[,"Event End Time Units"]),"years",param[,"Event End Time Units"])
-  
   if (read_files & is.null(data)) {
     if (verbose) message("Reading in data files")
     data_files <- unique(param[,c(1,2)])
@@ -794,9 +608,7 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
       names(data) <- data_files[,1]
     }
   }
-  
   if (verbose) message("Formatting Event Data")
-  
   event_data_list <- lapply(seq_along(data),function(data_tab) {
     table_name <- names(data)[data_tab]
     df <- data[[data_tab]]
@@ -812,20 +624,16 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
       event_data_list_tab$EventEnd <- ifelse(is.na(event_data_list_tab$EventEnd),event_data_list_tab$EventStart,event_data_list_tab$EventEnd)
       event_data_list_tab$EventStart <- ifelse(is.na(event_data_list_tab$EventStart),event_data_list_tab$EventEnd,event_data_list_tab$EventStart)
       event_data_list_tab <- event_data_list_tab[complete.cases(event_data_list_tab),]
-      event_data_list_tab <- event_data_list_tab[order(event_data_list_tab[,1]),]
       return(event_data_list_tab)
     }
   })
-  
   event_data <- unique(as.data.frame(data.table::rbindlist(event_data_list)))
   event_data <- event_data[complete.cases(event_data),]
-  event_data <- event_data[order(event_data[,1]),]
-  
   if (!summary) {
+    event_data <- event_data[order(event_data[,1]),]
     return(event_data)
   } else {
     if (verbose) message("Summarizing Event Data")
-    
     treatment_events <- unique(param[which(param$Treatment == TRUE),])
     treatment_events <- ifelse(treatment_events$`Column Defined Event` == FALSE,treatment_events$`Event Name`,
                                paste0(treatment_events$`Event Category`,": "))
@@ -834,28 +642,24 @@ getEventData <- function(param = NULL,data = NULL, summary = TRUE, read_files = 
                               paste0(response_events$`Event Category`,": "))
     event_data_tr <- event_data[grepl(paste(treatment_events,collapse = "|"),event_data$Event),]
     event_data_re <- event_data[grepl(paste(response_events,collapse = "|"),event_data$Event),]
-    
     if (verbose) message("Summarizing Treatment Event Data")
     event_data_tr_cls <- eventDataSummary(event_data_tr, event_summary = "Treatment", verbose = verbose, cluster_window = cluster_window)
     if (verbose) message("Summarizing Response Event Data")
     event_data_re_cls <- eventDataSummary(event_data_re, event_summary = "Response", verbose = verbose, cluster_window = cluster_window)
-    event_data_cls <- rbind(event_data_tr_cls,event_data_re_cls)
-    
+    event_data_cls <- as.data.frame(rbindlist(list(event_data_tr_cls,event_data_re_cls)))
     event_data_cls$Event <- gsub("Cluster \\d+$","Cluster",event_data_cls$Event)
     event_data_cls <- event_data_cls %>%
       group_by(Name) %>%
       arrange(!EventType %in% c("Full Treatment Summary","Full Response Summary"), .by_group = TRUE)
-    
     event_data_cls_all <- data.table::rbindlist(list(event_data_cls,event_data), fill = T)
     event_data_cls_all <- event_data_cls_all[order(event_data_cls_all[,1]),]
     event_data_cls_all <- as.data.frame(event_data_cls_all)
-    
     return(event_data_cls_all)
   }
 }
 
 
-ColorPalSelect_UI <- function(id) {
+ColorPalSelect_UI <- function(id, default_col = "Standard colors") {
   ns <- NS(id)
   qual_cols <- palette.pals()
   qual_cols <- qual_cols[qual_cols!="R3"]
@@ -873,7 +677,7 @@ ColorPalSelect_UI <- function(id) {
                                 ),
                                 "If finite, number of possible colors in palette shown in parentheses."
                               ),
-                              choices = ColorOptList, selected = "Standard colors")
+                              choices = ColorOptList, selected = default_col)
     ),
     column(6,
            shiny::actionButton(ns("PalSelect_mod"),"Available Palettes", icon = icon("palette"), width = "100%",
@@ -905,11 +709,6 @@ ColorPalSelect_server <- function(id){
                             )
                           ))
                         })
-                        
-                        #PalSelect_react <- reactive({input$PalSelect})
-                        #ColorPalRev_react <- reactive({input$ColorPalRev})
-                        #return(list(PalSelect_react = PalSelect_react,
-                        #            ColorPalRev_react = ColorPalRev_react))
                         return(reactive(input$PalSelect))
                       }
   )
