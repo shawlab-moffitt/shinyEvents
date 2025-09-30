@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250922")
+version_id <- paste0("v1.0.20250930")
 
 # lite swap able
 
@@ -720,23 +720,29 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                              )
                                                            ),
                                                            fluidRow(
-                                                             column(4,
+                                                             column(8,offset = 4, style = "margin-top:-60px",
+                                                                    materialSwitch(inputId = "ClusterHeatHover", label = "Enable Heatmap Hover",
+                                                                                   value = FALSE, status = "success")
+                                                                    )
+                                                           ),
+                                                           fluidRow(
+                                                             column(4, style = "margin-top:-25px",
                                                                     checkboxGroupInput("HeatClusterRC","Cluster:",choices = c("Rows","Columns"), selected = "Rows")
                                                              ),
-                                                             column(8,
+                                                             column(8, style = "margin-top:-25px",
                                                                     conditionalPanel(condition = "input.HeatClusterRC.includes('Rows') || input.HeatClusterRC.includes('Columns')",
                                                                                      selectInput("HeatClusterMethod","Cluster Method:",
                                                                                                  choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
                                                                     )
                                                              )
                                                            ),
-                                                           selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
+                                                           div(selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
                                                            div(selectizeInput("HeatYchoices","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
                                                            fluidRow(
-                                                             column(6, style = "margin-top:15px",
+                                                             column(6, #style = "margin-top:0px",
                                                                     checkboxInput("HeatEventCapYN","Cap Number of Events",value = T)
                                                              ),
-                                                             column(6,
+                                                             column(6, style = "margin-top:-20px",
                                                                     conditionalPanel(condition = "input.HeatEventCapYN == true",
                                                                                      numericInput("HeatEventCapN","Number of Events Cap:", value = 20, min = 1, step = 1)
                                                                     )
@@ -776,7 +782,9 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                            fluidRow(
                                                              column(8,
                                                                     radioButtons("EventDurMaxSumHeat","Reduce duplicate patient events by:",
-                                                                                 choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max"))
+                                                                                 choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max")),
+                                                                    div(materialSwitch(inputId = "DurHeatHover", label = "Enable Heatmap Hover",
+                                                                                   value = FALSE, status = "success"), style = "margin-top:-5px")
                                                              ),
                                                              column(4,
                                                                     checkboxInput("HeatFlipDist","Flip Axes",value = FALSE),
@@ -784,23 +792,23 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                              )
                                                            ),
                                                            fluidRow(
-                                                             column(4,
+                                                             column(4, style = "margin-top:-15px",
                                                                     checkboxGroupInput("HeatClusterRCDist","Cluster:",choices = c("Rows","Columns"), selected = c("Rows","Columns"))
                                                              ),
-                                                             column(8,
+                                                             column(8, style = "margin-top:-15px",
                                                                     conditionalPanel(condition = "input.HeatClusterRCDist.includes('Rows') || input.HeatClusterRCDist.includes('Columns')",
                                                                                      selectInput("HeatClusterMethodDist","Cluster Method:",
                                                                                                  choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
                                                                     )
                                                              )
                                                            ),
-                                                           selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T),
+                                                           div(selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
                                                            div(selectizeInput("HeatYchoicesDist","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
                                                            fluidRow(
-                                                             column(6, style = "margin-top:15px",
+                                                             column(6, #style = "margin-top:0px",
                                                                     checkboxInput("HeatEventCapYNDist","Cap Duration",value = T),
                                                              ),
-                                                             column(6,
+                                                             column(6, style = "margin-top:-20px",
                                                                     conditionalPanel(condition = "input.HeatEventCapYNDist == true",
                                                                                      numericInput("HeatEventCapNDist","Duration Cap (Days):", value = 365, min = 1, step = 1)
                                                                     )
@@ -837,7 +845,7 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                          p(),
                          conditionalPanel(condition = "input.treatAnalytics == '1'",
                                           conditionalPanel(condition = "input.treatAnalyticsCls == '1'",
-                                                           ColorPalSelect_UI("SankeyColorPal"),
+                                                           ColorPalSelect_UI("SankeyColorPal",default_col = "Okabe-Ito"),
                                                            ),
                                           conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
                                                            h4("Heatmap Color Scheme"),
@@ -849,8 +857,6 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                                     colourInput("HeatColorHigh","High:","#FF0000"),
                                                              )
                                                            ),
-                                                           #textInput("HeatColorLow","Low:", value = "white"),
-                                                           #textInput("HeatColorHigh","High:", value = "red"),
                                                            fluidRow(
                                                              column(6,
                                                                     numericInput("heatmapFontCol", "Column Font Size:",
@@ -869,11 +875,6 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                          ),
                          conditionalPanel(condition = "input.treatAnalytics == '2'",
                                           conditionalPanel(condition = "input.treatAnalyticsDur == '1'",
-                                                           #selectInput("BPTheme","Theme:",
-                                                           #            choices = c("Minimal" = "theme_minimal","Grey" = "theme_grey","BW" = "theme_bw",
-                                                           #                        "Linedraw" = "theme_linedraw","Light" = "theme_light","Dark" = "theme_dark",
-                                                           #                        "Classic" = "theme_classic","Void" = "theme_void","Test" = "theme_test")),
-                                                           #textInput("BoxPlotColor","Boxplot Color:", value = "cadetblue"),
                                                            fluidRow(
                                                              column(6,
                                                                     selectInput("BPTheme","Theme:",
@@ -920,8 +921,6 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                                     colourInput("HeatColorHighDist","High:","#FF0000"),
                                                              )
                                                            ),
-                                                           #textInput("HeatColorLowDist","Low:", value = "white"),
-                                                           #textInput("HeatColorHighDist","High:", value = "red"),
                                                            fluidRow(
                                                              column(6,
                                                                     numericInput("heatmapDistFontCol", "Column Font Size:",
@@ -941,14 +940,12 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                            h4("Swimmers Plot Color Scheme"),
                                                            fluidRow(
                                                              column(6,
-                                                                    colourInput("SwimFullLine","Full Duration:","#5F9EA0"),
+                                                                    colourInput("SwimFullLine","Full Duration:","#56B4E9"),
                                                              ),
                                                              column(6,
-                                                                    colourInput("SwimDurLine","Event Duration:","#FF6347"),
+                                                                    colourInput("SwimDurLine","Event Duration:","#D55E00"),
                                                              )
                                                            ),
-                                                           #textInput("SwimFullLine","Full Duration:", value = "cadetblue"),
-                                                           #textInput("SwimDurLine","Event Duration:", value = "tomato"),
                                                            h4("Figure Download Parameters"),
                                                            fluidRow(
                                                              column(6,
@@ -990,7 +987,12 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                      ),
                                      tabPanel("Heatmap",
                                               p(),
-                                              shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmap",height = "800px", width = "100%", hover = "heatmap_hover")),
+                                              conditionalPanel(condition = "input.ClusterHeatHover == false",
+                                                               shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmapNoHover",height = "800px", width = "100%"))
+                                                               ),
+                                              conditionalPanel(condition = "input.ClusterHeatHover == true",
+                                                               shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmap",height = "800px", width = "100%", hover = "heatmap_hover"))
+                                                               ),
                                               p(),
                                               fluidRow(column(3,
                                                               downloadButton("dnldTreatClusterHeatmap","SVG")
@@ -1022,7 +1024,12 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                      ),
                                      tabPanel("Heatmap",
                                               p(),
-                                              shinyjqui::jqui_resizable(plotOutput("TreatDistHeatmap",height = "800px", width = "100%", hover = "heatmapDist_hover")),
+                                              conditionalPanel(condition = "input.DurHeatHover == false",
+                                                               shinyjqui::jqui_resizable(plotOutput("TreatDistHeatmapNoHover",height = "800px", width = "100%"))
+                                              ),
+                                              conditionalPanel(condition = "input.DurHeatHover == true",
+                                                               shinyjqui::jqui_resizable(plotOutput("TreatDistHeatmap",height = "800px", width = "100%", hover = "heatmapDist_hover"))
+                                              ),
                                               p(),
                                               fluidRow(
                                                 column(3,
@@ -1118,7 +1125,7 @@ tte_tab_contents <- sidebarLayout(
                                           conditionalPanel(condition = "input.ttetabs == '1'",
                                                            fluidRow(
                                                              column(6,
-                                                                    numericInput("maxpatview","Max Number of Patients", value = 60, min = 1, step = 1)
+                                                                    numericInput("maxpatview","Max Number of Patients", value = 40, min = 1, step = 1)
                                                              ),
                                                              column(6,
                                                                     selectInput("swimmerSort","Sort Swimmer Plot By:",
@@ -1213,12 +1220,12 @@ tte_tab_contents <- sidebarLayout(
                                           h4("Figure Colors"),
                                           fluidRow(
                                             column(6,
-                                                   colourInput("kpSwimPatBaseLine","Base Line:","#5F9EA0"),
-                                                   colourInput("kpSwimEventLine","Event Line:","#FF6347")
+                                                   colourInput("kpSwimPatBaseLine","Base Line:","#56B4E9"),
+                                                   colourInput("kpSwimEventLine","Event Line:","#F0E442")
                                                    ),
                                             column(6,
-                                                   colourInput("kpSwimStartEvent","Start Event:","#228B22"),
-                                                   colourInput("kpSwimProgEvent","Progression Event:","#8B1A1A")
+                                                   colourInput("kpSwimStartEvent","Start Event:","#009E73"),
+                                                   colourInput("kpSwimProgEvent","Progression Event:","#D55E00")
                                                    )
                                           ),
                                           h4("Swimmers Plot Download Parameters"),
@@ -1269,7 +1276,7 @@ tte_tab_contents <- sidebarLayout(
                 ),
                 tabPanel("Swimmers Plot",
                          p(),
-                         shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("swimmer_plot",height = "600px", width = "100%")), type = 6),
+                         shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("swimmer_plot",height = "700px", width = "100%")), type = 6),
                          p(),
                          div(DT::dataTableOutput("swimmer_plotTable"), style = "font-size:14px"),
                          fluidRow(
@@ -1377,7 +1384,7 @@ CohortLevel_tab_contents <- sidebarLayout(
                               checkboxInput("swimmerShowAllSumm","Show All",value = FALSE)
                        )
                      ),
-                     ColorPalSelect_UI("SwimSummColorPal"),
+                     ColorPalSelect_UI("SwimSummColorPal",default_col = "Okabe-Ito"),
                      numericInput("SwimmPlotHeight","Plot Height (px)",value = 800, step = 25, min = 0),
                      h4("Download Parameters"),
                      fluidRow(
@@ -1867,6 +1874,7 @@ server <- function(input, output, session) {
         req(input$ExampleDataOptions)
         ExampleDataOptions <- input$ExampleDataOptions
         
+        #st <- Sys.time()
         withProgress(message = "Loading Example Data", value = 0, {
           incProgress(0.2, detail = "Loading file")
           if (ExampleDataOptions == "1" | ExampleDataOptions == "3") {
@@ -1983,7 +1991,10 @@ server <- function(input, output, session) {
             }
           }
         })
-        
+        #et <- Sys.time()
+        #print("LoadExampleData")
+        #print(et-st)
+
         ProjectName_react(input$UserProjectName)
         Param_File_react(NULL)
         Workbook_file_predf_react(NULL)
@@ -2044,11 +2055,15 @@ server <- function(input, output, session) {
       
       observeEvent(input$EventDataFileInput, {
         event_data_file <- input$EventDataFileInput$datapath
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.5, detail = "Loading input file")
           event_data <- as.data.frame(fread(event_data_file, na.strings = c("","NA")))
           incProgress(0.5, detail = "Complete!")
         })
+        #et <- Sys.time()
+        #print("read EventDataFileInput")
+        #print(et-st)
         eventDataInput_raw(event_data)
       })
       
@@ -2188,6 +2203,7 @@ server <- function(input, output, session) {
           SuppEventColumnLink <- input$SuppEventColumnLink
           SuppDataFileInput1 <- input$SuppDataFileInput1
           
+          #st <- Sys.time()
           withProgress(message = "Processing Input Data", value = 0, {
             
             input_file <- input$EventDataFileInput$datapath
@@ -2303,7 +2319,10 @@ server <- function(input, output, session) {
             }
             incProgress(0.5, detail = "Complete!")
           })
-          
+          #et <- Sys.time()
+          #print("process_input_react")
+          #print(et-st)
+
           ProjectName_react(input$UserProjectName)
           Param_File_react(NULL)
           Workbook_file_predf_react(NULL)
@@ -2367,13 +2386,18 @@ server <- function(input, output, session) {
         file_df <- input$SuppDataFileInput1
         
         if (tools::file_ext(file_df$datapath[1]) %in% c("xlsx","xls")) {
+          #st <- Sys.time()
           withProgress(message = "Loading Supplementary Data", value = 0, {
             incProgress(0.5, detail = "Loading input file")
             wkbk <- read_excel_allsheets(file_df$datapath[1])
             incProgress(0.5, detail = "Complete!")
           })
+          #et <- Sys.time()
+          #print("read Supplementary excel")
+          #print(et-st)
           wkbk_raw_react(c(wkbk_raw_react(),wkbk))
         } else {
+          #st <- Sys.time()
           withProgress(message = "Loading Supplementary Data", value = 0, {
             incProgress(0.5, detail = "Loading input file")
             df <- as.data.frame(fread(file_df[row,"datapath"], na.strings = c("","NA")))
@@ -2381,6 +2405,9 @@ server <- function(input, output, session) {
             wkbk[[tabName]] <- df
             incProgress(0.5, detail = "Complete!")
           })
+          #et <- Sys.time()
+          #print("read Supplementary")
+          #print(et-st)
           wkbk_raw_react(c(wkbk_raw_react(),wkbk))
         }
         
@@ -2550,11 +2577,15 @@ server <- function(input, output, session) {
           }
           if (input$ParamInputOpt == "Input Parameter File") {
             if (isTruthy(Param_File_react())) {
+              #st <- Sys.time()
               withProgress(message = "Processing", value = 0, {
                 incProgress(0.5, detail = "Loading parameter file")
                 params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
                 incProgress(0.5, detail = "Complete!")
               })
+              #et <- Sys.time()
+              #print("read Param_File_react")
+              #print(et-st)
               param_data(params)
               param_events <- params[which(!is.na(params[,3])),]
               rownames(param_events) <- NULL
@@ -2563,11 +2594,15 @@ server <- function(input, output, session) {
           }
         } else {
           if (isTruthy(Param_File_react())) {
+            #st <- Sys.time()
             withProgress(message = "Processing", value = 0, {
               incProgress(0.5, detail = "Loading parameter file")
               params <- as.data.frame(fread(Param_File_react(),na.strings = c("","NA")))
               incProgress(0.5, detail = "Complete!")
             })
+            #et <- Sys.time()
+            #print("read Param_File_react")
+            #print(et-st)
             param_data(params)
             param_events <- params[which(!is.na(params[,3])),]
             rownames(param_events) <- NULL
@@ -2590,6 +2625,7 @@ server <- function(input, output, session) {
         if (length(which(is.na(param[,1]) == T)) == 0) {
           Clin_Supp_Cols_List <- list()
           wkbk_tabs <- unique(param[,1])
+          #st <- Sys.time()
           withProgress(message = "Processing Supplementary Data", value = 0, {
             data_to_proc <- length(names(wkbk))
             wkbk_adj <- lapply(names(wkbk), function(df_name) {
@@ -2630,6 +2666,9 @@ server <- function(input, output, session) {
             })
             
           })
+          #et <- Sys.time()
+          #print("Adjust workbook")
+          #print(et-st)
           names(wkbk_adj) <- names(wkbk)
           Clin_Supp_Cols_List <- lapply(wkbk_adj,function(x){
             return(colnames(x)[-1])
@@ -2659,6 +2698,7 @@ server <- function(input, output, session) {
         event_data <- event_data_summ()
         pat_react <- pat_react()
         tree_df <- TableFilterMainInput_df()
+        #st <- Sys.time()
         withProgress(message = "Filtering Dataset", value = 0, {
           incProgress(0.3, detail = "Organizing filter terms")
           if (isTruthy(filters)) {
@@ -2702,6 +2742,9 @@ server <- function(input, output, session) {
           pat_react_subset <- pat_react[which(pat_react[,1] %in% subset_ids),]
           incProgress(0.3, detail = "Colmplete!")
         })
+        #et <- Sys.time()
+        #print("ApplyDataFilter")
+        #print(et-st)
         showNotification("Data Filtering Complete!", type = "message")
         
         event_data_summ(event_data_subset)
@@ -2757,6 +2800,7 @@ server <- function(input, output, session) {
         Patient_Event_Data <- event_data_raw()
         cluster_window <- Event_Cluster_Window
         # Event data already has summary columns
+        #st <- Sys.time()
         if (!any(grepl("summary$", colnames(Patient_Event_Data), ignore.case = T))) {
           withProgress(message = "Summaizing Event Data", value = 0, {
             incProgress(0.25, detail = "Summarizing treatment events")
@@ -2784,6 +2828,9 @@ server <- function(input, output, session) {
             incProgress(0.25, detail = "Colmplete!")
           })
         }
+        #et <- Sys.time()
+        #print("update event data")
+        #print(et-st)
         event_data_summ(Patient_Event_Data)
         
       })
@@ -2801,6 +2848,7 @@ server <- function(input, output, session) {
         
         Patient_Event_Data <- Patient_Event_Data[!is.na(Patient_Event_Data$EventTab),]
         
+        #st <- Sys.time()
         withProgress(message = "Re-Clustering Event Data", value = 0, {
           incProgress(0.2, detail = "Summarizing treatment events")
           treatment_events <- unique(param[which(param$Treatment == TRUE),])
@@ -2836,8 +2884,9 @@ server <- function(input, output, session) {
             mutate(Event = EventType) %>%
             group_by(Name,Event) %>%
             arrange(EventStart,EventEnd, .by_group = TRUE) %>%
-            mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n()))) %>%
-            mutate(Event = Treatment_Line_Cluster) %>%
+            mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n())),
+                   Event = Treatment_Line_Cluster) %>%
+            #mutate(Event = Treatment_Line_Cluster) %>%
             select(-c(EventTab,EventColumn)) %>%
             as.data.frame()
           event_data_clusters$EventType <- ifelse(event_data_clusters$EventType == "Full Treatment Summary","Full Treatment Summary",
@@ -2903,6 +2952,9 @@ server <- function(input, output, session) {
             as.data.frame()
           incProgress(0.1, detail = "Colmplete!")
         })
+        #et <- Sys.time()
+        #print("UpdateSummaryClusters")
+        #print(et-st)
         showNotification("Event Re-Clustering Complete!", type = "message")
         
         
@@ -2930,8 +2982,9 @@ server <- function(input, output, session) {
             mutate(Event = EventType) %>%
             group_by(Name,Event) %>%
             arrange(EventStart,EventEnd, .by_group = TRUE) %>%
-            mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n()))) %>%
-            mutate(Event = Treatment_Line_Cluster) %>%
+            mutate(Treatment_Line_Cluster = paste0(unique(Event)," Cluster Line ",seq(n())),
+                   Event = Treatment_Line_Cluster) %>%
+            #mutate(Event = Treatment_Line_Cluster) %>%
             select(-c(EventTab,EventColumn)) %>%
             as.data.frame()
           event_data_clusters$EventType <- ifelse(event_data_clusters$EventType == "Full Treatment Summary","Full Treatment Summary",
@@ -3715,15 +3768,16 @@ server <- function(input, output, session) {
         added_events <- c(added_events,paste0(dataTab,": ",cutpoint_col_name))
         plot_df_new <- merge(plot_df,plot_df_in, all = T)
         plot_df2 <- plot_df %>%
-          group_by(!!sym(colnames(plot_df)[1])) %>%
-          mutate(id = consecutive_id(!!sym(cutpoint_col_name))) %>%
-          group_by(!!sym(colnames(plot_df)[1]),id) %>%
+          #group_by(!!sym(colnames(plot_df)[1])) %>%
+          mutate(id = consecutive_id(!!sym(cutpoint_col_name)), .by = !!sym(colnames(plot_df)[1])) %>%
+          #group_by(!!sym(colnames(plot_df)[1]),id) %>%
           mutate(EventStart = min(!!sym(xAxis), na.rm = T), EventEnd = max(!!sym(xAxis), na.rm = T),
                  Event = paste0(dataTab,": ",unique(!!sym(cutpoint_col_name))),
                  EventType = unique(!!sym(cutpoint_col_name)),
                  EventTab = dataTab,
-                 EventColumn = cutpoint_col_name) %>%
-          ungroup() %>%
+                 EventColumn = cutpoint_col_name,
+                 .by = c(!!sym(colnames(plot_df)[1]),id)) %>%
+          #ungroup() %>%
           select(any_of(c(colnames(plot_df)[1],"Event","EventType","EventTab",
                           "EventStart","EventEnd","EventColumn"))) %>%
           unique()
@@ -3784,15 +3838,16 @@ server <- function(input, output, session) {
         
         plot_df_new <- merge(plot_df,plot_df_in, all = T)
         plot_df2 <- plot_df %>%
-          group_by(!!sym(colnames(plot_df)[1])) %>%
-          mutate(id = consecutive_id(!!sym(cutpoint_col_name))) %>%
-          group_by(!!sym(colnames(plot_df)[1]),id) %>%
+          #group_by(!!sym(colnames(plot_df)[1])) %>%
+          mutate(id = consecutive_id(!!sym(cutpoint_col_name)), .by = !!sym(colnames(plot_df)[1])) %>%
+          #group_by(!!sym(colnames(plot_df)[1]),id) %>%
           mutate(EventStart = min(!!sym(xAxis), na.rm = T), EventEnd = max(!!sym(xAxis), na.rm = T),
                  Event = unique(!!sym(cutpoint_col_name)),
                  EventType = unique(!!sym(cutpoint_col_name)),
                  EventTab = dataTab,
-                 EventColumn = cutpoint_col_name) %>%
-          ungroup() %>%
+                 EventColumn = cutpoint_col_name,
+                 .by = c(!!sym(colnames(plot_df)[1]),id)) %>%
+          #ungroup() %>%
           select(any_of(c(colnames(plot_df)[1],"Event","EventType","EventTab",
                           "EventStart","EventEnd","EventColumn"))) %>%
           unique()
@@ -4145,6 +4200,7 @@ server <- function(input, output, session) {
         SankeyXgroups <- input$sankeyXaxis
         sankey_clusters_cast <- sankey_clusters_cast()
         
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Formatting Sankey Data")
         sankey_clusters_cast_sub <- sankey_clusters_cast[,c(colnames(sankey_clusters_cast)[1],SankeyXgroups)]
@@ -4176,6 +4232,9 @@ server <- function(input, output, session) {
                                                 all.x = TRUE)
         incProgress(0.25, detail = "Complete!")
         })
+        #et <- Sys.time()
+        #print("sankeyEvent_df_react")
+        #print(et-st)
         sankey_clusters_cast_sub_plot2
         
       })
@@ -4201,6 +4260,7 @@ server <- function(input, output, session) {
           }
         }
         if (sum(is.na(event_data_clusters_sub_wid_plot2$x))!=nrow(event_data_clusters_sub_wid_plot2)) {
+          #st <- Sys.time()
           withProgress(message = "Processing", value = 0, {
             incProgress(0.5, detail = "Generating Sankey Plot")
             pl <- ggplot(event_data_clusters_sub_wid_plot2, aes(x = x,
@@ -4235,6 +4295,9 @@ server <- function(input, output, session) {
               scale_x_discrete(labels = function(x) str_wrap(x, width = 20))
             incProgress(0.5, detail = "Complete!")
           })
+          #et <- Sys.time()
+          #print("sankey_plot_react")
+          #print(et-st)
           pl
         }
       })
@@ -4332,8 +4395,10 @@ server <- function(input, output, session) {
         heat_view <- input$heatView
         HeatFlip <- input$HeatFlip
         event_data_key <- event_data_key()
+        #save(list = ls(), file = "TreatClusterHeatmapdf_react.RData", envir = environment())
         if (EventSum %in% cluster_df$EventType) {
           
+          #st <- Sys.time()
           withProgress(message = "Processing", value = 0, {
             incProgress(0.4, detail = "Parsing Event Clusters")
             cluster_df_event <- cluster_df %>%
@@ -4363,6 +4428,9 @@ server <- function(input, output, session) {
             }
             incProgress(0.3, detail = "Complete!")
             })
+          #et <- Sys.time()
+          #print("TreatClusterHeatmapdf_react")
+          #print(et-st)
           TreatClusterHeatmapdf_EventCount(cluster_event_df_cast_mat)
           if (heat_view == "Patients") {
             cluster_event_df_cast_mat[which(cluster_event_df_cast_mat > 0)] <- 1
@@ -4376,6 +4444,13 @@ server <- function(input, output, session) {
         plot_df <- TreatClusterHeatmapdf_react()
         updateSelectizeInput(session,"HeatXchoices", choices = colnames(plot_df), selected = colnames(plot_df), server = T)
         updateSelectizeInput(session,"HeatYchoices", choices = rownames(plot_df), selected = rownames(plot_df), server = T)
+      })
+      observe({
+        req(input$HeatXchoices)
+        req(input$HeatYchoices)
+        if (length(input$HeatXchoices) > 2000 | length(input$HeatYchoices) > 2000) {
+          updateCheckboxInput(session,"border_op",value = FALSE)
+        }
       })
       
       TreatClusterHeatmap_react <- reactive({
@@ -4398,7 +4473,10 @@ server <- function(input, output, session) {
         col_font <- input$heatmapFontCol
         color_lo <- input$HeatColorLow
         color_hi <- input$HeatColorHigh
-        plot_df <- as.matrix(plot_df_in[which(rownames(plot_df_in) %in% y_vars),which(colnames(plot_df_in) %in% x_vars),drop = F])
+        #save(list = ls(), file = "TreatClusterHeatmap_react.RData", envir = environment())
+        if (all(x_vars %in% colnames(plot_df_in)) & all(y_vars %in% rownames(plot_df_in))) {
+          plot_df <- as.matrix(plot_df_in[which(rownames(plot_df_in) %in% y_vars),which(colnames(plot_df_in) %in% x_vars),drop = F])
+        }
         if (isTruthy(plot_df)) {
           if (!is.null(dim(plot_df))) {
             if (capYN) {
@@ -4408,6 +4486,7 @@ server <- function(input, output, session) {
             }
             if (all(areColors(c(color_lo, color_hi)))) {
               
+              #st <- Sys.time()
               withProgress(message = "Processing", value = 0, {
                 incProgress(0.3, detail = "Building Heatmap Legends")
                 if (heat_view == "Patients") {
@@ -4445,19 +4524,37 @@ server <- function(input, output, session) {
                                              border = FALSE)
                 incProgress(0.3, detail = "Rendering Heatmap")
                 })
-              draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+              p
+              #et <- Sys.time()
+              #print("TreatClusterHeatmap_react")
+              #print(et-st)
+              #draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
             }
           }
         }
       })
-      output$TreatClusterHeatmap <- renderPlot({
+      output$TreatClusterHeatmapNoHover <- renderPlot({
         req(TreatClusterHeatmap_react())
         p <- TreatClusterHeatmap_react()
+        p <- draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+        p
+      })
+      draw_TreatClusterHeatmap_react <- reactive({
+        req(TreatClusterHeatmap_react())
+        p <- TreatClusterHeatmap_react()
+        p <- draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+      })
+      output$TreatClusterHeatmap <- renderPlot({
+        req(draw_TreatClusterHeatmap_react())
+        p <- draw_TreatClusterHeatmap_react()
         if (heat_hover_avail) {
-          p_int <- InteractiveComplexHeatmap::htPositionsOnDevice(p)
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.5, detail = "Rendering Interactive Heatmap")
+            p_int <- InteractiveComplexHeatmap::htPositionsOnDevice(p)
+            incProgress(0.5, detail = "Complete!")
+          })
           heatInteractive_react(p_int)
         }
-        p
       })
       if (heat_hover_avail) {
         heatInteractive_react <- reactiveVal(NULL)
@@ -4465,11 +4562,12 @@ server <- function(input, output, session) {
         hover_row <- shiny::reactiveVal(NULL)
         shiny::observeEvent(input$heatmap_hover, {
           pos = InteractiveComplexHeatmap::getPositionFromHover(input$heatmap_hover)
-          selection = InteractiveComplexHeatmap::selectPosition(TreatClusterHeatmap_react(), pos, mark = FALSE, ht_pos = heatInteractive_react(), verbose = FALSE)
+          selection = InteractiveComplexHeatmap::selectPosition(draw_TreatClusterHeatmap_react(), pos, mark = FALSE, ht_pos = heatInteractive_react(), verbose = FALSE)
           hover_column(selection$column_label)
           hover_row(selection$row_label)
         })
         output$HeatHoverInfo <- renderUI({
+          req(input$ClusterHeatHover)
           req(heatInteractive_react())
           req(TreatClusterHeatmapdf_EventCount())
           hover_column <- hover_column()
@@ -4531,6 +4629,7 @@ server <- function(input, output, session) {
         event_type <- input$durationHeatEventType
         event_spec <- input$BoxplotXaxis
         MaxOrSum <- input$EventDurMaxSum
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Subsetting Event Data")
           if (event_type == "All Treatment Events") {
@@ -4554,15 +4653,15 @@ server <- function(input, output, session) {
           incProgress(0.25, detail = paste0("Calculating ",MaxOrSum," Event Duration"))
           if (MaxOrSum == "sum") {
             event_sub_event_bp <- event_sub_event_bp %>%
-              group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
-              mutate(Days = sum(Days)) %>%
-              ungroup() %>%
+              #group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
+              mutate(Days = sum(Days), .by = !!sym(colnames(event_sub_event_bp)[1])) %>%
+              #ungroup() %>%
               mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
           } else if (MaxOrSum == "max") {
             event_sub_event_bp <- event_sub_event_bp %>%
-              group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
-              mutate(Days = max(Days)) %>%
-              ungroup() %>%
+              #group_by(!!sym(colnames(event_sub_event_bp)[1])) %>%
+              mutate(Days = max(Days), .by = !!sym(colnames(event_sub_event_bp)[1])) %>%
+              #ungroup() %>%
               mutate(Outlier = ifelse(rstatix::is_outlier(Days),TRUE,FALSE))
           }
           incProgress(0.25, detail = "Deriving Quantiles")
@@ -4574,6 +4673,9 @@ server <- function(input, output, session) {
             as.data.frame()
           incProgress(0.25, detail = "Complete!")
           })
+        #et <- Sys.time()
+        #print("EventBoxPlotdf_react")
+        #print(et-st)
         event_sub_event_bp
       })
       
@@ -4592,6 +4694,7 @@ server <- function(input, output, session) {
         bpCol <- input$BoxPlotColor
         VilOrBP <- input$ViolinOrBoxP
         if (nrow(df) > 0) {
+          #st <- Sys.time()
           withProgress(message = "Processing", value = 0, {
             incProgress(0.5, detail = "Rendering Box Plot")
             p <- ggplot(df, aes(x = Event, y = Days))
@@ -4632,6 +4735,9 @@ server <- function(input, output, session) {
               )
             incProgress(0.5, detail = "Complete!")
             })
+          #et <- Sys.time()
+          #print("EventBoxPlot_react")
+          #print(et-st)
           ply
         }
       })
@@ -4703,6 +4809,7 @@ server <- function(input, output, session) {
         MaxOrSum <- input$EventDurMaxSumHeat
         heat_flip <- input$HeatFlipDist
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Subsetting Event Data")
           if (dur_event == "All Treatment Events") {
@@ -4723,9 +4830,9 @@ server <- function(input, output, session) {
           incProgress(0.25, detail = paste0("Calculating ",MaxOrSum," Event Duration"))
           if (MaxOrSum == "sum") {
             event_data_dur <- event_data %>%
-              group_by(Name,Event) %>%
-              mutate(EventDuration = sum(EventDuration)) %>%
-              ungroup() %>%
+              #group_by(Name,Event) %>%
+              mutate(EventDuration = sum(EventDuration), .by = c(Name,Event)) %>%
+              #ungroup() %>%
               select(Name,Event,EventDuration) %>%
               unique() %>%
               mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
@@ -4736,9 +4843,9 @@ server <- function(input, output, session) {
             
           } else if (MaxOrSum == "max") {
             event_data_dur <- event_data %>%
-              group_by(Name,Event) %>%
-              mutate(EventDuration = max(EventDuration)) %>%
-              ungroup() %>%
+              #group_by(Name,Event) %>%
+              mutate(EventDuration = max(EventDuration), .by = c(Name,Event)) %>%
+              #ungroup() %>%
               select(Name,Event,EventDuration) %>%
               unique() %>%
               mutate(Event = gsub(paste0(dur_event,": "),"",Event)) %>%
@@ -4756,6 +4863,9 @@ server <- function(input, output, session) {
           }
           incProgress(0.3, detail = "Complete!")
           })
+        #et <- Sys.time()
+        #print("TreatDistHeatmapdf_react")
+        #print(et-st)
         event_data_dur
       })
       
@@ -4793,6 +4903,7 @@ server <- function(input, output, session) {
           }
           plot_df[is.na(plot_df)] <- 0
           if (all(areColors(c(color_lo, color_hi)))) {
+            #st <- Sys.time()
             withProgress(message = "Processing", value = 0, {
               incProgress(0.3, detail = "Building Heatmap Legends")
               if (min(plot_df, na.rm = T) == max(plot_df, na.rm = T)) {
@@ -4822,30 +4933,72 @@ server <- function(input, output, session) {
                                            border = FALSE)
               incProgress(0.3, detail = "Rendering Heatmap")
               })
-            draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+            p
+            #et <- Sys.time()
+            #print("TreatDistHeatmap_react")
+            #print(et-st)
+            #draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
           }
         }
       })
-      output$TreatDistHeatmap <- renderPlot({
+      
+      output$TreatDistHeatmapNoHover <- renderPlot({
         req(TreatDistHeatmap_react())
         p <- TreatDistHeatmap_react()
-        if (heat_hover_avail) {
-          p_int <- InteractiveComplexHeatmap::htPositionsOnDevice(p)
-          heatDistInteractive_react(p_int)
-        }
+        #st <- Sys.time()
+        p <- draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+        #et <- Sys.time()
+        #print("TreatDistHeatmapNoHover_draw")
+        #print(et-st)
         p
       })
+      draw_TreatDistHeatmap_react <- reactive({
+        req(TreatDistHeatmap_react())
+        p <- TreatDistHeatmap_react()
+        #st <- Sys.time()
+        p <- draw(p, padding = unit(c(25, 50, 2, 2), "mm"), align_heatmap_legend = "heatmap_top") # unit(c(bottom,left,right,top))
+        #et <- Sys.time()
+        #print("draw_TreatDistHeatmap_react_draw")
+        #print(et-st)
+        p
+      })
+      output$TreatDistHeatmap <- renderPlot({
+        req(draw_TreatDistHeatmap_react())
+        p <- draw_TreatDistHeatmap_react()
+        if (heat_hover_avail) {
+          #st <- Sys.time()
+          withProgress(message = "Processing", value = 0, {
+            incProgress(0.5, detail = "Rendering Interactive Heatmap")
+            p_int <- InteractiveComplexHeatmap::htPositionsOnDevice(p)
+            incProgress(0.5, detail = "Complete!")
+          })
+          #et <- Sys.time()
+          #print("htPositionsOnDevice_TreatDistHeatmap")
+          #print(et-st)
+          heatDistInteractive_react(p_int)
+        }
+      })
+      
       if (heat_hover_avail) {
         heatDistInteractive_react <- reactiveVal(NULL)
         hoverDist_column <- shiny::reactiveVal(NULL)
         hoverDist_row <- shiny::reactiveVal(NULL)
         shiny::observeEvent(input$heatmapDist_hover, {
+          st <- Sys.time()
           pos = InteractiveComplexHeatmap::getPositionFromHover(input$heatmapDist_hover)
-          selection = InteractiveComplexHeatmap::selectPosition(TreatDistHeatmap_react(), pos, mark = FALSE, ht_pos = heatDistInteractive_react(), verbose = FALSE)
+          et <- Sys.time()
+          print("getPositionFromHover")
+          print(et-st)
+          st <- Sys.time()
+          selection = InteractiveComplexHeatmap::selectPosition(draw_TreatDistHeatmap_react(), pos, mark = FALSE, ht_pos = heatDistInteractive_react(), verbose = FALSE)
+          et <- Sys.time()
+          print("selectPosition")
+          print(et-st)
           hoverDist_column(selection$column_label)
           hoverDist_row(selection$row_label)
         })
         output$HeatHoverInfoDist <- renderUI({
+          req(input$DurHeatHover)
           req(heatDistInteractive_react())
           req(TreatDistHeatmapdf_react())
           hover_column <- hoverDist_column()
@@ -4896,6 +5049,7 @@ server <- function(input, output, session) {
         event_type <- input$durationHeatEventType
         event_spec <- input$BoxplotXaxis
         
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Subsetting Event Data")
           if (event_type == "All Treatment Events") {
@@ -4910,19 +5064,19 @@ server <- function(input, output, session) {
             as.data.frame()
           incProgress(0.25, detail = "Deriving First and Final Endpoints")
           Patient_Event_Data_fl <- event_data %>%
-            group_by(Name) %>%
-            filter(Name %in% unique(Patient_Event_Data$Name)) %>%
+            #group_by(Name) %>%
+            filter(Name %in% unique(Patient_Event_Data$Name), .by = Name) %>%
             mutate(Event_New = case_when(
               EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
               EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
-            )) %>%
-            ungroup() %>%
+            ), .by = Name) %>%
+            #ungroup() %>%
             select(Name,Event,Event_New,EventStart,EventEnd) %>%
             filter(!is.na(Event_New)) %>%
             arrange(Name, EventStart) %>%
-            group_by(Name, Event_New) %>%
-            mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
-            ungroup() %>%
+            #group_by(Name, Event_New) %>%
+            mutate(Event_Details = paste0(unique(Event), collapse = "\n"), .by = c(Name, Event_New)) %>%
+            #ungroup() %>%
             mutate(Event = Event_New) %>%
             select(Name,Event,EventStart,EventEnd,Event_Details) %>%
             unique() %>%
@@ -4935,12 +5089,16 @@ server <- function(input, output, session) {
           incProgress(0.25, detail = "Calculating Event Duration")
           Patient_Event_Data3 <- Patient_Event_Data2 %>%
             arrange(Name,EventStart) %>%
-            group_by(Name) %>%
-            mutate(EventStart_FromZero = round(EventStart - min(EventStart,na.rm = T),3)) %>%
-            mutate(EventEnd_FromZero = round(EventEnd - min(EventStart,na.rm = T),3)) %>%
-            mutate(FirstEventTime_FromZero = 0.00) %>%
-            mutate(FinalEventTime_FromZero = round(EventEnd[which(Event == "Final Recorded Time Point")] - min(EventStart,na.rm = T),3)) %>%
-            ungroup() %>%
+            #group_by(Name) %>%
+            mutate(EventStart_FromZero = round(EventStart - min(EventStart,na.rm = T),3),
+                   EventEnd_FromZero = round(EventEnd - min(EventStart,na.rm = T),3),
+                   FirstEventTime_FromZero = 0.00,
+                   FinalEventTime_FromZero = round(EventEnd[which(Event == "Final Recorded Time Point")] - min(EventStart,na.rm = T),3),
+                   .by = Name) %>%
+            #mutate(EventEnd_FromZero = round(EventEnd - min(EventStart,na.rm = T),3)) %>%
+            #mutate(FirstEventTime_FromZero = 0.00) %>%
+            #mutate(FinalEventTime_FromZero = round(EventEnd[which(Event == "Final Recorded Time Point")] - min(EventStart,na.rm = T),3)) %>%
+            #ungroup() %>%
             mutate(Event_Details = case_when(
               Event == "First Recorded Time Point" ~ paste0("<b>",Name,"</b>\n",paste0("<b>First Recorded Time Point</b>: ",FirstEventTime_FromZero,"\n"),
                                                             paste0("Age at Event: ",round(EventStart,3),"\n"),
@@ -4956,6 +5114,9 @@ server <- function(input, output, session) {
             as.data.frame()
           incProgress(0.25, detail = "Complete!")
           })
+        #et <- Sys.time()
+        #print("DurationSwimmers_plot_df")
+        #print(et-st)
         Patient_Event_Data3
       })
       
@@ -4997,8 +5158,8 @@ server <- function(input, output, session) {
         }
         ply_df <- ply_df %>%
           mutate(EventTime = EventEnd_FromZero - EventStart_FromZero) %>%
-          group_by(Name) %>%
-          mutate(EventTime_Sum = sum(EventTime,na.rm = T)) %>%
+          #group_by(Name) %>%
+          mutate(EventTime_Sum = sum(EventTime,na.rm = T), .by = Name) %>%
           as.data.frame()
         if ((swimmerShowAll & maxpats == length(unique(ply_df$Name))) | !swimmerShowAll) {
           # sort to get correct head of patients
@@ -5016,6 +5177,7 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
+            #st <- Sys.time()
             withProgress(message = "Processing", value = 0, {
               incProgress(0.3, detail = "Building Swimmers Plot")
               if (length(patientsSpec) > 0) {
@@ -5064,6 +5226,9 @@ server <- function(input, output, session) {
                 filter(Event == full_event_name)
               incProgress(0.4, detail = "Rendering Swimmers Plot")
               })
+            #et <- Sys.time()
+            #print("DurationSwimmers_plot_react")
+            #print(et-st)
             plot_ly() %>%
               # Add base duration lines
               add_segments(data = base_lines,
@@ -5203,20 +5368,23 @@ server <- function(input, output, session) {
         AndOr <- input$StartAndOr2
         if (AndOr == "'Or' Statement") {
           Patient_Event_Data <- Patient_Event_Data %>%
-            group_by(Name) %>%
-            filter(any(Event %in% start_events)) %>%
-            mutate(Start_Time_Point = min(EventStart[which(Event %in% start_events)], na.rm = T)) %>%
-            mutate(Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T)) %>%
+            #group_by(Name) %>%
+            filter(any(Event %in% start_events), .by = Name) %>%
+            mutate(Start_Time_Point = min(EventStart[which(Event %in% start_events)], na.rm = T),
+                   Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T), .by = Name) %>%
+            #mutate(Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T)) %>%
             as.data.frame()
           Patient_Event_Data
         } else {
           Patient_Event_Data <- Patient_Event_Data %>%
-            group_by(Name) %>%
-            mutate(StartPoitntFound = Event %in% start_events) %>%
-            filter(length(unique(Event[which(StartPoitntFound==TRUE)])) == length(start_events)) %>%
+            #group_by(Name) %>%
+            mutate(StartPoitntFound = Event %in% start_events, .by = Name) %>%
+            filter(length(unique(Event[which(StartPoitntFound==TRUE)])) == length(start_events), .by = Name) %>%
             select(-StartPoitntFound) %>%
-            mutate(Start_Time_Point = min(EventStart[which(Event %in% start_events)], na.rm = T)) %>%
-            mutate(Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T)) %>%
+            mutate(Start_Time_Point = min(EventStart[which(Event %in% start_events)], na.rm = T),
+                   Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T),
+                   .by = Name) %>%
+            #mutate(Final_Time_Point = max(c(EventStart,EventEnd), na.rm = T)) %>%
             as.data.frame()
           Patient_Event_Data
         }
@@ -5288,13 +5456,15 @@ server <- function(input, output, session) {
         if (nrow(Patient_Event_Data) > 0) {
           if (AndOrstop == "'Or' Statement") {
             Patient_Event_Data <- Patient_Event_Data %>%
-              group_by(Name) %>%
-              mutate(End_Time_Point = suppressWarnings(min((EventStart[which(Event %in% stop_events)][(EventStart[which(Event %in% stop_events)]) > unique(Start_Time_Point)]), na.rm = T))) %>%
+              #group_by(Name) %>%
+              mutate(End_Time_Point = suppressWarnings(min((EventStart[which(Event %in% stop_events)][(EventStart[which(Event %in% stop_events)]) > unique(Start_Time_Point)]), na.rm = T)),
+                     .by = Name) %>%
               as.data.frame()
           } else {
             Patient_Event_Data <- Patient_Event_Data %>%
-              group_by(Name) %>%
-              mutate(End_Time_Point = suppressWarnings(min((EventStart[which(all(stop_events %in% Event))][(EventStart[which(all(stop_events %in% Event))]) > unique(Start_Time_Point)]), na.rm = T))) %>%
+              #group_by(Name) %>%
+              mutate(End_Time_Point = suppressWarnings(min((EventStart[which(all(stop_events %in% Event))][(EventStart[which(all(stop_events %in% Event))]) > unique(Start_Time_Point)]), na.rm = T)),
+                     .by = Name) %>%
               as.data.frame()
           }
         }
@@ -5360,9 +5530,11 @@ server <- function(input, output, session) {
           filter(Event %in% c(start_events,stop_events)) %>%
           select(Name,Event,Start_Time_Point) %>%
           unique() %>%
-          group_by(Name) %>%
-          mutate(Start_Event = paste0(unique(Event[Event %in% start_events]), collapse = ", ")) %>%
-          mutate(Progression_Event = ifelse(any(Event %in% stop_events),paste0(unique(Event[Event %in% stop_events]), collapse = ", "),NA)) %>%
+          #group_by(Name) %>%
+          mutate(Start_Event = paste0(unique(Event[Event %in% start_events]), collapse = ", "),
+                 Progression_Event = ifelse(any(Event %in% stop_events),paste0(unique(Event[Event %in% stop_events]), collapse = ", "),NA),
+                 .by = Name) %>%
+          #mutate(Progression_Event = ifelse(any(Event %in% stop_events),paste0(unique(Event[Event %in% stop_events]), collapse = ", "),NA)) %>%
           select(Name,Start_Event,Progression_Event,Start_Time_Point) %>%
           unique() %>%
           as.data.frame()
@@ -5461,6 +5633,7 @@ server <- function(input, output, session) {
         if (ncol(plot_df) == 4) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
+              #st <- Sys.time()
               withProgress(message = "Processing", value = 0, {
                 incProgress(0.3, detail = "Performing Cox Proportional Hazards")
                 plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
@@ -5469,6 +5642,9 @@ server <- function(input, output, session) {
                 tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
                 incProgress(0.3, detail = "Complete!")
                 })
+              #et <- Sys.time()
+              #print("KPplotHRtab_react")
+              #print(et-st)
               tab
             }
           }
@@ -5743,25 +5919,26 @@ server <- function(input, output, session) {
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         if (nrow(Patient_Event_Data) > 0) {
+          #st <- Sys.time()
           withProgress(message = "Processing", value = 0, {
             incProgress(0.25, detail = "Deriving Time Points")
             Patient_Event_Data2 <- Patient_Event_Data %>%
-              group_by(Name) %>%
+              #group_by(Name) %>%
               mutate(swimmer_event = case_when(
                 Event %in% start_events & EventStart == Start_Time_Point ~ "Start Event",
                 EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
                 Event %in% stop_events & EventStart == End_Time_Point ~ "Progression Event",
                 EventEnd == Final_Time_Point ~ "Final Recorded Time Point"
-              )) %>%
-              relocate(swimmer_event, .after = Name) %>%
-              ungroup()
+              ), .by = Name) %>%
+              relocate(swimmer_event, .after = Name) #%>%
+              #ungroup()
             event_types <- c("First Recorded Time Point", "Start Event", "Progression Event", "Final Recorded Time Point")
             incProgress(0.25, detail = "Summarizing Event Details")
             Patient_Event_Data3 <- Patient_Event_Data2 %>%
               filter(!is.na(swimmer_event)) %>%
               arrange(Name,EventStart) %>%
-              group_by(Name, swimmer_event) %>%
-              mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
+              #group_by(Name, swimmer_event) %>%
+              mutate(Event_Details = paste0(unique(Event), collapse = "\n"), .by = c(Name, swimmer_event)) %>%
               select(Name, swimmer_event,Event_Details,EventStart,Start_Time_Point,End_Time_Point,Final_Time_Point) %>%
               unique() %>%
               mutate(EventTime = case_when(
@@ -5769,8 +5946,8 @@ server <- function(input, output, session) {
                 swimmer_event == "Start Event" ~ min(unique(Start_Time_Point,na.rm = T)),
                 swimmer_event == "Progression Event" ~ min(unique(End_Time_Point,na.rm = T)),
                 swimmer_event == "Final Recorded Time Point" ~ min(unique(Final_Time_Point,na.rm = T))
-              )) %>%
-              ungroup() %>%
+              ), .by = c(Name, swimmer_event)) %>%
+              #ungroup() %>%
               group_by(Name) %>%
               mutate(EventTime_FromZero = EventTime - min(EventTime,na.rm = T)) %>%
               select(Name, swimmer_event,Event_Details,EventTime,EventTime_FromZero) %>%
@@ -5785,14 +5962,17 @@ server <- function(input, output, session) {
               group_by(Name) %>%
               fill(Event_Details,EventTime,EventTime_FromZero, .direction = "up") %>%
               ungroup() %>%
-              mutate(across(c(Event_Details,EventTime,EventTime_FromZero), ~ ifelse(swimmer_event == "Progression Event" & Name %in% NonProg_Pats,NA,.))) %>%
-              mutate(Event_Details = paste0(paste0("<b>",swimmer_event,"</b> - ",round(EventTime_FromZero,3),"\n"),
+              mutate(across(c(Event_Details,EventTime,EventTime_FromZero), ~ ifelse(swimmer_event == "Progression Event" & Name %in% NonProg_Pats,NA,.)),
+                     Event_Details = paste0(paste0("<b>",swimmer_event,"</b> - ",round(EventTime_FromZero,3),"\n"),
                                             paste0("Age - ",round(EventTime,3),"\n"),
                                             Event_Details,sep = "\n")) %>%
+              #mutate(Event_Details = paste0(paste0("<b>",swimmer_event,"</b> - ",round(EventTime_FromZero,3),"\n"),
+              #                              paste0("Age - ",round(EventTime,3),"\n"),
+              #                              Event_Details,sep = "\n")) %>%
               as.data.frame() %>%
-              group_by(Name,EventTime,EventTime_FromZero) %>%
-              mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
-              ungroup() %>%
+              #group_by(Name,EventTime,EventTime_FromZero) %>%
+              mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n")), .by = c(Name,EventTime,EventTime_FromZero)) %>%
+              #ungroup() %>%
               as.data.frame()
             Patient_Event_Data3[which(Patient_Event_Data3[,1] %in% NonProg_Pats & Patient_Event_Data3$swimmer_event == "Progression Event"),c(3,4,5)] <- NA
             incProgress(0.25, detail = "Formatting Matrix")
@@ -5812,6 +5992,9 @@ server <- function(input, output, session) {
             Patient_Event_Data3_cast_det <- merge(Patient_Event_Data3_cast,Patient_Event_Data3[,-c(4,5)], all = T)
             colnames(Patient_Event_Data3_cast_det)[which(colnames(Patient_Event_Data3_cast_det) == "swimmer_event")] <- "Event"
             })
+          #et <- Sys.time()
+          #print("swimmer_plot_df")
+          #print(et-st)
           if (ncol(Patient_Event_Data3_cast_det) == 8) {
             ply_df <- Patient_Event_Data3_cast_det
             colnames(ply_df) <- c("Name","First_Time_Point","Start_Time_Point","Prog_Time_Point","Final_Time_Point","Index","Event","Event_Details")
@@ -5862,6 +6045,7 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
+            #st <- Sys.time()
             withProgress(message = "Processing", value = 0, {
               incProgress(0.3, detail = "Building Swimmers Plot")
               if (length(patientsSpec) > 0) {
@@ -6024,6 +6208,9 @@ server <- function(input, output, session) {
                   )
                 )
               })
+            #et <- Sys.time()
+            #print("swimmer_plot_react")
+            #print(et-st)
             p_out
           }
         }
@@ -6144,6 +6331,7 @@ server <- function(input, output, session) {
         event_data_key <- event_data_key()
         Patient_Event_Data <- event_data()
         events_to_plot <- input$SummaryOptions
+        #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Subsetting Event Data")
           Patient_Event_Data_summ <- Patient_Event_Data[which(Patient_Event_Data$Event %in% events_to_plot),]
@@ -6162,18 +6350,18 @@ server <- function(input, output, session) {
             select(-c(EventType,EventTab,EventColumn)) %>%
             as.data.frame()
           Patient_Event_Data_fl <- Patient_Event_Data %>%
-            group_by(Name) %>%
+            #group_by(Name) %>%
             mutate(Event_New = case_when(
               EventStart == min(EventStart,na.rm = T) ~ "First Recorded Time Point",
               EventStart == max(EventStart,na.rm = T) ~ "Final Recorded Time Point"
-            )) %>%
-            ungroup() %>%
+            ), .by = Name) %>%
+            #ungroup() %>%
             select(Name,Event,Event_New,EventStart,EventEnd) %>%
             filter(!is.na(Event_New)) %>%
             arrange(Name, EventStart) %>%
-            group_by(Name, Event_New) %>%
-            mutate(Event_Details = paste0(unique(Event), collapse = "\n")) %>%
-            ungroup() %>%
+            #group_by(Name, Event_New) %>%
+            mutate(Event_Details = paste0(unique(Event), collapse = "\n"), .by = c(Name, Event_New)) %>%
+            #ungroup() %>%
             mutate(Event = Event_New) %>%
             select(Name,Event,EventStart,EventEnd,Event_Details) %>%
             unique() %>%
@@ -6182,24 +6370,30 @@ server <- function(input, output, session) {
           incProgress(0.25, detail = "Formatting Data")
           Patient_Event_Data_summ3 <- Patient_Event_Data_summ3 %>%
             arrange(Name,EventStart) %>%
-            group_by(Name) %>%
-            mutate(EventTime_FromZero = EventStart - min(EventStart,na.rm = T)) %>%
-            mutate(FirstEventTime_FromZero = 0.00) %>%
-            mutate(FinalEventTime_FromZero = max(EventEnd[which(Event == "Final Recorded Time Point")], na.rm = T) - min(EventStart,na.rm = T)) %>%
-            ungroup() %>%
+            #group_by(Name) %>%
+            mutate(EventTime_FromZero = EventStart - min(EventStart,na.rm = T),
+                   FirstEventTime_FromZero = 0.00,
+                   FinalEventTime_FromZero = max(EventEnd[which(Event == "Final Recorded Time Point")], na.rm = T) - min(EventStart,na.rm = T),
+                   .by = Name) %>%
+            #mutate(FirstEventTime_FromZero = 0.00) %>%
+            #mutate(FinalEventTime_FromZero = max(EventEnd[which(Event == "Final Recorded Time Point")], na.rm = T) - min(EventStart,na.rm = T)) %>%
+            #ungroup() %>%
             mutate(Event_Details = paste0(paste0("<b>",Event,"</b> - ",round(EventTime_FromZero,3),"\n"),
                                           paste0("Age at Event Start - ",round(EventStart,3),"\n"),
                                           Event_Details,sep = "\n")) %>%
             select(-EventStart,-EventEnd) %>%
             unique() %>%
-            group_by(Name,EventTime_FromZero) %>%
-            mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n"))) %>%
-            ungroup() %>%
+            #group_by(Name,EventTime_FromZero) %>%
+            mutate(Event_Details = paste0("<b>",Name,"</b>\n",paste(unique(Event_Details), collapse = "\n")), .by = c(Name,EventTime_FromZero)) %>%
+            #ungroup() %>%
             as.data.frame()
           Patient_Event_Data_summ3$Index <- as.numeric(factor(Patient_Event_Data_summ3$Name))
           ply_df <- Patient_Event_Data_summ3
           incProgress(0.25, detail = "Complete!")
           })
+        #et <- Sys.time()
+        #print("summ_swimmer_plot_df")
+        #print(et-st)
         ply_df
       })
       
@@ -6249,6 +6443,7 @@ server <- function(input, output, session) {
             ply_df <- ply_df[order(ply_df$Name),]
           }
           if (maxpats >= 1) {
+            #st <- Sys.time()
             withProgress(message = "Processing", value = 0, {
               incProgress(0.3, detail = "Building Swimmers Plot")
               if (length(patientsSpec) > 0) {
@@ -6375,7 +6570,10 @@ server <- function(input, output, session) {
                   )
                 )
               })
-            
+            #et <- Sys.time()
+            #print("summ_swimmer_plot_react")
+            #print(et-st)
+
             
             p_out
           }
@@ -6443,8 +6641,8 @@ server <- function(input, output, session) {
         ref_event_data <- event_data[which(event_data$Event %in% ref_event),]
         if (GroupRefEventSelect) {
           ref_event_data2 <- ref_event_data %>%
-            group_by(Name, EventType) %>%
-            slice_min(order_by = EventStart) %>%
+            #group_by(Name, EventType) %>%
+            slice_min(order_by = EventStart, by = c(Name, EventType)) %>%
             select(Name,Event,EventType,EventTab,EventStart) %>%
             unique() %>%
             rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
@@ -6452,17 +6650,17 @@ server <- function(input, output, session) {
           ref_event_data2
         } else {
           ref_event_data2 <- ref_event_data %>%
-            group_by(Name, Event) %>%
-            slice_min(order_by = EventStart) %>%
+            #group_by(Name, Event) %>%
+            slice_min(order_by = EventStart, by = c(Name, Event)) %>%
             select(Name,Event,EventType,EventTab,EventStart) %>%
             unique()
           ref_event_data3 <- merge(ref_event_data2,event_data_key[,c("Event","EventSpecified")], all.x = T, sort = F)
           ref_event_data4 <- ref_event_data3 %>%
             relocate(Name) %>%
-            group_by(Name,EventStart,EventType) %>%
-            mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
-            group_by(Name,EventStart) %>%
-            mutate(Event = paste0(unique(EventTemp),collapse = ", ")) %>%
+            #group_by(Name,EventStart,EventType) %>%
+            mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", ")), .by = c(Name,EventStart,EventType)) %>%
+            #group_by(Name,EventStart) %>%
+            mutate(Event = paste0(unique(EventTemp),collapse = ", "), .by = c(Name,EventStart)) %>%
             select(-EventSpecified,-EventTemp) %>%
             unique() %>%
             rename_at(vars(-1), ~ paste0(.,"_Ref")) %>%
@@ -6505,9 +6703,9 @@ server <- function(input, output, session) {
         eoi_event_data <- event_data[which(event_data$Event %in% eoi_event),]
         if (andor == "'And' Statement") {
           eoi_event_data <- eoi_event_data %>%
-            group_by(Name) %>%
-            filter(all(eoi_event %in% Event)) %>%
-            filter(Event %in% eoi_event) %>%
+            #group_by(Name) %>%
+            filter(all(eoi_event %in% Event) & Event %in% eoi_event, .by = Name) %>%
+            #filter(Event %in% eoi_event) %>%
             as.data.frame()
         }
         
@@ -6517,8 +6715,8 @@ server <- function(input, output, session) {
             arrange(EventStart, .by_group = TRUE)
         } else {
           eoi_event_data2 <- eoi_event_data %>%
-            group_by(Name) %>%
-            slice_min(order_by = EventStart)
+            #group_by(Name) %>%
+            slice_min(order_by = EventStart, by = Name)
         }
         eoi_event_data3 <- eoi_event_data2 %>%
           select(Name,Event,EventType,EventStart) %>%
@@ -6526,10 +6724,10 @@ server <- function(input, output, session) {
         eoi_event_data4 <- merge(eoi_event_data3,event_data_key[,c("Event","EventSpecified")],all.x = T, sort = F)
         eoi_event_data5 <- eoi_event_data4 %>%
           relocate(Name) %>%
-          group_by(Name,EventStart,EventType) %>%
-          mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", "))) %>%
-          group_by(Name,EventStart) %>%
-          mutate(Event = paste0(unique(EventTemp),collapse = ", ")) %>%
+          #group_by(Name,EventStart,EventType) %>%
+          mutate(EventTemp = paste0(unique(EventType),": ",paste0(unique(EventSpecified), collapse = ", ")), .by = c(Name,EventStart,EventType)) %>%
+          #group_by(Name,EventStart) %>%
+          mutate(Event = paste0(unique(EventTemp),collapse = ", "), .by = c(Name,EventStart)) %>%
           select(-EventType,-EventSpecified,-EventTemp) %>%
           unique() %>%
           rename_at(vars(-1), ~ paste0(.,"_EOI")) %>%
@@ -6589,12 +6787,12 @@ server <- function(input, output, session) {
               ref_eoi_event_data_b[,newcolname2_b] <- round(ref_eoi_event_data_b$EventStart_EOI-ref_eoi_event_data_b$EventStart_Ref,4)
               AddAnnoWindowNumBefore_conv <- convert_time_units(AddAnnoWindowNumBefore,"days",GlobalAppTimeUnit)
               ref_eoi_event_data_b2 <- ref_eoi_event_data_b %>%
-                group_by(Name) %>%
-                slice_min(order_by = abs(!!sym(newcolname2_b))) %>%
+                #group_by(Name) %>%
+                slice_min(order_by = abs(!!sym(newcolname2_b)), by = Name) %>%
                 mutate(!!sym(newcolname_b) := case_when(
                   abs(!!sym(newcolname2_b)) <= AddAnnoWindowNumBefore_conv ~ TRUE,
                   abs(!!sym(newcolname2_b)) > AddAnnoWindowNumBefore_conv ~ FALSE
-                )) %>%
+                ), .by = Name) %>%
                 rename("Event_EOI_BeforeRef" = Event_EOI) %>%
                 rename("EventStart_EOI_BeforeRef" = EventStart_EOI) %>%
                 as.data.frame()
@@ -6607,12 +6805,12 @@ server <- function(input, output, session) {
               ref_eoi_event_data_a[,newcolname2_a] <- round(ref_eoi_event_data_a$EventStart_EOI-ref_eoi_event_data_a$EventStart_Ref,4)
               AddAnnoWindowNumAfter_conv <- convert_time_units(AddAnnoWindowNumAfter,"days",GlobalAppTimeUnit)
               ref_eoi_event_data_a2 <- ref_eoi_event_data_a %>%
-                group_by(Name) %>%
-                slice_min(order_by = abs(!!sym(newcolname2_a))) %>%
+                #group_by(Name) %>%
+                slice_min(order_by = abs(!!sym(newcolname2_a)), by = Name) %>%
                 mutate(!!sym(newcolname_a) := case_when(
                   abs(!!sym(newcolname2_a)) <= AddAnnoWindowNumAfter_conv ~ TRUE,
                   abs(!!sym(newcolname2_a)) > AddAnnoWindowNumAfter_conv ~ FALSE
-                )) %>%
+                ), .by = Name) %>%
                 rename("Event_EOI_AfterRef" = Event_EOI) %>%
                 rename("EventStart_EOI_AfterRef" = EventStart_EOI) %>%
                 as.data.frame()
@@ -7204,7 +7402,7 @@ server <- function(input, output, session) {
         Homepage_server("ShinyEvents1", homepage_tutorial_text_list, switch_main_tab, switch_main_navbar)
         Tutorial_server("ShinyEvents1", homepage_tutorial_text_list)
         observe({
-          print("this is stupid")
+          #print("this is stupid")
           updateNavbarPage(session = session, inputId = "shinyevents_tabs", selected = "patient_visual_analytics")
           updateTabsetPanel(session = session, inputId = "PatientMainPanel", selected = "2")
         })%>% bindEvent(input$tabselect_test)
