@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20250930")
+version_id <- paste0("v1.0.20251002")
 
 # lite swap able
 
@@ -475,8 +475,8 @@ PatientLevel_tab_contents <- sidebarLayout(
     tabsetPanel(
       id = "PatientTimeline",
       tabPanel("Data Input",
-               p(),
                conditionalPanel(condition = "input.PatientMainPanel == '1'",
+                                p(),
                                 fluidRow(
                                   column(9,
                                          virtualSelectInput(inputId = "SwimmerYlinesSelect",label = "Timeline Row Filter:",
@@ -491,39 +491,61 @@ PatientLevel_tab_contents <- sidebarLayout(
                                 div(virtualSelectInput(inputId = "HighlightEventSelect",label = "Highlight Event:",
                                                        choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
                ),
-               conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
-                                selectInput("LinePlotTable","Data Table:",choices = NULL,
-                                            selected = 1),
-                                div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = "margin-top:-15px"),
-                                conditionalPanel(condition = "input.LinePlotSub != 'Select all data'",
-                                                 div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = "margin-top:-15px")
+               conditionalPanel(condition = "input.PatientMainPanel == '2'",
+                                tags$div(
+                                  style = "display: flex; align-items: center; gap: 10px; margin-top:-10px",
+                                  tags$span("Change-Point Line Plot:", style = "font-size: 25px"),
+                                  div(switchInput(inputId = "ChangePointLineOpt",label = NULL,value = FALSE,inline = TRUE, size = "small"),
+                                      style = "margin-top:15px")
+                                )
                                 ),
+               conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
+                                #div(h4("Line Plot Parameters:"), style = "margin-top:-20px"),
+                                conditionalPanel(condition = "output.SuppDataAdded",
+                                                 div(selectInput("LinePlotTable","Data Table:",choices = NULL,
+                                                             selected = 1), style = "margin-top:-20px")
+                                                 ),
+                                div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = "margin-top:-20px"),
+                                conditionalPanel(condition = "input.LinePlotSub != 'Select all data' && input.LinePlotSub != ''",
+                                                 div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = "margin-top:-25px")
+                                ),
+                                conditionalPanel(condition = "output.SuppDataAdded",
+                                                 fluidRow(
+                                                   column(6, style = "margin-top:-25px",
+                                                          selectizeInput("LinePlotX","X-Axis", choice = NULL, selected = 1)
+                                                   ),
+                                                   column(6, style = "margin-top:-25px",
+                                                          selectInput("LinePlotXunits","X-Axis Units", choices = c("Hours","Days","Months","Years"), selected = "Years")
+                                                   )
+                                                 )
+                                                 ),
                                 fluidRow(
-                                  column(6,
-                                         selectizeInput("LinePlotX","X-Axis", choice = NULL, selected = 1),
-                                         selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1)
+                                  column(6, style = "margin-top:-30px",
+                                         selectizeInput("LinePlotY","Y-Axis", choice = NULL, selected = 1)
                                   ),
-                                  column(6,
-                                         selectizeInput("LinePlotY","Y-Axis", choice = NULL, selected = 1),
-                                         selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1)
+                                  column(6, style = "margin-top:-30px",
+                                         selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1),
+                                         conditionalPanel(condition = "input.LinePunitCol != ''",
+                                                          div(selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1), style = "margin-top:-15px")
+                                                          )
                                   )
                                 ),
                                 fluidRow(
-                                  column(6,
+                                  column(6, style = "margin-top:-25px",
                                          numericInput("linePlotCutP","User defined cut-point:",
                                                       value = NULL)
                                   ),
-                                  column(6,
+                                  column(6, style = "margin-top:-25px",
                                          textInput("linePlotCutPAnno","Cut-Point Annotation:", placeholder = "i.e. Adverse Event Name")
                                   )
                                 ),
-                                h4("Save Annotation:"),
+                                div(h4("Save Annotation:"), style = "margin-top:-20px"),
                                 fluidRow(
-                                  column(6,
-                                         actionButton("saveLinePlotAbvCutP","Above Cut-Point")
+                                  column(6, style = "margin-top:-15px",
+                                         actionButton("saveLinePlotAbvCutP","Above Cut-Point", width = "100%")
                                   ),
-                                  column(6,
-                                         actionButton("saveLinePlotBelCutP","Below Cut-Point")
+                                  column(6, style = "margin-top:-15px",
+                                         actionButton("saveLinePlotBelCutP","Below Cut-Point", width = "100%")
                                   )
                                 )
                ),
@@ -616,6 +638,7 @@ PatientLevel_tab_contents <- sidebarLayout(
       tabPanel(newTabName,
                p(),
                uiOutput("rendSummaryLinePlots"),
+               div(DT::dataTableOutput("LinePlotdf"), style = "font-size:14px"),
                value = 2
       )
     ),
@@ -1771,7 +1794,7 @@ server <- function(input, output, session) {
       #  print(colPalSelected$ColorPalRev_react())
       #})
       
-      # Front end event data input --------------------------------------------------------
+      # Front Event data input --------------------------------------------------------
       observe({
         ProjectName_react(input$UserProjectName)
         if (isTruthy(input$dataFileInput$datapath)) {
@@ -2355,7 +2378,7 @@ server <- function(input, output, session) {
         
       })
       
-      # Front End wkbk input ---------------------------------------------------
+      # Front wkbk input ---------------------------------------------------
       
       observe({
         req(eventDataInput_raw())
@@ -3727,6 +3750,7 @@ server <- function(input, output, session) {
       event_data_cutp <- reactiveVal()
       added_events <- reactiveVal()
       observeEvent(input$saveLinePlotAbvCutP, {
+        req(line_plot_df_react())
         req(wkbk_react_anno())
         req(event_data())
         req(input$linePlotCutP)
@@ -3735,14 +3759,16 @@ server <- function(input, output, session) {
         added_events <- added_events()
         cutp <- input$linePlotCutP
         cutp_anno <- input$linePlotCutPAnno
-        dataTab <- input$LinePlotTable
+        dataTab <- line_plot_dfname_react()
+        #dataTab <- input$LinePlotTable
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
         yAxis <- input$LinePlotY
         unitCol <- input$LinePunitCol
         unitSel <- input$LinePunitSelect
-        plot_df_in <- wkbk[[dataTab]]
+        plot_df_in <- line_plot_df_react()
+        #plot_df_in <- wkbk[[dataTab]]
         plot_df_in[,xAxis] <- suppressWarnings(as.numeric(plot_df_in[,xAxis]))
         plot_df_in[,yAxis] <- suppressWarnings(as.numeric(plot_df_in[,yAxis]))
         plot_df <- plot_df_in
@@ -3803,14 +3829,16 @@ server <- function(input, output, session) {
         added_events <- added_events()
         cutp <- input$linePlotCutP
         cutp_anno <- input$linePlotCutPAnno
-        dataTab <- input$LinePlotTable
+        dataTab <- line_plot_dfname_react()
+        #dataTab <- input$LinePlotTable
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
         yAxis <- input$LinePlotY
         unitCol <- input$LinePunitCol
         unitSel <- input$LinePunitSelect
-        plot_df_in <- wkbk[[dataTab]]
+        plot_df_in <- line_plot_df_react()
+        #plot_df_in <- wkbk[[dataTab]]
         plot_df_in[,xAxis] <- suppressWarnings(as.numeric(plot_df_in[,xAxis]))
         plot_df_in[,yAxis] <- suppressWarnings(as.numeric(plot_df_in[,yAxis]))
         plot_df <- plot_df_in
@@ -3893,18 +3921,51 @@ server <- function(input, output, session) {
             TitleFont <- input$TimeLineTitleSize
             xFont <- input$TimeLineXAxisSize
             yFont <- input$TimeLineYAxisSize
+            TimeLineHeight <- input$TimeLineHeight
+            TimeLineWidth <- input$TimeLineWidth
             Patient_Event_Data_sub <- PatientTimelineSummPlot_df()
             Patient_Event_Data_sub$EventStart <- round(Patient_Event_Data_sub$EventStart,2)
             Patient_Event_Data_sub$EventEnd <- round(Patient_Event_Data_sub$EventEnd,2)
+            #save(list = ls(), file = "PatientTimelineSummPlot_react.RData", envir = environment())
             plot2 <- timelinePlot(data = Patient_Event_Data_sub[,-1],event_col = "Event", event_type_col = "EventType",
                                   start_col = "EventStart", stop_col = "EventEnd", unit = "Years", plotly = TRUE,
                                   title_font = TitleFont, x_font = xFont, y_font = yFont,na.rm = RemoveUnkNA_opt,
                                   title = SwimmerTitle_in,svg_name = paste0(gsub(" ","_",Project_Name),"_Patient_",Patient,"_Timeline"),
-                                  svg_height = input$TimeLineHeight, svg_width = input$TimeLineWidth, highlight_col = "highlight", col_pal = colorPal  )
+                                  svg_height = TimeLineHeight, svg_width = TimeLineWidth, highlight_col = "highlight", col_pal = colorPal)
             plot2
           }
         }
       })
+      #observe({
+      #  p1 <- PatientTimelineSummPlot_react()
+      #  save(list = ls(), file = "PatientTimelineSummPlot_react1.RData", envir = environment())
+      #})
+      #observe({
+      #  line_p <- PatientLinePlot_react()
+      #  save(list = ls(), file = "PatientLinePlot_react1.RData", envir = environment())
+      #})
+      #observe({
+      #  PatientLinePlot_df <- PatientLinePlot_df()
+      #  save(list = ls(), file = "PatientLinePlot_df1.RData", envir = environment())
+      #})
+      #observe({
+      #  Patient_Event_Data_sub <- PatientTimelineSummPlot_df()
+      #  save(list = ls(), file = "PatientTimelineSummPlot_df1.RData", envir = environment())
+      #})
+      #observe({
+      #  print(isTruthy(PatientLinePlot_df()))
+      #  print(input$ChangePointLineOpt)
+      #  print(isTruthy(PatientLinePlot_df()) & input$ChangePointLineOpt)
+      #  print(isTruthy(PatientTimelineSummPlot_react()))
+      #  print(input$PatientSelectionTab_rows_selected)
+      #  print(isTruthy(PatientLinePlot_react()))
+      #  ChangePointLineOpt <- input$ChangePointLineOpt
+      #  xAxis <- input$LinePlotX
+      #  yAxis <- input$LinePlotY
+      #  xAxisUnits <- input$LinePlotXunits
+      #  save(list = ls(), file = "ChangePointLineOpt.RData", envir = environment())
+      #})
+      
       
       output$PatientTimelineLineSummPlot <- renderPlotly({
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
@@ -3913,32 +3974,33 @@ server <- function(input, output, session) {
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
           plot_title <- paste0("Clinical Course of Patient: ", as.character(Patient))
         }
-        if (isTruthy(input$LinePlotSubCrit)) {
-          req(PatientTimelineSummPlot_react())
-          req(PatientLinePlot_react())
-          xAxis <- input$LinePlotX
-          p1 <- PatientTimelineSummPlot_react()
-          line_p <- PatientLinePlot_react()
-          p1_xlim <- p1$x$layout$xaxis$range
-          if (nrow(line_p$data[xAxis]) > 0) {
-            p2_xlim <- range(line_p$data[xAxis], na.rm = T)
-            line_p <- line_p +
-              ggplot2::scale_x_continuous(limits=c(min(c(p1_xlim,p2_xlim), na.rm = T), max(c(p1_xlim,p2_xlim), na.rm = T)))
-            p2 <- plotly::ggplotly(line_p)
-            subply <- subplot(p1, p2, nrows = 2, shareY = TRUE, shareX = TRUE,
-                              titleY = TRUE, titleX = TRUE, which_layout = 1)
-            subply <- subply %>%
-              layout(margin = list(t = 50))
+        p1 <- PatientTimelineSummPlot_react()
+        p_out <- p1
+        if (input$ChangePointLineOpt) {
+          if (isTruthy(input$LinePlotY)) {
+            line_p <- PatientLinePlot_react()
+            #save(list = ls(), file = "PatientTimelineLineSummPlot.RData", envir = environment())
+            req(p1)
+            req(line_p)
+            xAxis <- input$LinePlotX
+            p1_xlim <- p1$x$layout$xaxis$range
+            if (nrow(line_p$data[xAxis]) > 0) {
+              p2_xlim <- range(line_p$data[xAxis], na.rm = T)
+              line_p <- line_p +
+                ggplot2::scale_x_continuous(limits=c(min(c(p1_xlim,p2_xlim), na.rm = T), max(c(p1_xlim,p2_xlim), na.rm = T)))
+              p2 <- plotly::ggplotly(line_p)
+              p_out <- subplot(p1, p2, nrows = 2, shareY = TRUE, shareX = TRUE,
+                                titleY = TRUE, titleX = TRUE, which_layout = 1)
+              p_out <- p_out %>%
+                layout(margin = list(t = 50))
+            }
           }
-        } else {
-          req(PatientTimelineSummPlot_react())
-          p1 <- PatientTimelineSummPlot_react()
-          p1
         }
+        p_out
       })
       
       output$rendSummaryLinePlots <- renderUI({
-        if (isTruthy(input$LinePlotSubCrit)) {
+        if (isTruthy(input$LinePlotY) & input$ChangePointLineOpt) {
           shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelineLineSummPlot",height = "600px", width = "100%")), type = 6)
         } else {
           shinycssloaders::withSpinner(shinyjqui::jqui_resizable(plotlyOutput("PatientTimelineLineSummPlot",height = "300px", width = "100%")), type = 6)
@@ -3946,12 +4008,45 @@ server <- function(input, output, session) {
       })
       
       ## Line Plot --------------------------------------------------------------
+      
+      
+      
       observe({
-        req(wkbk_react_sub())
-        req(input$LinePlotTable)
-        dataTab <- input$LinePlotTable
+        if (AllFilesReady) {
+          if (Data_Contains_Longitudinal_Biomarkers) {
+            updateSwitchInput(session,"ChangePointLineOpt", value = TRUE)
+          }
+        } else {
+          biomarkerUIinput <- input$InputBiomarkerData
+          if (isTruthy(biomarkerUIinput)) {
+            if (biomarkerUIinput == "Yes") {
+              updateSwitchInput(session,"ChangePointLineOpt", value = TRUE)
+            }
+          }
+        }
+      })
+      
+      line_plot_df_react <- reactiveVal(NULL)
+      line_plot_dfname_react <- reactiveVal(NULL)
+      observe({
+        req(wkbk_react_sub)
         Clin_Supp_List <- wkbk_react_sub()
-        xChoices <- colnames(Clin_Supp_List[[dataTab]])[-1]
+        dataTab <- input$LinePlotTable
+        if (isTruthy(dataTab) & length(Clin_Supp_List) > 1) {
+          df <- Clin_Supp_List[[dataTab]]
+          line_plot_df_react(df)
+          line_plot_dfname_react(dataTab)
+        } else {
+          df <- Clin_Supp_List[[1]]
+          line_plot_df_react(df)
+          line_plot_dfname_react("InputData")
+        }
+      })
+      
+      observe({
+        req(line_plot_df_react())
+        lineP_df <- line_plot_df_react()
+        xChoices <- colnames(lineP_df)[-1]
         if (any(grepl("LabTest",xChoices, ignore.case = T))) {
           PreSelect <- grep("LabTest",xChoices,ignore.case = T,value = T)[1]
         } else {
@@ -3964,15 +4059,12 @@ server <- function(input, output, session) {
         req(input$LinePlotSub)
         req(input$PatientSelectionTab_rows_selected)
         if (input$LinePlotSub != "Select all data") {
-          req(wkbk_react_sub())
-          req(input$LinePlotTable)
-          Clin_Supp_List <- wkbk_react_sub()
+          req(line_plot_df_react())
+          lineP_df <- line_plot_df_react()
           Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
           Patient_Table_df <- Patient_Table_React()
           Patient <- Patient_Table_df[Patient_Row_Selec,1]
-          dataTab <- input$LinePlotTable
-          df <- Clin_Supp_List[[dataTab]]
-          choices <- sort(unique(df[which(df[,1] == Patient),input$LinePlotSub]))
+          choices <- sort(unique(lineP_df[which(lineP_df[,1] == Patient),input$LinePlotSub]))
           updateSelectizeInput(session,"LinePlotSubCrit",choices = choices, selected = choices[1], server = T)
         }
       })
@@ -3983,16 +4075,21 @@ server <- function(input, output, session) {
       })
       
       observe({
-        req(wkbk_react_sub())
-        req(input$LinePlotTable)
-        dataTab <- input$LinePlotTable
+        req(line_plot_df_react())
+        lineP_df <- line_plot_df_react()
         Clin_Supp_List <- wkbk_react_sub()
-        Choices <- colnames(Clin_Supp_List[[dataTab]])[-1]
+        AppTimeUnits <- GlobalAppTimeUnit_react()
+        Choices <- colnames(lineP_df)[-1]
         if (input$LinePlotSub != "Select all data") {
           Choices <- Choices[which(Choices!=input$LinePlotSub)]
         }
+        if (length(Clin_Supp_List) > 1) {
+          LinePlotXPred <- ifelse(any(grepl("^AgeAtLabResults",Choices,ignore.case = T)),grep("^AgeAtLabResults",Choices,ignore.case = T, value = T)[1],NA)
+        } else {
+          LinePlotXPred <- "EventStart"
+          updateSelectInput(session,"LinePlotXunits", selected = AppTimeUnits)
+        }
         unitColPred <- ifelse(any(grepl("unit",Choices,ignore.case = T)),grep("unit",Choices,ignore.case = T, value = T)[1],NA)
-        LinePlotXPred <- ifelse(any(grepl("^AgeAtLabResults",Choices,ignore.case = T)),grep("^AgeAtLabResults",Choices,ignore.case = T, value = T)[1],NA)
         LinePlotYPred <- ifelse(any(grepl("^LabResults",Choices,ignore.case = T)),grep("^LabResults",Choices,ignore.case = T, value = T)[1],NA)
         updateSelectizeInput(session,"LinePlotX", choices = Choices, selected = LinePlotXPred)
         updateSelectizeInput(session,"LinePlotY", choices = Choices, selected = LinePlotYPred)
@@ -4008,34 +4105,55 @@ server <- function(input, output, session) {
       })
       
       PatientLinePlot_df <- reactive({
-        req(wkbk_react_sub())
-        req(input$LinePlotTable)
+        req(line_plot_df_react())
         req(input$LinePlotSub)
         req(input$PatientSelectionTab_rows_selected)
-        Clin_Supp_List <- wkbk_react_sub()
-        param <- param_data()
-        dataTab <- input$LinePlotTable
+        lineP_df <- line_plot_df_react()
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
         yAxis <- input$LinePlotY
+        xAxisUnits <- input$LinePlotXunits
         Patient_Row_Selec <- input$PatientSelectionTab_rows_selected
         Patient_Table_df <- Patient_Table_React()
         Patient <- Patient_Table_df[Patient_Row_Selec,1]
+        AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
+        #save(list = ls(), file = "PatientLinePlot_df.RData", envir = environment())
         
-        plot_df <- Clin_Supp_List[[dataTab]]
+        
+        plot_df <- lineP_df
         plot_df <- plot_df[which(plot_df[,1] == Patient),]
         if (tab_sub != "Select all data") {
           plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
         }
-        plot_df <- plot_df %>%
-          relocate(any_of(c(colnames(plot_df)[1],tab_crit,xAxis,yAxis)))
-        
-        plot_df
+        if (all(isTruthy(c(xAxis,yAxis)))) {
+          plot_df <- plot_df %>%
+            relocate(any_of(c(colnames(plot_df)[1],tab_crit,xAxis,yAxis))) %>%
+            as.data.frame()
+          plot_df[,xAxis] <- round(convert_time_units(suppressWarnings(as.numeric(plot_df[,xAxis])),tolower(xAxisUnits),AppTimeUnits), 2)
+          plot_df
+        } else {
+          return(NULL)
+        }
+      })
+      
+      output$LinePlotdf <- DT::renderDataTable({
+        req(PatientLinePlot_df())
+        if (isTruthy(input$LinePlotY) & input$ChangePointLineOpt) {
+          df <- PatientLinePlot_df()
+          DT::datatable(df,
+                        extensions = 'Scroller',
+                        options = list(lengthMenu = c(1,3,5,10, 20, 100, 1000),
+                                       pageLength = 3,
+                                       scrollX = T),
+                        rownames = F
+          )
+        }
       })
       
       output$rendLinePlotTitle <- renderUI({
-        dataTab <- input$LinePlotTable
+        dataTab <- line_plot_dfname_react()
+        #dataTab <- input$LinePlotTable
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
@@ -4057,10 +4175,8 @@ server <- function(input, output, session) {
       
       PatientLinePlot_react <- reactive({
         req(PatientLinePlot_df())
-        req(input$LinePlotX)
-        req(input$LinePlotY)
         plot_df <- PatientLinePlot_df()
-        dataTab <- input$LinePlotTable
+        dataTab <- line_plot_dfname_react()
         tab_sub <- input$LinePlotSub
         tab_crit <- input$LinePlotSubCrit
         xAxis <- input$LinePlotX
@@ -4072,51 +4188,60 @@ server <- function(input, output, session) {
         unitCol <- input$LinePunitCol
         unitSel <- input$LinePunitSelect
         LinePlotTheme <- input$LinePlotTheme
-        if (isTruthy(unitCol) & isTruthy(unitSel)) {
-          plot_df <- plot_df[which(plot_df[,unitCol] == unitSel),]
-        }
-        unit_col <- grep("unit",colnames(plot_df),ignore.case = T, value = T)[1]
-        if (isTruthy(unit_col)) {
-          plot_df <- plot_df[,c(colnames(plot_df)[1],xAxis,yAxis,unit_col)]
-          units <- paste0(unique(plot_df[,unit_col]), collapse = ", ")
-          if (tab_sub != "Select all data") {
-            plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab," - ",tab_crit," (",units,")","\ndata featuring ",yAxis," over ", xAxis)
-          } else {
-            plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab,"\ndata featuring ",yAxis," over ", xAxis)
+        #save(list = ls(), file = "PatientLinePlot_react.RData", envir = environment())
+        if (isTruthy(yAxis)) {
+          if (isTruthy(unitCol) & isTruthy(unitSel)) {
+            plot_df <- plot_df[which(plot_df[,unitCol] == unitSel),]
           }
-          yaxlab <- paste0(tab_crit," (",units,")")
+          unit_col <- grep("unit",colnames(plot_df),ignore.case = T, value = T)[1]
+          if (isTruthy(unit_col)) {
+            plot_df <- plot_df[,c(colnames(plot_df)[1],xAxis,yAxis,unit_col)]
+            units <- paste0(unique(plot_df[,unit_col]), collapse = ", ")
+            if (tab_sub != "Select all data") {
+              plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab," - ",tab_crit," (",units,")","\ndata featuring ",yAxis," over ", xAxis)
+            } else {
+              plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab,"\ndata featuring ",yAxis," over ", xAxis)
+            }
+            yaxlab <- paste0(tab_crit," (",units,")")
+          } else {
+            plot_df <- plot_df[,c(colnames(plot_df)[1],xAxis,yAxis)]
+            if (tab_sub != "Select all data") {
+              plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab," - ",tab_crit,"\ndata featuring ",yAxis," over ", xAxis)
+            } else {
+              plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab,"\ndata featuring ",yAxis," over ", xAxis)
+            }
+            yaxlab <- paste0(tab_crit)
+          }
+          yaxlab <- ifelse(!isTruthy(yaxlab),yAxis,yaxlab)
+          plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
+          plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
+          plot_df <- plot_df[complete.cases(plot_df),]
+          p <- ggplot(data=plot_df, aes(x=!!sym(xAxis), y=!!sym(yAxis))) +
+            geom_line(aes(group = 1),size = 0.5) +
+            geom_point(size = 3) +
+            get(LinePlotTheme)() +
+            theme(axis.title.x = element_text(size = Xaxis_font, margin = margin(30,0,0,0)),
+                  axis.text.x = element_text(size = Xaxis_font, angle = 45, vjust = 0.5, hjust=1),
+                  axis.text.y = element_text(size = Yaxis_font),
+                  axis.title.y = element_text(size = Yaxis_font),
+                  plot.title = element_text(size = title_font, margin = margin(0,0,30,0)),
+                  legend.position = "none") +
+            ylab(paste0(yaxlab))
+          if (isTruthy(userCutP)) {
+            p <- p +
+              geom_hline(yintercept = userCutP, linetype = "dashed", color = "red")
+          }
+          p
         } else {
-          plot_df <- plot_df[,c(colnames(plot_df)[1],xAxis,yAxis)]
-          if (tab_sub != "Select all data") {
-            plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab," - ",tab_crit,"\ndata featuring ",yAxis," over ", xAxis)
-          } else {
-            plotTitle <- paste0("Line plot of patient ",unique(plot_df[,1])," ",dataTab,"\ndata featuring ",yAxis," over ", xAxis)
-          }
-          yaxlab <- paste0(tab_crit)
+          NULL
         }
-        plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
-        plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
-        p <- ggplot(data=plot_df, aes(x=!!sym(xAxis), y=!!sym(yAxis))) +
-          geom_line(aes(group = 1),size = 0.5) +
-          geom_point(size = 3) +
-          get(LinePlotTheme)() +
-          theme(axis.title.x = element_text(size = Xaxis_font, margin = margin(30,0,0,0)),
-                axis.text.x = element_text(size = Xaxis_font, angle = 45, vjust = 0.5, hjust=1),
-                axis.text.y = element_text(size = Yaxis_font),
-                axis.title.y = element_text(size = Yaxis_font),
-                plot.title = element_text(size = title_font, margin = margin(0,0,30,0)),
-                legend.position = "none") +
-          ylab(paste0(yaxlab))
-        if (isTruthy(userCutP)) {
-          p <- p +
-            geom_hline(yintercept = userCutP, linetype = "dashed", color = "red")
-        }
-        p
+        
       })
       
       output$dnldPatientLinePlot <- downloadHandler(
         filename = function() {
-          dataTab <- input$LinePlotTable
+          dataTab <- line_plot_dfname_react()
+          #dataTab <- input$LinePlotTable
           paste0(gsub(" ","_",Project_Name),"_",gsub(" ","_",dataTab),"_LinePlot_",Sys.Date(),".svg")
         },
         content = function(file) {
@@ -5337,6 +5462,18 @@ server <- function(input, output, session) {
         
       })
       
+      output$SuppDataAdded <- reactive({
+        req(wkbk_react_sub())
+        wkbk <- wkbk_react_sub()
+        if (length(wkbk) > 1) {
+          TRUE 
+        } else {
+          FALSE
+        }
+      })
+      outputOptions(output, "SuppDataAdded", suspendWhenHidden = FALSE)
+      
+      
       output$BiomarkerData <- reactive({
         if (AllFilesReady) {
           if (Data_Contains_Longitudinal_Biomarkers) {
@@ -5344,6 +5481,8 @@ server <- function(input, output, session) {
           } else {
             FALSE
           }
+        } else if (input$ChangePointLineOpt) {
+          TRUE
         } else {
           biomarkerUIinput <- input$InputBiomarkerData
           if (isTruthy(biomarkerUIinput)) {
