@@ -34,5 +34,9 @@ suppressPackageStartupMessages(library(shinyalert))
 suppressPackageStartupMessages(library(ggsankey))
 suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(InteractiveComplexHeatmap))
+suppressPackageStartupMessages(library(magick))
+suppressPackageStartupMessages(library(lme4))
+suppressPackageStartupMessages(library(sass))
+
 
 

@@ -713,3 +713,29 @@ ColorPalSelect_server <- function(id){
                       }
   )
 }
+
+
+min_max_breaks <- function(...) {
+  function(x) {
+    rng <- range(x, na.rm = TRUE)
+    c(min(rng),max(rng))
+  }
+}
+
+
+margin_adjust <- function(top,bot,lite = FALSE,top_new = NULL, bot_new = NULL) {
+  top_new <- ifelse(is.null(top_new),(top+10),top_new)
+  bot_new <- ifelse(is.null(bot_new),(bot+10),bot_new)
+  
+  if (lite) {
+    top <- ifelse(!is.na(top) & top<0,top_new,top)
+    bot <- ifelse(!is.na(bot) & bot<0,bot_new,bot)
+  }
+  top_p <- ifelse(!is.na(top),paste0("margin-top:",top,"px"),NA)
+  bot_p <- ifelse(!is.na(bot),paste0("margin-bottom:",bot,"px"),NA)
+  out_p <- c(top_p,bot_p)
+  out_p <- out_p[!is.na(out_p)]
+  return(paste0(out_p,collapse = ";"))
+}
+
+

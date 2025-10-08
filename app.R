@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20251002")
+version_id <- paste0("v1.0.20251008")
 
 # lite swap able
 
@@ -19,6 +19,8 @@ Data_Contains_Longitudinal_Biomarkers <- FALSE
 # Does user want password Protection?
 Password_Protected <- FALSE
 PasswordSet <- ''
+
+
 
 
 
@@ -175,7 +177,7 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                ),
                                "Event data requires columns defining: Patient ID, Event Name, Event Start Time and Event End Time."
                              ),
-                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = "margin-top:-10px;margin-bottom:-25px"),
+                             accept = c(".xlsx",".xls",".txt",".csv",".tsv")), style = margin_adjust(-10,-25,app_lite)),
                
                fluidRow(
                  column(6,
@@ -188,16 +190,24 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                  )
                ),
                actionButton("EventDataHelp","Event data input formatting", icon = icon("circle-question"), width = "100%",
-                            style = "background-color: #2c3e50; border-color: #2c3e50; margin-top:-15px"),
+                            style = paste0("background-color: #2c3e50; border-color: #2c3e50;",margin_adjust(-15,NA,app_lite,top_new = 0))),
                conditionalPanel(condition = "output.EventDataFileIn_found",
-                                div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                div(hr(),style = margin_adjust(-25,-15,app_lite)),
                                 shinyWidgets::materialSwitch("SuppDataInput1","Would you like to upload supplementary data?", inline = T, status = "primary"),
                                 conditionalPanel(condition = "input.SuppDataInput1 == true",
                                                  div(fileInput("SuppDataFileInput1","Supplementary Data Upload", accept = c(".xlsx",".xls",".txt",".csv",".tsv")),
                                                      style = "margin-top:-15px;margin-bottom:-15px"),
                                                  fluidRow(
-                                                   column(7, style = "margin-bottom:-25px",
-                                                          selectizeInput("SuppEventColumnLink","Select Event Data Column to Link Supplementary Data Table Names:",
+                                                   column(6, style = "margin-bottom:-25px",
+                                                          selectizeInput("SuppEventColumnLink",
+                                                                         label = tooltip(
+                                                                           trigger = list(
+                                                                             "Event to Supplementary Data Link",
+                                                                             bsicons::bs_icon("info-circle")
+                                                                           ),
+                                                                           "Select the column in the event Ddta that links to the supplementary data table names"
+                                                                         ),
+                                                                         #"Select Event Data Column to Link Supplementary Data Table Names:",
                                                                          choices = NULL, selected = 1,
                                                                          options = list(
                                                                            placeholder = 'Please select an option below',
@@ -205,7 +215,7 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                                                                          ))
                                                           
                                                    ),
-                                                   column(5, style = "margin-bottom:-25px",
+                                                   column(6, style = "margin-bottom:-25px",
                                                           radioButtons("InputBiomarkerData","Does input data contain biomarker information?",
                                                                        choices = c("Yes","No"), selected = "No", inline = T)
                                                    )
@@ -214,14 +224,16 @@ DataInput_tab_contents <- shiny::sidebarLayout(
                ),
                p(),
                conditionalPanel(condition = "output.InputDataReady",
-                                div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
+                                #div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
                                 fluidRow(
                                   column(4,
                                          div(tags$b(tags$u(h3("Step 4:"))), style = "margin-top:10px;margin-bottom:-15px")
                                   ),
                                   column(8,
-                                         actionButton("ProcessInputData","Click Here Finalize and Process Input Data!", icon = icon("rotate-right"), width = "100%",
-                                                      style = "background-color: #18bc9c; border-color: #2c3e50")
+                                         actionButton("ProcessInputData", HTML(paste0(c("Click Here Finalize and","Process Input Data!"), collapse="</br>")),
+                                                      icon = icon("rotate-right"), width = "100%",style = "background-color: #18bc9c; border-color: #2c3e50")
+                                         #actionButton("ProcessInputData","Click Here Finalize and Process Input Data!", icon = icon("rotate-right"), width = "100%",
+                                         #             style = "background-color: #18bc9c; border-color: #2c3e50")
                                   )
                                 )
                ),
@@ -487,9 +499,9 @@ PatientLevel_tab_contents <- sidebarLayout(
                                   )
                                 ),
                                 div(virtualSelectInput(inputId = "SwimmerHoverSelect",label = "Hover-text Information:",
-                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = margin_adjust(-15,NA,app_lite)),
                                 div(virtualSelectInput(inputId = "HighlightEventSelect",label = "Highlight Event:",
-                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = "margin-top:-15px"),
+                                                       choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE), style = margin_adjust(-15,NA,app_lite)),
                ),
                conditionalPanel(condition = "input.PatientMainPanel == '2'",
                                 tags$div(
@@ -498,53 +510,56 @@ PatientLevel_tab_contents <- sidebarLayout(
                                   div(switchInput(inputId = "ChangePointLineOpt",label = NULL,value = FALSE,inline = TRUE, size = "small"),
                                       style = "margin-top:15px")
                                 )
-                                ),
+               ),
                conditionalPanel(condition = "input.PatientMainPanel == '2' & output.BiomarkerData",
-                                #div(h4("Line Plot Parameters:"), style = "margin-top:-20px"),
                                 conditionalPanel(condition = "output.SuppDataAdded",
                                                  div(selectInput("LinePlotTable","Data Table:",choices = NULL,
-                                                             selected = 1), style = "margin-top:-20px")
-                                                 ),
-                                div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = "margin-top:-20px"),
+                                                                 selected = 1), style = margin_adjust(-20,NA,app_lite))
+                                ),
+                                div(selectizeInput("LinePlotSub","Subset Table:",choices = NULL, selected = 1), style = margin_adjust(-20,NA,app_lite)),
                                 conditionalPanel(condition = "input.LinePlotSub != 'Select all data' && input.LinePlotSub != ''",
-                                                 div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = "margin-top:-25px")
+                                                 div(selectizeInput("LinePlotSubCrit","Subset criteria:",choices = NULL, selected = 1), style = margin_adjust(-25,NA,app_lite))
                                 ),
                                 conditionalPanel(condition = "output.SuppDataAdded",
                                                  fluidRow(
-                                                   column(6, style = "margin-top:-25px",
+                                                   column(6, style = margin_adjust(-25,NA,app_lite),
                                                           selectizeInput("LinePlotX","X-Axis", choice = NULL, selected = 1)
                                                    ),
-                                                   column(6, style = "margin-top:-25px",
+                                                   column(6, style = margin_adjust(-25,NA,app_lite),
                                                           selectInput("LinePlotXunits","X-Axis Units", choices = c("Hours","Days","Months","Years"), selected = "Years")
                                                    )
                                                  )
-                                                 ),
+                                ),
                                 fluidRow(
-                                  column(6, style = "margin-top:-30px",
+                                  column(6, style = margin_adjust(-30,NA,app_lite),
                                          selectizeInput("LinePlotY","Y-Axis", choice = NULL, selected = 1)
                                   ),
-                                  column(6, style = "margin-top:-30px",
-                                         selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1),
+                                  column(6, style = margin_adjust(-30,NA,app_lite),
+                                         selectizeInput("LinePunitCol","Y-Axis Units Column", choice = NULL, selected = 1,
+                                                        options = list(
+                                                          placeholder = 'Optional',
+                                                          onInitialize = I('function() { this.setValue(""); }')
+                                                        )),
                                          conditionalPanel(condition = "input.LinePunitCol != ''",
-                                                          div(selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1), style = "margin-top:-15px")
-                                                          )
+                                                          div(selectizeInput("LinePunitSelect","Y-Axis Units", choice = NULL, selected = 1), style = margin_adjust(-15,NA,app_lite,top_new = -10))
+                                         )
                                   )
                                 ),
                                 fluidRow(
-                                  column(6, style = "margin-top:-25px",
+                                  column(6, style = margin_adjust(-25,NA,app_lite),
                                          numericInput("linePlotCutP","User defined cut-point:",
                                                       value = NULL)
                                   ),
-                                  column(6, style = "margin-top:-25px",
+                                  column(6, style = margin_adjust(-25,NA,app_lite),
                                          textInput("linePlotCutPAnno","Cut-Point Annotation:", placeholder = "i.e. Adverse Event Name")
                                   )
                                 ),
                                 div(h4("Save Annotation:"), style = "margin-top:-20px"),
                                 fluidRow(
-                                  column(6, style = "margin-top:-15px",
+                                  column(6, style = margin_adjust(-15,NA,app_lite),
                                          actionButton("saveLinePlotAbvCutP","Above Cut-Point", width = "100%")
                                   ),
-                                  column(6, style = "margin-top:-15px",
+                                  column(6, style = margin_adjust(-15,NA,app_lite),
                                          actionButton("saveLinePlotBelCutP","Below Cut-Point", width = "100%")
                                   )
                                 )
@@ -743,29 +758,29 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                              )
                                                            ),
                                                            fluidRow(
-                                                             column(8,offset = 4, style = "margin-top:-60px",
+                                                             column(8,offset = 4, style = margin_adjust(-60,NA,app_lite,top_new = -40),
                                                                     materialSwitch(inputId = "ClusterHeatHover", label = "Enable Heatmap Hover",
                                                                                    value = FALSE, status = "success")
-                                                                    )
+                                                             )
                                                            ),
                                                            fluidRow(
-                                                             column(4, style = "margin-top:-25px",
+                                                             column(4, style = margin_adjust(-25,NA,app_lite),
                                                                     checkboxGroupInput("HeatClusterRC","Cluster:",choices = c("Rows","Columns"), selected = "Rows")
                                                              ),
-                                                             column(8, style = "margin-top:-25px",
+                                                             column(8, style = margin_adjust(-25,NA,app_lite),
                                                                     conditionalPanel(condition = "input.HeatClusterRC.includes('Rows') || input.HeatClusterRC.includes('Columns')",
                                                                                      selectInput("HeatClusterMethod","Cluster Method:",
                                                                                                  choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
                                                                     )
                                                              )
                                                            ),
-                                                           div(selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
-                                                           div(selectizeInput("HeatYchoices","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
+                                                           div(selectizeInput("HeatXchoices","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = margin_adjust(-15,NA,app_lite,top_new = 0)),
+                                                           div(selectizeInput("HeatYchoices","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = margin_adjust(-15,NA,app_lite,top_new = 0)),
                                                            fluidRow(
                                                              column(6, #style = "margin-top:0px",
                                                                     checkboxInput("HeatEventCapYN","Cap Number of Events",value = T)
                                                              ),
-                                                             column(6, style = "margin-top:-20px",
+                                                             column(6, style = margin_adjust(-20,NA,app_lite),
                                                                     conditionalPanel(condition = "input.HeatEventCapYN == true",
                                                                                      numericInput("HeatEventCapN","Number of Events Cap:", value = 20, min = 1, step = 1)
                                                                     )
@@ -807,7 +822,7 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                                     radioButtons("EventDurMaxSumHeat","Reduce duplicate patient events by:",
                                                                                  choices = c("Sum total duration per patient" = "sum","Max duration per patient" = "max")),
                                                                     div(materialSwitch(inputId = "DurHeatHover", label = "Enable Heatmap Hover",
-                                                                                   value = FALSE, status = "success"), style = "margin-top:-5px")
+                                                                                       value = FALSE, status = "success"), style = "margin-top:-5px")
                                                              ),
                                                              column(4,
                                                                     checkboxInput("HeatFlipDist","Flip Axes",value = FALSE),
@@ -815,23 +830,23 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                                              )
                                                            ),
                                                            fluidRow(
-                                                             column(4, style = "margin-top:-15px",
+                                                             column(4, style = margin_adjust(-15,NA,app_lite),
                                                                     checkboxGroupInput("HeatClusterRCDist","Cluster:",choices = c("Rows","Columns"), selected = c("Rows","Columns"))
                                                              ),
-                                                             column(8, style = "margin-top:-15px",
+                                                             column(8, style = margin_adjust(-15,NA,app_lite),
                                                                     conditionalPanel(condition = "input.HeatClusterRCDist.includes('Rows') || input.HeatClusterRCDist.includes('Columns')",
                                                                                      selectInput("HeatClusterMethodDist","Cluster Method:",
                                                                                                  choices = c("ward.D", "ward.D2", "complete", "single", "average", "mcquitty", "median", "centroid"))
                                                                     )
                                                              )
                                                            ),
-                                                           div(selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
-                                                           div(selectizeInput("HeatYchoicesDist","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = "margin-top:-15px"),
+                                                           div(selectizeInput("HeatXchoicesDist","X-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = margin_adjust(-15,NA,app_lite,top_new = 0)),
+                                                           div(selectizeInput("HeatYchoicesDist","Y-Axis Variables:", choices = NULL, selected = NULL, multiple = T), style = margin_adjust(-15,NA,app_lite,top_new = 0)),
                                                            fluidRow(
                                                              column(6, #style = "margin-top:0px",
                                                                     checkboxInput("HeatEventCapYNDist","Cap Duration",value = T),
                                                              ),
-                                                             column(6, style = "margin-top:-20px",
+                                                             column(6, style = margin_adjust(-20,NA,app_lite),
                                                                     conditionalPanel(condition = "input.HeatEventCapYNDist == true",
                                                                                      numericInput("HeatEventCapNDist","Duration Cap (Days):", value = 365, min = 1, step = 1)
                                                                     )
@@ -869,7 +884,7 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                          conditionalPanel(condition = "input.treatAnalytics == '1'",
                                           conditionalPanel(condition = "input.treatAnalyticsCls == '1'",
                                                            ColorPalSelect_UI("SankeyColorPal",default_col = "Okabe-Ito"),
-                                                           ),
+                                          ),
                                           conditionalPanel(condition = "input.treatAnalyticsCls == '2'",
                                                            h4("Heatmap Color Scheme"),
                                                            fluidRow(
@@ -1012,10 +1027,10 @@ TreatmentAnalytics_tab_contents <- sidebarLayout(
                                               p(),
                                               conditionalPanel(condition = "input.ClusterHeatHover == false",
                                                                shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmapNoHover",height = "800px", width = "100%"))
-                                                               ),
+                                              ),
                                               conditionalPanel(condition = "input.ClusterHeatHover == true",
                                                                shinyjqui::jqui_resizable(plotOutput("TreatClusterHeatmap",height = "800px", width = "100%", hover = "heatmap_hover"))
-                                                               ),
+                                              ),
                                               p(),
                                               fluidRow(column(3,
                                                               downloadButton("dnldTreatClusterHeatmap","SVG")
@@ -1144,72 +1159,147 @@ tte_tab_contents <- sidebarLayout(
     tabsetPanel(id = "ttetabsside",
                 tabPanel("Data Input",
                          p(),
-                         conditionalPanel(condition = "input.ttetabs == '1' | input.ttetabs == '2'",
-                                          conditionalPanel(condition = "input.ttetabs == '1'",
-                                                           fluidRow(
-                                                             column(6,
-                                                                    numericInput("maxpatview","Max Number of Patients", value = 40, min = 1, step = 1)
-                                                             ),
-                                                             column(6,
-                                                                    selectInput("swimmerSort","Sort Swimmer Plot By:",
-                                                                                choices = c("Time - Descending","Time - Ascending",
-                                                                                            "Alphabetical - Ascending","Alphabetical - Descending"))
-                                                             )
-                                                           ),
-                                                           fluidRow(
-                                                             column(9,
-                                                                    selectizeInput("swimmerPatSpec","Specify Patients to Include:",
-                                                                                   choices = NULL, selected = 1, multiple = TRUE)
-                                                             ),
-                                                             column(3, style = "margin-top:25px",
-                                                                    checkboxInput("swimmerShowAll","Show All",value = FALSE)
-                                                             )
-                                                           ),
+                         conditionalPanel(condition = "input.ttetabs == '3'",
+                                          p(),
+                                          conditionalPanel(condition = "output.SuppDataAdded",
+                                                           div(selectInput("mixeffTable","Data Table:",choices = NULL,
+                                                                           selected = 1), style = margin_adjust(-20,NA,app_lite))
                                           ),
-                                          conditionalPanel(condition = "input.ttetabs == '2'",
-                                                           div(h4("Data Selection"), style = "margin-bottom:-15px"),
-                                                           virtualSelectInput(inputId = "TTEstartEvent",label = "Select Start Point:",
-                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
-                                                           div(radioButtons("StartAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                                                               style = "margin-top:-40px;margin-bottom:-20px"),
-                                                           virtualSelectInput(inputId = "TTEstopEvent",label = "Select End Point - Progression Event:",
-                                                                              choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
-                                                           div(radioButtons("StopAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                                                               style = "margin-top:-40px"),
-                                                           conditionalPanel(condition = "input.ttetabs == '2'",
-                                                                            div(hr(),style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                            div(h4("Strata Selection"), style = "margin-bottom:-15px"),
-                                                                            selectizeInput("KPstrataDataTable","Data Table:",choices = NULL,
-                                                                                           options = list(
-                                                                                             placeholder = 'Please select an option below',
-                                                                                             onInitialize = I('function() { this.setValue(""); }')
-                                                                                           )),
-                                                                            conditionalPanel(condition = "input.KPstrataDataTable > '0' && input.KPstrataDataTable != 'No Strata'",
-                                                                                             div(selectizeInput("KPstrataCol","Strata Column:",choices = NULL, selected = 1),
-                                                                                                 style = "margin-top:-25px;margin-bottom:-15px"),
-                                                                                             fluidRow(
-                                                                                               column(8, style = "margin-top:-15px",
-                                                                                                      selectizeInput("KPstrataColGroups","X-Axis Groups:",choices = NULL,
-                                                                                                                     selected = 1, multiple = T)
-                                                                                               ),
-                                                                                               column(4,
-                                                                                                      checkboxInput("KPshowOtherGroup","Group Unselected Variables", value = T)
-                                                                                               )
-                                                                                             ),
-                                                                                             conditionalPanel(condition = "input.KPshowOtherGroup == true",
-                                                                                                              div(textInput("KPotherGroupName","Unselected Variables Group Name:"), style = "margin-top:-30px")
-                                                                                             )
-                                                                            )
-                                                           ),
-                                                           uiOutput("rendTTEexplHeader"),
-                                                           uiOutput("rendTTEexpl")
-                                          )
+                                          div(selectizeInput("mixeffSub","Subset Table:",choices = NULL, selected = 1), style = margin_adjust(-20,NA,app_lite)),
+                                          conditionalPanel(condition = "input.mixeffSub != 'Select all data' && input.mixeffSub != ''",
+                                                           div(selectizeInput("mixeffSubCrit","Subset criteria:",choices = NULL, selected = 1), style = margin_adjust(-25,NA,app_lite))
+                                          ),
+                                          conditionalPanel(condition = "output.SuppDataAdded",
+                                                           fluidRow(
+                                                             column(6, style = margin_adjust(-25,NA,app_lite),
+                                                                    selectizeInput("mixeffX","Time Column", choice = NULL, selected = 1)
+                                                             ),
+                                                             column(6, style = margin_adjust(-25,NA,app_lite),
+                                                                    selectInput("mixeffXunits","Time Units", choices = c("Hours","Days","Months","Years"), selected = "Years")
+                                                             )
+                                                           )
+                                          ),
+                                          fluidRow(
+                                            column(6, style = margin_adjust(-30,NA,app_lite,top_new = -15),
+                                                   selectizeInput("mixeffY","Mixed Effect Variable", choice = NULL, selected = 1)
+                                            ),
+                                            column(6, style = margin_adjust(-30,NA,app_lite,top_new = -15),
+                                                   selectizeInput("mixeffunitCol","Variable Units Column", choice = NULL, selected = 1,
+                                                                  options = list(
+                                                                    placeholder = 'Optional',
+                                                                    onInitialize = I('function() { this.setValue(""); }')
+                                                                  )),
+                                                   conditionalPanel(condition = "input.mixeffunitCol != ''",
+                                                                    div(selectizeInput("mixeffunitSelect","Variable Units", choice = NULL, selected = 1), style = margin_adjust(-15,NA,app_lite,top_new = -10))
+                                                   )
+                                            )
+                                          ),
+                                          fluidRow(
+                                            column(6, style = margin_adjust(-30,NA,app_lite,top_new = -15),
+                                                   numericInput("mixeffMaxFacet","Max Patient View", value = 20, min = 1, step = 1)
+                                            ),
+                                            column(6, style = margin_adjust(-30,NA,app_lite,top_new = -15),
+                                                   numericInput("mixeffNcols","Facet Columns", value = 5, min = 1, step = 1)
+                                            )
+                                          ),
+                                          div(radioButtons("mexeffStart","Model Start Point:",choices = c("First Event","First Treatment Event"),
+                                                           inline = T), style = margin_adjust(-20,-20,app_lite))
                          ),
-                         value = 1
+                         conditionalPanel(condition = "input.ttetabs == '1'",
+                                          div(h4("Data Selection"), style = margin_adjust(NA,-15,app_lite))
+                         ),
+                         conditionalPanel(condition = "input.ttetabs == '1' || (input.ttetabs == '3' && input.mexeffStart == 'First Treatment Event')",
+                                          virtualSelectInput(inputId = "TTEstartEvent",label = "Select Start Point:",
+                                                             choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                          div(radioButtons("StartAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
+                                              style = margin_adjust(-30,NA,app_lite))
+                         ),
+                         conditionalPanel(condition = "input.ttetabs == '3' && input.mexeffStart == 'First Treatment Event'",
+                                          div(radioButtons("mixeffVarStartOpt","Include Variables:",choices = c("Post Treatment","Pre & Post Treatment"),
+                                                           inline = T), style = margin_adjust(-20,-20,app_lite))
+                         ),
+                         conditionalPanel(condition = "input.ttetabs == '1'",
+                                          virtualSelectInput(inputId = "TTEstopEvent",label = "Select End Point - Progression Event:",
+                                                             choices = NULL,showValueAsTags = TRUE,search = TRUE,multiple = TRUE),
+                                          div(radioButtons("StopAndOr2","",choices = c("'Or' Statement","'And' Statement"), inline = T),
+                                              style = margin_adjust(-30,-20,app_lite,bot_new = -5)),
+                                          conditionalPanel(condition = "input.ttetabs == '1'",
+                                                           tabsetPanel(id = "kpstratacovar",
+                                                                       tabPanel("Strata Selection",
+                                                                                p(),
+                                                                                selectizeInput("KPstrataDataTable","Data Table:",choices = NULL,
+                                                                                               options = list(
+                                                                                                 placeholder = 'Please select an option below',
+                                                                                                 onInitialize = I('function() { this.setValue(""); }')
+                                                                                               )),
+                                                                                conditionalPanel(condition = "input.KPstrataDataTable > '0' && input.KPstrataDataTable != 'No Strata'",
+                                                                                                 div(selectizeInput("KPstrataCol","Strata Column:",choices = NULL, selected = 1),
+                                                                                                     style = margin_adjust(-20,-15,app_lite)),
+                                                                                                 fluidRow(
+                                                                                                   column(8, style = margin_adjust(-15,NA,app_lite),
+                                                                                                          selectizeInput("KPstrataColGroups","Strata Groups:",choices = NULL,selected = 1,multiple = T)
+                                                                                                   ),
+                                                                                                   column(4,
+                                                                                                          checkboxInput("KPshowOtherGroup","Group Unselected Variables", value = T)
+                                                                                                   )
+                                                                                                 ),
+                                                                                                 conditionalPanel(condition = "input.KPshowOtherGroup == true",
+                                                                                                                  div(textInput("KPotherGroupName","Unselected Variables Group Name:"), style = margin_adjust(-30,NA,app_lite))
+                                                                                                 )
+                                                                                )
+                                                                       ),
+                                                                       tabPanel("Covariate Selection",
+                                                                                selectizeInput("KPcovarDataTable","Data Table:",choices = NULL,
+                                                                                               options = list(
+                                                                                                 placeholder = 'Please select an option below',
+                                                                                                 onInitialize = I('function() { this.setValue(""); }')
+                                                                                               )),
+                                                                                conditionalPanel(condition = "input.KPcovarDataTable > '0' && input.KPcovarDataTable != 'No Strata'",
+                                                                                                 div(selectizeInput("KPcovarCol","Strata Column:",choices = NULL, selected = 1),
+                                                                                                     style = margin_adjust(-20,-15,app_lite)),
+                                                                                                 fluidRow(
+                                                                                                   column(8, style = margin_adjust(-15,NA,app_lite),
+                                                                                                          selectizeInput("KPcovarColGroups","Covariate Groups:",choices = NULL,selected = 1,multiple = T)
+                                                                                                   ),
+                                                                                                   column(4,
+                                                                                                          checkboxInput("KPcovarshowOtherGroup","Group Unselected Variables", value = T)
+                                                                                                   )
+                                                                                                 ),
+                                                                                                 conditionalPanel(condition = "input.KPcovarshowOtherGroup == true",
+                                                                                                                  div(textInput("KPcovarotherGroupName","Unselected Variables Group Name:"), style = margin_adjust(-30,NA,app_lite))
+                                                                                                 )
+                                                                                )
+                                                                       )
+                                                           )
+                                          ),
+                                          uiOutput("rendTTEexplHeader"),
+                                          uiOutput("rendTTEexpl")
+                         ),
+                         conditionalPanel(condition = "input.ttetabs == '2'",
+                                          fluidRow(
+                                            column(6,
+                                                   numericInput("maxpatview","Max Number of Patients", value = 40, min = 1, step = 1)
+                                            ),
+                                            column(6,
+                                                   selectInput("swimmerSort","Sort Swimmer Plot By:",
+                                                               choices = c("Time - Descending","Time - Ascending",
+                                                                           "Alphabetical - Ascending","Alphabetical - Descending"))
+                                            )
+                                          ),
+                                          fluidRow(
+                                            column(9,
+                                                   selectizeInput("swimmerPatSpec","Specify Patients to Include:",
+                                                                  choices = NULL, selected = 1, multiple = TRUE)
+                                            ),
+                                            column(3, style = "margin-top:25px",
+                                                   checkboxInput("swimmerShowAll","Show All",value = FALSE)
+                                            )
+                                          )
+                         ),value = 1
                 ),
                 tabPanel("Figure Settings",
                          p(),
-                         conditionalPanel(condition = "input.ttetabs == '2'",
+                         conditionalPanel(condition = "input.ttetabs == '1'",
                                           p(),
                                           h4("Survival Plot Parameters"),
                                           fluidRow(
@@ -1218,8 +1308,9 @@ tte_tab_contents <- sidebarLayout(
                                                    numericInput("SurvXaxisBreaks","X-Axis Breaks (Years):",value = 1, min = 0, step = 0.25),
                                                    selectInput("SurvLegendPos","Legend Position",choices = c("right","left","top","bottom","none"))
                                             ),
-                                            column(6, style = "margin-top:15px",
-                                                   radioButtons("SurvYearOrMonth","Survival X-Axis Units:",choices = c("Days","Years","Months"), inline = T, selected = "Years"),
+                                            column(6, #style = "margin-top:15px",
+                                                   #radioButtons("SurvYearOrMonth","Survival X-Axis Units:",choices = c("Days","Years","Months"), inline = T, selected = "Years"),
+                                                   radioButtons("SurvYearOrMonth","Survival X-Axis Units:",choices = c("Days","Years","Months"), selected = "Years"),
                                                    checkboxInput("ShowPval","Show P.Value",value = T),
                                                    checkboxInput("ShowConfInt","Show Confidence Interval",value = F),
                                                    checkboxInput("ShowMedSurvLine","Show Median Survival Line",value = F)
@@ -1239,17 +1330,17 @@ tte_tab_contents <- sidebarLayout(
                                             )
                                           )
                          ),
-                         conditionalPanel(condition = "input.ttetabs == '1'",
+                         conditionalPanel(condition = "input.ttetabs == '2'",
                                           h4("Figure Colors"),
                                           fluidRow(
                                             column(6,
                                                    colourInput("kpSwimPatBaseLine","Base Line:","#56B4E9"),
                                                    colourInput("kpSwimEventLine","Event Line:","#F0E442")
-                                                   ),
+                                            ),
                                             column(6,
                                                    colourInput("kpSwimStartEvent","Start Event:","#009E73"),
                                                    colourInput("kpSwimProgEvent","Progression Event:","#D55E00")
-                                                   )
+                                            )
                                           ),
                                           h4("Swimmers Plot Download Parameters"),
                                           fluidRow(
@@ -1261,12 +1352,39 @@ tte_tab_contents <- sidebarLayout(
                                             )
                                           )
                          ),
+                         conditionalPanel(condition = "input.ttetabs == '3'",
+                                          fluidRow(
+                                            column(6, style = margin_adjust(-10,NA,app_lite),
+                                                   colourInput("mixeffMod3Line","Model 3:","#0072B2"),
+                                                   numericInput("mixeffPanSpace","Panel Spacing (cm):",value = 2,step = 1,min = 0),
+                                                   numericInput("mixeffDotSize","Dot Size:",value = 1,step = 0.5,min = 0)
+                                            ),
+                                            column(6, style = margin_adjust(-10,NA,app_lite),
+                                                   colourInput("mixeffMod4Line","Model 4:","#D55E00"),
+                                                   selectInput("mixeffLegPos","Legend Position:",choices = c("Top" = "top","Bottom" = "bottom","Right" = "right","Left" = "left")),
+                                                   numericInput("mixeffLineSize","Line Thickness:",value = 1,step = 0.5,min = 0)
+                                            )
+                                          ),
+                                          div(h4("Font Sizes"), style = margin_adjust(-20,-20,app_lite, bot_new = -5)),
+                                          fluidRow(
+                                            column(6,
+                                                   numericInput("mixeffXTextSize","X-Axis Ticks:",value = 12,step = 1,min = 0),
+                                                   numericInput("mixeffYTextSize","Y-Axis Ticks:",value = 12,step = 1,min = 0),
+                                                   numericInput("mixeffLegTextSize","Legend:",value = 12,step = 1,min = 0)
+                                            ),
+                                            column(6,
+                                                   numericInput("mixeffXTitleSize","X-Axis Title:",value = 14,step = 1,min = 0),
+                                                   numericInput("mixeffYTitleSize","Y-Axis Title:",value = 14,step = 1,min = 0),
+                                                   numericInput("mixeffPlotTitleSize","Plot Titles:",value = 14,step = 1,min = 0)
+                                            )
+                                          )
+                         ),
                          value = 2
                 )
     )
   ),
   mainPanel(
-    p(),
+    #p(),
     span(textOutput("NoPatientsMatchError"), style="color:red"),
     tabsetPanel(id = "ttetabs",
                 tabPanel("Kaplan Meier",
@@ -1295,7 +1413,7 @@ tte_tab_contents <- sidebarLayout(
                                   downloadButton("dnldKPplotTable", "Download Table")
                            )
                          ),
-                         value = 2
+                         value = 1
                 ),
                 tabPanel("Swimmers Plot",
                          p(),
@@ -1307,8 +1425,20 @@ tte_tab_contents <- sidebarLayout(
                                   downloadButton("dnldswimmer_plotTable", "Download Table")
                            )
                          ),
-                         value = 1
-                )
+                         value = 2
+                ),
+                tabPanel("Mixed Effect Modeling",
+                         p(),
+                         span(textOutput("mixeffNoDataError"), style="color:red"),
+                         shinycssloaders::withSpinner(verbatimTextOutput("mixeffPlotSummary"), type = 6),
+                         p(),
+                         shinyjqui::jqui_resizable(plotOutput("mixeffPlot",height = "550px", width = "100%")),
+                         fluidRow(
+                           column(3,
+                                  downloadButton("dnldmixeffPlot", "SVG")
+                           )
+                         ),
+                         value = 3)
     )
   )
 )
@@ -1443,13 +1573,13 @@ CohortLevel_tab_contents <- sidebarLayout(
                        multiple = TRUE
                      ),
                      div(radioButtons("EOIEventAndOr","",choices = c("'Or' Statement","'And' Statement"), inline = T),
-                         style = "margin-top:-30px"),
+                         style = margin_adjust(-30,NA,app_lite)),
                      conditionalPanel(condition = "output.EOIEventSelect_gt1",
                                       textInput("EOIEventColName","Group Name for Events of Interest", placeholder = "CustomEventOfInterest")
                      ),
                      hr(),
                      div(materialSwitch(inputId = "AddAnnoWindow", label = "Add time window for EOI occurence relative to reference event start",
-                                        value = FALSE, status = "success", inline = T), style = "margin-top:-20px;margin-bottom:-20px"),
+                                        value = FALSE, status = "success", inline = T), style = margin_adjust(-15,-15,app_lite)),
                      conditionalPanel(condition = "input.AddAnnoWindow == true",
                                       h5("Time Window (Days)"),
                                       fluidRow(
@@ -1694,7 +1824,6 @@ if (!app_lite) {
 }
 
 
-
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
@@ -1786,7 +1915,7 @@ server <- function(input, output, session) {
       SankeyColorPal_sel <- ColorPalSelect_server("SankeyColorPal")
       KPplotColorPal_sel <- ColorPalSelect_server("KPplotColorPal")
       SwimSummColorPal_sel <- ColorPalSelect_server("SwimSummColorPal")
-
+      
       #observe({
       #  #colPalSelected <- ColorPalSelect_server("PatTimelineColorPal")
       #  #print(colPalSelected())
@@ -2017,7 +2146,7 @@ server <- function(input, output, session) {
         #et <- Sys.time()
         #print("LoadExampleData")
         #print(et-st)
-
+        
         ProjectName_react(input$UserProjectName)
         Param_File_react(NULL)
         Workbook_file_predf_react(NULL)
@@ -2345,7 +2474,7 @@ server <- function(input, output, session) {
           #et <- Sys.time()
           #print("process_input_react")
           #print(et-st)
-
+          
           ProjectName_react(input$UserProjectName)
           Param_File_react(NULL)
           Workbook_file_predf_react(NULL)
@@ -2787,7 +2916,7 @@ server <- function(input, output, session) {
       observe({
         req(wkbk_react_sub())
         wkbk_names <- names(wkbk_react_sub())
-        wkbk_names <- c(wkbk_names,"ShinyEvents Treatment Clusters")
+        wkbk_names <- c("ShinyEvents Treatment Clusters",wkbk_names)
         updateSelectizeInput(session,"KPstrataDataTable",choices = c("No Strata",wkbk_names),
                              options = list(
                                placeholder = 'Please select an option below',
@@ -3990,7 +4119,7 @@ server <- function(input, output, session) {
                 ggplot2::scale_x_continuous(limits=c(min(c(p1_xlim,p2_xlim), na.rm = T), max(c(p1_xlim,p2_xlim), na.rm = T)))
               p2 <- plotly::ggplotly(line_p)
               p_out <- subplot(p1, p2, nrows = 2, shareY = TRUE, shareX = TRUE,
-                                titleY = TRUE, titleX = TRUE, which_layout = 1)
+                               titleY = TRUE, titleX = TRUE, which_layout = 1)
               p_out <- p_out %>%
                 layout(margin = list(t = 50))
             }
@@ -4080,8 +4209,10 @@ server <- function(input, output, session) {
         Clin_Supp_List <- wkbk_react_sub()
         AppTimeUnits <- GlobalAppTimeUnit_react()
         Choices <- colnames(lineP_df)[-1]
-        if (input$LinePlotSub != "Select all data") {
-          Choices <- Choices[which(Choices!=input$LinePlotSub)]
+        if (isTruthy(input$LinePlotSub)) {
+          if (input$LinePlotSub != "Select all data") {
+            Choices <- Choices[which(Choices!=input$LinePlotSub)]
+          }
         }
         if (length(Clin_Supp_List) > 1) {
           LinePlotXPred <- ifelse(any(grepl("^AgeAtLabResults",Choices,ignore.case = T)),grep("^AgeAtLabResults",Choices,ignore.case = T, value = T)[1],NA)
@@ -4328,34 +4459,34 @@ server <- function(input, output, session) {
         #st <- Sys.time()
         withProgress(message = "Processing", value = 0, {
           incProgress(0.25, detail = "Formatting Sankey Data")
-        sankey_clusters_cast_sub <- sankey_clusters_cast[,c(colnames(sankey_clusters_cast)[1],SankeyXgroups)]
-        if (cat_NA) {
-          sankey_clusters_cast_sub[is.na(sankey_clusters_cast_sub)] <- "NA"
-        }
-        sankey_clusters_cast_sub <- sankey_clusters_cast_sub[which(rowSums(!is.na(sankey_clusters_cast_sub)) > 1),]
-        sankey_clusters_cast_sub_plot <- do.call(rbind, apply(sankey_clusters_cast_sub, 1, function(x) {
-          Name <- x[1]
-          x <- na.omit(x[-1])
-          data.frame(Name = Name,
-                     x = names(x), node = x,
-                     next_x = dplyr::lead(names(x)),
-                     next_node = dplyr::lead(x), row.names = NULL)
-        })) %>%
-          mutate(x = factor(x, names(sankey_clusters_cast_sub)[-1]),
-                 next_x = factor(next_x, names(sankey_clusters_cast_sub)[-1])) %>%
-          as.data.frame()
-        sankey_clusters_cast_sub_plot$x <- factor(sankey_clusters_cast_sub_plot$x, levels = SankeyXgroups)
-        sankey_clusters_cast_sub_plot$next_x <- factor(sankey_clusters_cast_sub_plot$next_x, levels = SankeyXgroups)
-        incProgress(0.25, detail = "Tallying Groups")
-        sankey_clusters_cast_sub_plot_n <- sankey_clusters_cast_sub_plot %>%
-          group_by(across(all_of(c("x", "node")))) %>%
-          tally() %>%
-          as.data.frame()
-        incProgress(0.25, detail = "Merging")
-        sankey_clusters_cast_sub_plot2 <- merge(sankey_clusters_cast_sub_plot,
-                                                sankey_clusters_cast_sub_plot_n,
-                                                all.x = TRUE)
-        incProgress(0.25, detail = "Complete!")
+          sankey_clusters_cast_sub <- sankey_clusters_cast[,c(colnames(sankey_clusters_cast)[1],SankeyXgroups)]
+          if (cat_NA) {
+            sankey_clusters_cast_sub[is.na(sankey_clusters_cast_sub)] <- "NA"
+          }
+          sankey_clusters_cast_sub <- sankey_clusters_cast_sub[which(rowSums(!is.na(sankey_clusters_cast_sub)) > 1),]
+          sankey_clusters_cast_sub_plot <- do.call(rbind, apply(sankey_clusters_cast_sub, 1, function(x) {
+            Name <- x[1]
+            x <- na.omit(x[-1])
+            data.frame(Name = Name,
+                       x = names(x), node = x,
+                       next_x = dplyr::lead(names(x)),
+                       next_node = dplyr::lead(x), row.names = NULL)
+          })) %>%
+            mutate(x = factor(x, names(sankey_clusters_cast_sub)[-1]),
+                   next_x = factor(next_x, names(sankey_clusters_cast_sub)[-1])) %>%
+            as.data.frame()
+          sankey_clusters_cast_sub_plot$x <- factor(sankey_clusters_cast_sub_plot$x, levels = SankeyXgroups)
+          sankey_clusters_cast_sub_plot$next_x <- factor(sankey_clusters_cast_sub_plot$next_x, levels = SankeyXgroups)
+          incProgress(0.25, detail = "Tallying Groups")
+          sankey_clusters_cast_sub_plot_n <- sankey_clusters_cast_sub_plot %>%
+            group_by(across(all_of(c("x", "node")))) %>%
+            tally() %>%
+            as.data.frame()
+          incProgress(0.25, detail = "Merging")
+          sankey_clusters_cast_sub_plot2 <- merge(sankey_clusters_cast_sub_plot,
+                                                  sankey_clusters_cast_sub_plot_n,
+                                                  all.x = TRUE)
+          incProgress(0.25, detail = "Complete!")
         })
         #et <- Sys.time()
         #print("sankeyEvent_df_react")
@@ -4552,7 +4683,7 @@ server <- function(input, output, session) {
               cluster_event_df_cast_mat <- as.matrix(t(cluster_event_df_cast_mat))
             }
             incProgress(0.3, detail = "Complete!")
-            })
+          })
           #et <- Sys.time()
           #print("TreatClusterHeatmapdf_react")
           #print(et-st)
@@ -4648,7 +4779,7 @@ server <- function(input, output, session) {
                                              rect_gp = cell_border,
                                              border = FALSE)
                 incProgress(0.3, detail = "Rendering Heatmap")
-                })
+              })
               p
               #et <- Sys.time()
               #print("TreatClusterHeatmap_react")
@@ -4797,7 +4928,7 @@ server <- function(input, output, session) {
             unique() %>%
             as.data.frame()
           incProgress(0.25, detail = "Complete!")
-          })
+        })
         #et <- Sys.time()
         #print("EventBoxPlotdf_react")
         #print(et-st)
@@ -4859,7 +4990,7 @@ server <- function(input, output, session) {
                 )
               )
             incProgress(0.5, detail = "Complete!")
-            })
+          })
           #et <- Sys.time()
           #print("EventBoxPlot_react")
           #print(et-st)
@@ -4987,7 +5118,7 @@ server <- function(input, output, session) {
             event_data_dur <- as.matrix(t(event_data_dur))
           }
           incProgress(0.3, detail = "Complete!")
-          })
+        })
         #et <- Sys.time()
         #print("TreatDistHeatmapdf_react")
         #print(et-st)
@@ -5057,7 +5188,7 @@ server <- function(input, output, session) {
                                            rect_gp = cell_border,
                                            border = FALSE)
               incProgress(0.3, detail = "Rendering Heatmap")
-              })
+            })
             p
             #et <- Sys.time()
             #print("TreatDistHeatmap_react")
@@ -5238,7 +5369,7 @@ server <- function(input, output, session) {
             unique() %>%
             as.data.frame()
           incProgress(0.25, detail = "Complete!")
-          })
+        })
         #et <- Sys.time()
         #print("DurationSwimmers_plot_df")
         #print(et-st)
@@ -5350,7 +5481,7 @@ server <- function(input, output, session) {
               main_events <- ply_df %>%
                 filter(Event == full_event_name)
               incProgress(0.4, detail = "Rendering Swimmers Plot")
-              })
+            })
             #et <- Sys.time()
             #print("DurationSwimmers_plot_react")
             #print(et-st)
@@ -5438,7 +5569,8 @@ server <- function(input, output, session) {
         treat_resp_choices_summ <- treat_resp_choices[treat_resp_choices_summ_names]
         treat_resp_choices <- c(treat_resp_choices[grep("Summary|Cluster",names(treat_resp_choices),invert = T)],
                                 treat_resp_choices_summ,treat_resp_choices_cls)
-        start_terms <- c("medication","drug","treatment","diagnosis")
+        start_terms <- c("Medications Oncologic","medication","drug","treatment","diagnosis")
+        #save(list = ls(), file = "TTEstartEvent.RData", envir = environment())
         start_terms_found <- sapply(start_terms,function(x) {
           grep(x,names(treat_resp_choices),ignore.case = T)[1]
         })
@@ -5505,6 +5637,7 @@ server <- function(input, output, session) {
         Patient_Event_Data <- event_data()
         start_events <- input$TTEstartEvent
         AndOr <- input$StartAndOr2
+        #save(list = ls(), file = "EventData_wStartPoint.RData", envir = environment())
         if (AndOr == "'Or' Statement") {
           Patient_Event_Data <- Patient_Event_Data %>%
             #group_by(Name) %>%
@@ -5592,6 +5725,7 @@ server <- function(input, output, session) {
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         AndOrstop <- input$StopAndOr2
+        #save(list = ls(), file = "cohort_EventSumm_df.RData", envir = environment())
         if (nrow(Patient_Event_Data) > 0) {
           if (AndOrstop == "'Or' Statement") {
             Patient_Event_Data <- Patient_Event_Data %>%
@@ -5656,6 +5790,8 @@ server <- function(input, output, session) {
       
       ## KP -------------------------------------------------------------------
       
+      # KPcovarDataTable  KPcovarCol  KPcovarColGroups  KPcovarshowOtherGroup  KPcovarotherGroupName
+      
       cohort_TTE_table_wInfo <- reactive({
         req(cohort_EventSumm_df())
         Patient_Event_Data_sub_ETC3 <- cohort_EventSumm_df()
@@ -5664,6 +5800,7 @@ server <- function(input, output, session) {
         start_events <- input$TTEstartEvent
         stop_events <- input$TTEstopEvent
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
+        #save(list = ls(), file = "cohort_TTE_table_wInfo.RData", envir = environment())
         Patient_Event_Data_sub_ETC4 <- Patient_Event_Data_sub_ETC3
         Patient_event_info <- Patient_Event_Data_sub_ETC4 %>%
           filter(Event %in% c(start_events,stop_events)) %>%
@@ -5695,6 +5832,7 @@ server <- function(input, output, session) {
       cohort_TTE_table <- reactive({
         req(cohort_TTE_table_wInfo())
         plot_df <- cohort_TTE_table_wInfo()
+        #save(list = ls(), file = "cohort_TTE_table.RData", envir = environment())
         plot_df <- plot_df %>%
           select(-any_of(c("Start_Event","Progression_Event","Start_Time_Point","End_Time_Point","Final_Time_Point"))) %>%
           as.data.frame()
@@ -5716,6 +5854,7 @@ server <- function(input, output, session) {
         strata_col <- input$KPstrataCol
         strata_groups <- input$KPstrataColGroups
         Clin_Supp_List <- wkbk_react_anno_sub()
+        #save(list = ls(), file = "cohort_TTE_table_strata.RData", envir = environment())
         if (isTruthy(input$KPstrataDataTable)) {
           if (isTruthy(strata_col)) {
             if (kp_dt == "ShinyEvents Treatment Clusters") {
@@ -5769,6 +5908,7 @@ server <- function(input, output, session) {
         plot_df <- cohort_TTE_table_strata()
         strata_col <- input$KPstrataCol
         ref_var <- input$KPplotHRtab_RefSelect
+        #save(list = ls(), file = "KPplotHRtab_react.RData", envir = environment())
         if (ncol(plot_df) == 4) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
@@ -5780,7 +5920,7 @@ server <- function(input, output, session) {
                 form <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
                 tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
                 incProgress(0.3, detail = "Complete!")
-                })
+              })
               #et <- Sys.time()
               #print("KPplotHRtab_react")
               #print(et-st)
@@ -5798,6 +5938,7 @@ server <- function(input, output, session) {
         tab <- KPplotHRtab_react()
         ref_var <- input$KPplotHRtab_RefSelect
         strata_col <- input$KPstrataCol
+        #save(list = ls(), file = "KPplotHRtab.RData", envir = environment())
         strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
         tab_vars <- tab[["xlevels"]][[1]]
         ref_var <- tab_vars[1]
@@ -5868,24 +6009,25 @@ server <- function(input, output, session) {
         SurvXaxis <- input$SurvXaxis
         ShowConfInt <- input$ShowConfInt
         colorPal <- KPplotColorPal_sel()
+        strata_col <- input$KPstrataCol
+        showMedSurv <- input$ShowMedSurvLine
+        dOm <- input$SurvYearOrMonth
+        xBreaks <- input$SurvXaxisBreaks
+        #save(list = ls(), file = "cohort_TTE_table_KP_react.RData", envir = environment())
         
         if (colorPal == "Standard colors") {
           colorPal <- NULL 
         }
         if (nrow(plot_df) > 1) {
-          strata_col <- input$KPstrataCol
-          showMedSurv <- input$ShowMedSurvLine
           if (showMedSurv == T) {
             showMedSurv <- "hv"
           }
           else if (showMedSurv == F) {
             showMedSurv <- "none"
           }
-          dOm <- input$SurvYearOrMonth
           scale_vec <- c("Days" = 1,"Years" = 365.25,"Months" = 30.4375)
           scale <- scale_vec[[dOm]]
           xlab <- dOm
-          xBreaks <- input$SurvXaxisBreaks
           xBreaks <- xBreaks*scale_vec[[dOm]]
           if (max(plot_df$time) < xBreaks) {
             xBreaks <- NULL
@@ -6070,7 +6212,7 @@ server <- function(input, output, session) {
                 EventEnd == Final_Time_Point ~ "Final Recorded Time Point"
               ), .by = Name) %>%
               relocate(swimmer_event, .after = Name) #%>%
-              #ungroup()
+            #ungroup()
             event_types <- c("First Recorded Time Point", "Start Event", "Progression Event", "Final Recorded Time Point")
             incProgress(0.25, detail = "Summarizing Event Details")
             Patient_Event_Data3 <- Patient_Event_Data2 %>%
@@ -6130,7 +6272,7 @@ server <- function(input, output, session) {
             Patient_Event_Data3_cast$Index <- as.numeric(factor(Patient_Event_Data3_cast[,1]))
             Patient_Event_Data3_cast_det <- merge(Patient_Event_Data3_cast,Patient_Event_Data3[,-c(4,5)], all = T)
             colnames(Patient_Event_Data3_cast_det)[which(colnames(Patient_Event_Data3_cast_det) == "swimmer_event")] <- "Event"
-            })
+          })
           #et <- Sys.time()
           #print("swimmer_plot_df")
           #print(et-st)
@@ -6346,7 +6488,7 @@ server <- function(input, output, session) {
                     filename = paste0("Time_To_Event_Swimmers_",Sys.Date())
                   )
                 )
-              })
+            })
             #et <- Sys.time()
             #print("swimmer_plot_react")
             #print(et-st)
@@ -6408,6 +6550,254 @@ server <- function(input, output, session) {
           write.table(plot_df,file, sep = '\t', row.names = F)
         }
       )
+      
+      ## Mixed Effect ----------------------------------------------------------
+      
+      
+      observe({
+        req(wkbk_react_anno_sub())
+        wkbk_names <- names(wkbk_react_anno_sub())
+        preSelect_lineplot <- ifelse(any(grepl("lab",wkbk_names, ignore.case = T)),grep("lab",wkbk_names, ignore.case = T, value = T)[1],wkbk_names[1])
+        updateSelectInput(session,"mixeffTable",choices = wkbk_names,selected = preSelect_lineplot)
+      })
+      mixeff_df_react <- reactiveVal(NULL)
+      mixeff_dfname_react <- reactiveVal(NULL)
+      observe({
+        req(wkbk_react_anno_sub())
+        Clin_Supp_List <- wkbk_react_anno_sub()
+        dataTab <- input$mixeffTable
+        #save(list = ls(), file = "mixeff_df_react.RData", envir = environment())
+        if (isTruthy(dataTab) & length(Clin_Supp_List) > 1) {
+          df <- Clin_Supp_List[[dataTab]]
+          mixeff_df_react(df)
+          mixeff_dfname_react(dataTab)
+        } else {
+          df <- Clin_Supp_List[[1]]
+          mixeff_df_react(df)
+          mixeff_dfname_react("InputData")
+        }
+      })
+      observe({
+        req(mixeff_df_react())
+        mixeff_df <- mixeff_df_react()
+        xChoices <- colnames(mixeff_df)[-1]
+        if (any(grepl("LabTest",xChoices, ignore.case = T))) {
+          PreSelect <- grep("LabTest",xChoices,ignore.case = T,value = T)[1]
+        } else {
+          PreSelect <- "Select all data"
+        }
+        updateSelectizeInput(session,"mixeffSub", choices = c("Select all data",xChoices), server = T, selected = PreSelect)
+      })
+      observe({
+        req(input$mixeffSub)
+        if (input$mixeffSub != "Select all data") {
+          req(mixeff_df_react())
+          mixeff_df <- mixeff_df_react()
+          choices <- sort(unique(mixeff_df[,input$mixeffSub]))
+          updateSelectizeInput(session,"mixeffSubCrit",choices = choices, selected = choices[1], server = T)
+        }
+      })
+      observe({
+        req(mixeff_df_react())
+        mixeff_df <- mixeff_df_react()
+        Clin_Supp_List <- wkbk_react_anno_sub()
+        AppTimeUnits <- GlobalAppTimeUnit_react()
+        Choices <- colnames(mixeff_df)[-1]
+        if (isTruthy(input$mixeffSub)) {
+          if (input$mixeffSub != "Select all data") {
+            Choices <- Choices[which(Choices!=input$mixeffSub)]
+          }
+        }
+        if (length(Clin_Supp_List) > 1) {
+          mixeffXPred <- ifelse(any(grepl("^AgeAtLabResults",Choices,ignore.case = T)),grep("^AgeAtLabResults",Choices,ignore.case = T, value = T)[1],NA)
+        } else {
+          mixeffXPred <- "EventStart"
+          updateSelectInput(session,"mixeffXunits", selected = AppTimeUnits)
+        }
+        unitColPred <- ifelse(any(grepl("unit",Choices,ignore.case = T)),grep("unit",Choices,ignore.case = T, value = T)[1],NA)
+        mixeffYPred <- ifelse(any(grepl("^LabResults",Choices,ignore.case = T)),grep("^LabResults",Choices,ignore.case = T, value = T)[1],NA)
+        updateSelectizeInput(session,"mixeffX", choices = Choices, selected = mixeffXPred)
+        updateSelectizeInput(session,"mixeffY", choices = Choices, selected = mixeffYPred)
+        updateSelectizeInput(session,"mixeffunitCol", choices = Choices, selected = unitColPred)
+      })
+      observe({
+        req(mixeff_df_react())
+        req(input$mixeffunitCol)
+        mixeff_df <- mixeff_df_react()
+        tab_sub <- input$mixeffSub
+        tab_crit <- input$mixeffSubCrit
+        if (tab_sub != "Select all data" & tab_sub %in% colnames(mixeff_df)) {
+          req(tab_crit)
+          mixeff_df <- mixeff_df[which(mixeff_df[,tab_sub] == tab_crit),]
+        }
+        yChoices <- unique(mixeff_df[,input$mixeffunitCol])
+        updateSelectizeInput(session,"mixeffunitSelect",choices = yChoices, selected = yChoices[1])
+      })
+      mixeffPlot_df <- reactive({
+        req(mixeff_df_react())
+        req(input$mixeffSub)
+        mixeff_df <- mixeff_df_react()
+        tab_sub <- input$mixeffSub
+        tab_crit <- input$mixeffSubCrit
+        xAxis <- input$mixeffX
+        yAxis <- input$mixeffY
+        xAxisUnits <- input$mixeffXunits
+        AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
+        mexeffStart <- input$mexeffStart
+        mixeffVarStartOpt <- input$mixeffVarStartOpt
+        start_events <- input$TTEstartEvent
+        startAndOr <- input$StartAndOr2
+        plot_df <- mixeff_df
+        #save(list = ls(), file = "mixeffPlot_df.RData", envir = environment())
+        if (tab_sub != "Select all data" & tab_sub %in% colnames(mixeff_df)) {
+          plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
+        }
+        if (all(c(isTruthy(xAxis),isTruthy(yAxis)))) {
+          plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
+          plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
+          plot_df[,xAxis] <- round(convert_time_units(suppressWarnings(as.numeric(plot_df[,xAxis])),tolower(xAxisUnits),AppTimeUnits), 2)
+          plot_df <- plot_df %>%
+            select(any_of(c(colnames(plot_df)[1],yAxis,xAxis))) %>%
+            filter(!is.na(!!sym(yAxis))) %>%
+            filter(length(!!sym(colnames(plot_df)[1])) > 1, .by = !!sym(colnames(plot_df)[1])) #%>%
+          if (mexeffStart == "First Event") {
+            plot_df <- plot_df %>%
+              mutate(!!sym(xAxis) := !!sym(xAxis) - min(!!sym(xAxis), na.rm = T), .by = !!sym(colnames(plot_df)[1])) %>%
+              as.data.frame()
+          } else if (mexeffStart == "First Treatment Event") {
+            req(start_events)
+            req(cohort_EventSumm_df())
+            event_data <- cohort_EventSumm_df()
+            event_data_start <- unique(event_data[,c("Name","Start_Time_Point")])
+            plot_df <- merge(plot_df,event_data_start, by.x = colnames(plot_df)[1], by.y = "Name")
+            plot_df <- plot_df %>%
+              mutate(!!sym(xAxis) := !!sym(xAxis) - Start_Time_Point) %>%
+              select(-Start_Time_Point) %>%
+              as.data.frame()
+            if (mixeffVarStartOpt == "Post Treatment") {
+              plot_df <- plot_df[which(plot_df[,xAxis] > 0),]
+            }
+          }
+          plot_df
+        } else {
+          return(NULL)
+        }
+      })
+      mixeffPlot_df_cleanNames <- reactive({
+        req(mixeffPlot_df())
+        MixedEffect_Data <- mixeffPlot_df()
+        # Clean names for formula
+        colnames(MixedEffect_Data) <- sapply(colnames(MixedEffect_Data),function(x) {
+          x <- gsub("[[:punct:]]","_",x)
+          x <- sprintf(ifelse((grepl(" ", x) | !is.na(suppressWarnings(as.numeric(substring(x, 1, 1))))), "`%s`", "%s"), x)
+          return(x)
+        })
+        MixedEffect_Data
+      })
+      output$mixeffNoDataError <- renderText({
+        req(mixeffPlot_df_cleanNames())
+        MixedEffect_Data <- mixeffPlot_df_cleanNames()
+        if (nrow(MixedEffect_Data) == 0) {
+          "No data available for current parameters selected"
+        } else {
+          NULL
+        }
+      })
+      mixeff_models <- reactive({
+        req(mixeffPlot_df_cleanNames())
+        MixedEffect_Data <- mixeffPlot_df_cleanNames()
+        if (nrow(MixedEffect_Data) > 1) {
+          name_var <- colnames(MixedEffect_Data)[1]
+          me_var <- colnames(MixedEffect_Data)[2]
+          time_var <- colnames(MixedEffect_Data)[3]
+          model2_form <- as.formula(paste0(me_var," ~ 1 + (1 | ",name_var,")"))
+          model2 <- lmer(model2_form, data = MixedEffect_Data)
+          model3_form <- as.formula(paste0(me_var," ~ 1 + ",time_var," + (1 | ",name_var,")"))
+          model3 <- lmer(model3_form, data = MixedEffect_Data)
+          model4_form <- as.formula(paste0(me_var," ~ 1 + ",time_var," + (1 + ",time_var," | ",name_var,")"))
+          model4 <- lmer(model4_form, data = MixedEffect_Data)
+          list(model2 = model2,model3 = model3,model4 = model4)
+        }
+      })
+      
+      mixeffPlot_df_react <- reactive({
+        req(mixeffPlot_df_cleanNames())
+        req(mixeff_models())
+        mixeff_models <- mixeff_models()
+        mixeff_model3 <- mixeff_models[["model3"]]
+        mixeff_model4 <- mixeff_models[["model4"]]
+        MixedEffect_Data <- mixeffPlot_df_cleanNames()
+        facet_pat_n <- input$mixeffMaxFacet
+        mexeffStart <- input$mexeffStart
+        mixeffVarStartOpt <- input$mixeffVarStartOpt
+        #save(list = ls(), file = "mixeffPlot_df_react.RData", envir = environment())
+        model3_fit <- fitted(mixeff_model3)
+        model4_fit <- fitted(mixeff_model4)
+        MixedEffect_Data$Model3 <- model3_fit
+        MixedEffect_Data$Model4 <- model4_fit
+        MixedEffect_Data <- MixedEffect_Data[which(MixedEffect_Data[,1] %in% unique(MixedEffect_Data[,1])[c(1:facet_pat_n)]),]
+        MixedEffect_Data
+      })
+      
+      # mexeffStart  c("First Event","First Treatment Event")  mixeffVarStartOpt  c("Post Treatment","Pre & Post Treatment")
+      
+      mixeffPlot_react <- reactive({
+        req(mixeffPlot_df_react())
+        MixedEffect_Data <- mixeffPlot_df_react()
+        name_var <- colnames(MixedEffect_Data)[1]
+        me_var <- colnames(MixedEffect_Data)[2]
+        time_var <- colnames(MixedEffect_Data)[3]
+        facet_col_n <- input$mixeffNcols
+        
+        mixeffMod3Line <- input$mixeffMod3Line
+        mixeffMod4Line <- input$mixeffMod4Line
+        mixeffPanSpace <- input$mixeffPanSpace
+        mixeffLegPos <- input$mixeffLegPos
+        mixeffDotSize <- input$mixeffDotSize
+        mixeffLineSize <- input$mixeffLineSize
+        mixeffPlotTitleSize <- input$mixeffPlotTitleSize
+        mixeffXTitleSize <- input$mixeffXTitleSize
+        mixeffXTextSize <- input$mixeffXTextSize
+        mixeffYTitleSize <- input$mixeffYTitleSize
+        mixeffYTextSize <- input$mixeffYTextSize
+        mixeffLegTextSize <- input$mixeffLegTextSize
+        
+        #save(list = ls(), file = "mixeffPlot_react.RData", envir = environment())
+        
+        p <- ggplot(MixedEffect_Data, aes(!!sym(time_var), !!sym(me_var), group=!!sym(name_var))) + 
+          geom_point(size = mixeffDotSize) + 
+          geom_line(aes(y=Model3, color = "Model 3"), linetype=1, linewidth = mixeffLineSize) + 
+          geom_line(aes(y=Model4, color = "Model 4"), linetype=2, linewidth = mixeffLineSize) + 
+          facet_wrap(~MixedEffect_Data[[name_var]], ncol=facet_col_n, scales = "free_x") +  
+          scale_x_continuous(breaks=min_max_breaks(),expand = expansion(mult = 0))  + 
+          theme_minimal() +
+          scale_color_manual(name = "Mixed Effect Model",values = c("Model 3" = mixeffMod3Line, "Model 4" = mixeffMod4Line)) +
+          theme(panel.spacing.x = unit(mixeffPanSpace, "cm"),
+                legend.position = mixeffLegPos,
+                strip.text = element_text(size = mixeffPlotTitleSize),
+                axis.text.x = element_text(size = mixeffXTextSize),
+                axis.text.y = element_text(size = mixeffYTextSize),
+                axis.title.x = element_text(size = mixeffXTitleSize),
+                axis.title.y = element_text(size = mixeffYTitleSize),
+                legend.text = element_text(size = mixeffLegTextSize),
+                legend.title = element_text(size = mixeffLegTextSize))
+        p
+      })
+      
+      output$mixeffPlot <- renderPlot({
+        req(mixeffPlot_react())
+        p <- mixeffPlot_react()
+        p
+      })
+      output$mixeffPlotSummary <- renderPrint({
+        req(mixeff_models())
+        mixeff_models <- mixeff_models()
+        mixeff_model2 <- mixeff_models[["model2"]]
+        mixeff_model3 <- mixeff_models[["model3"]]
+        mixeff_model4 <- mixeff_models[["model4"]]
+        mixeff_anova <- anova(mixeff_model2,mixeff_model3,mixeff_model4)
+        mixeff_anova
+      })
       
       # Cohort Summary ---------------------------------------------------------
       
@@ -6529,7 +6919,7 @@ server <- function(input, output, session) {
           Patient_Event_Data_summ3$Index <- as.numeric(factor(Patient_Event_Data_summ3$Name))
           ply_df <- Patient_Event_Data_summ3
           incProgress(0.25, detail = "Complete!")
-          })
+        })
         #et <- Sys.time()
         #print("summ_swimmer_plot_df")
         #print(et-st)
@@ -6708,11 +7098,11 @@ server <- function(input, output, session) {
                     filename = paste0("Event_Summary_Swimmers_",Sys.Date())
                   )
                 )
-              })
+            })
             #et <- Sys.time()
             #print("summ_swimmer_plot_react")
             #print(et-st)
-
+            
             
             p_out
           }
