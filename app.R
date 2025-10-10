@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20251008")
+version_id <- paste0("v1.0.20251010")
 
 # lite swap able
 
@@ -19,13 +19,6 @@ Data_Contains_Longitudinal_Biomarkers <- FALSE
 # Does user want password Protection?
 Password_Protected <- FALSE
 PasswordSet <- ''
-
-
-
-
-
-
-
 
 
 
@@ -1249,6 +1242,9 @@ tte_tab_contents <- sidebarLayout(
                                                                                 )
                                                                        ),
                                                                        tabPanel("Covariate Selection",
+                                                                                p(),
+                                                                                materialSwitch(inputId = "KPcovarTurnOn", label = "Include covariate in analysis",
+                                                                                               value = FALSE, status = "success"),
                                                                                 selectizeInput("KPcovarDataTable","Data Table:",choices = NULL,
                                                                                                options = list(
                                                                                                  placeholder = 'Please select an option below',
@@ -1317,6 +1313,18 @@ tte_tab_contents <- sidebarLayout(
                                             )
                                           ),
                                           ColorPalSelect_UI("KPplotColorPal"),
+                                          h4("Font Sizes"),
+                                          fluidRow(
+                                            column(4,
+                                                   numericInput("KPplotAxisF","Axis",value = 12, min = 0, step = 1)
+                                            ),
+                                            column(4,
+                                                   numericInput("KPplotlegF","Legend",value = 12, min = 0, step = 1)
+                                            ),
+                                            column(4,
+                                                   numericInput("KPplottabF","Table",value = 5, min = 0, step = 1)
+                                            )
+                                          ),
                                           h4("Kaplan Meier Plot Download Parameters"),
                                           fluidRow(
                                             column(4,
@@ -1390,15 +1398,26 @@ tte_tab_contents <- sidebarLayout(
                 tabPanel("Kaplan Meier",
                          p(),
                          fluidRow(
-                           column(8,
+                           column(7,
                                   shinyjqui::jqui_resizable(plotOutput("KPplot",height = "500",width = "100%"))
                            ),
-                           column(4,
+                           column(5,
                                   conditionalPanel(condition = "input.KPstrataCol != ''",
-                                                   selectizeInput("KPplotHRtab_RefSelect","Reference Characteristic:", choices = NULL, selected = 1)
+                                                   fluidRow(
+                                                     column(6,
+                                                            selectizeInput("KPplotHRtab_RefSelect","Strata Reference:", choices = NULL, selected = 1)
+                                                     ),
+                                                     column(6,
+                                                            conditionalPanel(condition = "input.KPcovarTurnOn",
+                                                                             selectizeInput("KPcovarplotHRtab_RefSelect","Covariate Reference:", choices = NULL, selected = 1)
+                                                            )
+                                                     )
+                                                   )
                                   ),
-                                  div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
-                                  div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
+                                  uiOutput("rendKPHRtabsumm")
+                                  #div(uiOutput("rendKPHRtabsumm"), style = "height:500px; overflow-Y: scroll")
+                                  #div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
+                                  #div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
                            )
                          ),
                          fluidRow(
@@ -2923,6 +2942,16 @@ server <- function(input, output, session) {
                                onInitialize = I('function() { this.setValue(""); }')
                              ))
       })
+      observe({
+        req(wkbk_react_sub())
+        wkbk_names <- names(wkbk_react_sub())
+        wkbk_names <- c("ShinyEvents Treatment Clusters",wkbk_names)
+        updateSelectizeInput(session,"KPcovarDataTable",choices = c("No Strata",wkbk_names),
+                             options = list(
+                               placeholder = 'Please select an option below',
+                               onInitialize = I('function() { this.setValue(""); }')
+                             ))
+      })
       
       ## Event Data ------------------------------------------------------------
       
@@ -4065,36 +4094,6 @@ server <- function(input, output, session) {
           }
         }
       })
-      #observe({
-      #  p1 <- PatientTimelineSummPlot_react()
-      #  save(list = ls(), file = "PatientTimelineSummPlot_react1.RData", envir = environment())
-      #})
-      #observe({
-      #  line_p <- PatientLinePlot_react()
-      #  save(list = ls(), file = "PatientLinePlot_react1.RData", envir = environment())
-      #})
-      #observe({
-      #  PatientLinePlot_df <- PatientLinePlot_df()
-      #  save(list = ls(), file = "PatientLinePlot_df1.RData", envir = environment())
-      #})
-      #observe({
-      #  Patient_Event_Data_sub <- PatientTimelineSummPlot_df()
-      #  save(list = ls(), file = "PatientTimelineSummPlot_df1.RData", envir = environment())
-      #})
-      #observe({
-      #  print(isTruthy(PatientLinePlot_df()))
-      #  print(input$ChangePointLineOpt)
-      #  print(isTruthy(PatientLinePlot_df()) & input$ChangePointLineOpt)
-      #  print(isTruthy(PatientTimelineSummPlot_react()))
-      #  print(input$PatientSelectionTab_rows_selected)
-      #  print(isTruthy(PatientLinePlot_react()))
-      #  ChangePointLineOpt <- input$ChangePointLineOpt
-      #  xAxis <- input$LinePlotX
-      #  yAxis <- input$LinePlotY
-      #  xAxisUnits <- input$LinePlotXunits
-      #  save(list = ls(), file = "ChangePointLineOpt.RData", envir = environment())
-      #})
-      
       
       output$PatientTimelineLineSummPlot <- renderPlotly({
         if (!is.null(input$PatientSelectionTab_rows_selected)) {
@@ -4528,7 +4527,7 @@ server <- function(input, output, session) {
               theme_minimal()
             if (!is.null(colorPal)) {
               pl <- pl +
-                scale_fill_manual(values = new_cols)
+                scale_fill_manual(values = unname(new_cols))
             }
             pl <- pl + geom_sankey(flow.alpha = 0.5,          # This Creates the transparency of your node
                                    node.color = "black",      # This is your node color
@@ -5679,6 +5678,20 @@ server <- function(input, output, session) {
       })
       observe({
         req(wkbk_react_anno_sub())
+        req(input$KPcovarDataTable)
+        dataTab <- input$KPcovarDataTable
+        Clin_Supp_List <- wkbk_react_anno_sub()
+        if (dataTab == "ShinyEvents Treatment Clusters") {
+          req(sankey_clusters_cast())
+          cluster_df <- sankey_clusters_cast()
+          col_choices <- colnames(cluster_df)[-1]
+        } else {
+          col_choices <- colnames(Clin_Supp_List[[dataTab]])[-1]
+        }
+        updateSelectizeInput(session,"KPcovarCol", choices = col_choices, server = T)
+      })
+      observe({
+        req(wkbk_react_anno_sub())
         req(cohort_TTE_table())
         tte_df <- cohort_TTE_table()
         dataTab <- input$KPstrataDataTable
@@ -5711,6 +5724,45 @@ server <- function(input, output, session) {
               groupChoices <- groupChoices[!is.na(groupChoices)]
               groupChoices[is.logical(groupChoices)] <- as.character(groupChoices)
               updateSelectizeInput(session,"KPstrataColGroups",choices = groupChoices,
+                                   selected = groupChoices[1], server = T)
+            }
+          }
+        }
+      })
+      observe({
+        req(wkbk_react_anno_sub())
+        req(cohort_TTE_table())
+        tte_df <- cohort_TTE_table()
+        dataTab <- input$KPcovarDataTable
+        xAxisCol <- input$KPcovarCol
+        Clin_Supp_List <- wkbk_react_anno_sub()
+        sankey_clusters_cast <- sankey_clusters_cast()
+        if (dataTab == "ShinyEvents Treatment Clusters") {
+          req(sankey_clusters_cast())
+          df <- sankey_clusters_cast
+          if (isTruthy(xAxisCol)) {
+            if (all(xAxisCol %in% colnames(df))) {
+              df <- df[,c(colnames(df)[1],xAxisCol)]
+              df <- df[which(df[,1] %in% tte_df[,1]),]
+              df <- df[complete.cases(df),]
+              groupChoices <- unique(df[,xAxisCol])
+              groupChoices <- groupChoices[!is.na(groupChoices)]
+              groupChoices[is.logical(groupChoices)] <- as.character(groupChoices)
+              updateSelectizeInput(session,"KPcovarColGroups",choices = groupChoices,
+                                   selected = groupChoices[1], server = T)
+            }
+          }
+        } else {
+          if (isTruthy(xAxisCol)) {
+            df <- Clin_Supp_List[[dataTab]]
+            if (all(xAxisCol %in% colnames(df))) {
+              df <- df[,c(colnames(df)[1],xAxisCol)]
+              df <- df[which(df[,1] %in% tte_df[,1]),]
+              df <- df[complete.cases(df),]
+              groupChoices <- unique(df[,xAxisCol])
+              groupChoices <- groupChoices[!is.na(groupChoices)]
+              groupChoices[is.logical(groupChoices)] <- as.character(groupChoices)
+              updateSelectizeInput(session,"KPcovarColGroups",choices = groupChoices,
                                    selected = groupChoices[1], server = T)
             }
           }
@@ -5844,6 +5896,11 @@ server <- function(input, output, session) {
         strata_col <- input$KPstrataCol
         updateTextInput(session,"KPotherGroupName", value = paste0(strata_col,"_Other"))
       })
+      observe({
+        req(input$KPcovarCol)
+        KPcovarCol <- input$KPcovarCol
+        updateTextInput(session,"KPcovarotherGroupName", value = paste0(KPcovarCol,"_Other"))
+      })
       
       cohort_TTE_table_strata <- reactive({
         req(wkbk_react_anno_sub())
@@ -5853,9 +5910,13 @@ server <- function(input, output, session) {
         kp_dt <- input$KPstrataDataTable
         strata_col <- input$KPstrataCol
         strata_groups <- input$KPstrataColGroups
+        KPshowOtherGroup <- input$KPshowOtherGroup
+        KPotherGroupName <- input$KPotherGroupName
         Clin_Supp_List <- wkbk_react_anno_sub()
-        #save(list = ls(), file = "cohort_TTE_table_strata.RData", envir = environment())
-        if (isTruthy(input$KPstrataDataTable)) {
+        df_sanky <- sankey_clusters_cast()
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        
+        if (isTruthy(kp_dt)) {
           if (isTruthy(strata_col)) {
             if (kp_dt == "ShinyEvents Treatment Clusters") {
               req(sankey_clusters_cast())
@@ -5869,66 +5930,237 @@ server <- function(input, output, session) {
               df_sub <- df[,c(colnames(df)[1],strata_col)]
               df_sub <- df_sub[complete.cases(df_sub),]
               colnames(df_sub)[1] <- colnames(plot_df)[1]
-              if (input$KPshowOtherGroup) {
-                req(input$KPotherGroupName)
-                df_sub[which(!df_sub[,2] %in% strata_groups),strata_col] <- input$KPotherGroupName
+              if (KPshowOtherGroup) {
+                req(KPotherGroupName)
+                df_sub[which(!df_sub[,2] %in% strata_groups),strata_col] <- KPotherGroupName
                 df_sub_g <- df_sub
               } else {
                 df_sub_g <- df_sub[which(df_sub[,2] %in% strata_groups),]
               }
               df_sub_g <- unique(df_sub_g)
               plot_df <- merge(df_sub_g,plot_df,all.y = T)
+            }
+          }
+          #plot_df
+        } #else {
+        #plot_df
+        #}
+        
+        if (KPcovarTurnOn) {
+          # covar opts
+          kpcovar_dt <- input$KPcovarDataTable
+          covar_col <- input$KPcovarCol
+          covar_groups <- input$KPcovarColGroups
+          KPcovarshowOtherGroup <- input$KPcovarshowOtherGroup
+          KPcovarotherGroupName <- input$KPcovarotherGroupName
+          if (isTruthy(kpcovar_dt)) {
+            if (isTruthy(covar_col)) {
+              if (kpcovar_dt == "ShinyEvents Treatment Clusters") {
+                req(sankey_clusters_cast())
+                df <- sankey_clusters_cast()
+              } else {
+                if (kpcovar_dt %in% names(Clin_Supp_List)) {
+                  df <- Clin_Supp_List[[kpcovar_dt]]
+                }
+              }
+              if (covar_col %in% colnames(df)) {
+                df_sub <- df[,c(colnames(df)[1],covar_col)]
+                df_sub <- df_sub[complete.cases(df_sub),]
+                colnames(df_sub)[1] <- colnames(plot_df)[1]
+                if (KPcovarshowOtherGroup) {
+                  req(KPcovarotherGroupName)
+                  df_sub[which(!df_sub[,2] %in% covar_groups),covar_col] <- KPcovarotherGroupName
+                  df_sub_g <- df_sub
+                } else {
+                  df_sub_g <- df_sub[which(df_sub[,2] %in% covar_groups),]
+                }
+                df_sub_g <- unique(df_sub_g)
+                plot_df <- merge(df_sub_g,plot_df,all.y = T)
+              }
+            }
+          }
+        }
+        
+        if (isTruthy(kp_dt)) {
+          if (isTruthy(strata_col)) {
+            if (KPshowOtherGroup) {
+              req(KPotherGroupName)
+              plot_df[which(is.na(plot_df[,strata_col])),strata_col] <- KPotherGroupName
               plot_df[,strata_col] <- factor(plot_df[,strata_col])
             }
           }
-          plot_df
-        } else {
-          plot_df
         }
+        if (KPcovarTurnOn) {
+          if (isTruthy(kpcovar_dt)) {
+            if (isTruthy(covar_col)) {
+              if (KPcovarshowOtherGroup) {
+                req(KPcovarotherGroupName)
+                plot_df[which(is.na(plot_df[,covar_col])),covar_col] <- KPcovarotherGroupName
+                plot_df[,covar_col] <- factor(plot_df[,covar_col])
+              }
+            }
+          }
+        }
+        
+        plot_df
+        
+        
+        
+        
       })
       
       observe({
         req(cohort_TTE_table_strata())
         req(input$KPstrataCol)
+        KPcovarTurnOn <- input$KPcovarTurnOn
         plot_df <- cohort_TTE_table_strata()
         strata_col <- input$KPstrataCol
-        if (ncol(plot_df) == 4) {
+        if (strata_col %in% colnames(plot_df)) {
           if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
             if (length(unique(plot_df[,strata_col])) > 1) {
-              ref_choices <- levels(factor(plot_df[,strata_col]))
+              ref_choices <- levels(plot_df[,strata_col])
               updateSelectizeInput(session,"KPplotHRtab_RefSelect", choices = ref_choices, selected = ref_choices[1], server = T)
+            }
+          }
+        }
+        if (KPcovarTurnOn) {
+          covar_col <- input$KPcovarCol
+          if (covar_col %in% colnames(plot_df)) {
+            if (length(plot_df[,covar_col][which(is.na(plot_df[,covar_col]))]) < nrow(plot_df)) {
+              if (length(unique(plot_df[,covar_col])) > 1) {
+                ref_choices <- levels(plot_df[,covar_col])
+                updateSelectizeInput(session,"KPcovarplotHRtab_RefSelect", choices = ref_choices, selected = ref_choices[1], server = T)
+              }
             }
           }
         }
       })
       
+      KPplotHRtabAdd_react <- reactive({
+        req(cohort_TTE_table_strata())
+        req(input$KPplotHRtab_RefSelect)
+        req(input$KPcovarplotHRtab_RefSelect)
+        plot_df <- cohort_TTE_table_strata()
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        strata_col <- input$KPstrataCol
+        ref_var <- input$KPplotHRtab_RefSelect
+        covar_col <- input$KPcovarCol
+        covarref_var <- input$KPcovarplotHRtab_RefSelect
+        if (KPcovarTurnOn) {
+          if (all(c(strata_col,covar_col) %in% colnames(plot_df))) {
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Performing Additive Cox Proportional Hazards")
+              if (ref_var %in% levels(plot_df[,strata_col])) {
+                plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
+                strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+              }
+              if (covarref_var %in% levels(plot_df[,covar_col])) {
+                plot_df[,covar_col] <- relevel(plot_df[,covar_col], ref = covarref_var)
+                covar_col <- sprintf(ifelse(grepl(" ", covar_col), "`%s`", "%s"), covar_col)
+              }
+              form_add <- as.formula(paste0("Surv(time,status) ~ ",strata_col," + ",covar_col))
+              tab_add <- coxph(form_add,data = plot_df)
+              incProgress(0.3, detail = "Complete!")
+            })
+            tab_add
+          }
+        } else {
+          return(NULL)
+        }
+      })
+      KPplotHRtabInt_react <- reactive({
+        req(cohort_TTE_table_strata())
+        req(input$KPplotHRtab_RefSelect)
+        req(input$KPcovarplotHRtab_RefSelect)
+        plot_df <- cohort_TTE_table_strata()
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        strata_col <- input$KPstrataCol
+        ref_var <- input$KPplotHRtab_RefSelect
+        covar_col <- input$KPcovarCol
+        covarref_var <- input$KPcovarplotHRtab_RefSelect
+        if (KPcovarTurnOn) {
+          if (all(c(strata_col,covar_col) %in% colnames(plot_df))) {
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Performing Interactive Cox Proportional Hazards")
+              if (ref_var %in% levels(plot_df[,strata_col])) {
+                plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
+                strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+              }
+              if (covarref_var %in% levels(plot_df[,covar_col])) {
+                plot_df[,covar_col] <- relevel(plot_df[,covar_col], ref = covarref_var)
+                covar_col <- sprintf(ifelse(grepl(" ", covar_col), "`%s`", "%s"), covar_col)
+              }
+              form_int <- as.formula(paste0("Surv(time,status) ~ ",strata_col," * ",covar_col))
+              tab_int <- coxph(form_int,data = plot_df)
+              incProgress(0.3, detail = "Complete!")
+            })
+            tab_int
+          }
+        } else {
+          return(NULL)
+        }
+      })
       KPplotHRtab_react <- reactive({
         req(cohort_TTE_table_strata())
         req(input$KPplotHRtab_RefSelect)
         plot_df <- cohort_TTE_table_strata()
+        KPcovarTurnOn <- input$KPcovarTurnOn
         strata_col <- input$KPstrataCol
         ref_var <- input$KPplotHRtab_RefSelect
-        #save(list = ls(), file = "KPplotHRtab_react.RData", envir = environment())
-        if (ncol(plot_df) == 4) {
-          if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
-            if (length(unique(plot_df[,strata_col])) > 1) {
-              #st <- Sys.time()
-              withProgress(message = "Processing", value = 0, {
-                incProgress(0.3, detail = "Performing Cox Proportional Hazards")
-                plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
-                strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
-                form <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
-                tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
-                incProgress(0.3, detail = "Complete!")
-              })
-              #et <- Sys.time()
-              #print("KPplotHRtab_react")
-              #print(et-st)
-              tab
+        if (!KPcovarTurnOn) {
+          if (strata_col %in% colnames(plot_df)) {
+            if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
+              if (length(unique(plot_df[,strata_col])) > 1) {
+                withProgress(message = "Processing", value = 0, {
+                  incProgress(0.3, detail = "Performing Cox Proportional Hazards")
+                  if (ref_var %in% levels(plot_df[,strata_col])) {
+                    plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
+                    strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+                  }
+                  form <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
+                  tab <- coxph(as.formula(paste0("Surv(time,status) ~ ",strata_col)),data = plot_df)
+                  incProgress(0.3, detail = "Complete!")
+                })
+                tab
+              }
             }
+          } else {
+            return(NULL)
+          }
+        } else {
+          return(NULL)
+        }
+      })
+      
+      output$rendKPHRtabsumm <- renderUI({
+        if (!is.null(KPplotHRtab_react())) {
+          tagList(
+            div(tableOutput("KPplotHRtab"), style = "font-size:75%"),
+            div(verbatimTextOutput("KPplotSummary"), style = "font-size:90%")
+          )
+        } else {
+          if (isTruthy(KPplotHRtabAdd_react()) & isTruthy(KPplotHRtabInt_react())) {
+            tabsetPanel(
+              id = "KPHRtabsummTabs",
+              tabPanel("Additive",
+                       div(verbatimTextOutput("KPplot_add_form"), style = "font-size:90%"),
+                       div(div(tableOutput("KPplotHRtab_add"), style = "font-size:75%"),
+                           div(verbatimTextOutput("KPplotSummary_add"), style = "font-size:90%"), style = "height:400px; overflow-Y: scroll")
+              ),
+              tabPanel("Interactive",
+                       div(verbatimTextOutput("KPplot_int_form"), style = "font-size:90%"),
+                       div(div(tableOutput("KPplotHRtab_int"), style = "font-size:75%"),
+                           div(verbatimTextOutput("KPplotSummary_int"), style = "font-size:90%"), style = "height:400px; overflow-Y: scroll")
+              ),
+              tabPanel("Anova",
+                       div(div(verbatimTextOutput("KPplotSummary_anova1"), style = "font-size:90%"),
+                           div(verbatimTextOutput("KPplotSummary_anova2"), style = "font-size:90%"), style = "height:400px; overflow-Y: scroll")
+              )
+            )
           }
         }
       })
+      
       output$KPplotHRtab <- renderTable({
         req(input$KPstrataCol)
         req(KPplotHRtab_react())
@@ -5948,11 +6180,11 @@ server <- function(input, output, session) {
         conf.low <- as.numeric(formatC(tab_summ[["conf.int"]][,3]))
         conf.high <- as.numeric(formatC(tab_summ[["conf.int"]][,4]))
         ci <- paste0(conf.low,", ",conf.high)
-        coxph_hr_df <- data.frame(Characteristic = gsub(strata_col,"",rownames(tab_summ_coeff)),
+        coxph_hr_df <- data.frame(Characteristic = sub(strata_col,"",rownames(tab_summ_coeff)),
                                   `Hazard Ratio` = as.numeric(formatC(unname(tab_summ_coeff[,2]))),
                                   `95% Confidence Interval` = ci,
                                   P.Value = as.numeric(formatC(unname(tab_summ_coeff[,5]))))
-        coxph_hr_df <- data.frame(v1 = gsub(strata_col,"",rownames(tab_summ_coeff)),
+        coxph_hr_df <- data.frame(v1 = sub(strata_col,"",rownames(tab_summ_coeff)),
                                   v2 = as.numeric(formatC(unname(tab_summ_coeff[,2]))),
                                   v3 = ci,
                                   v4 = as.numeric(formatC(unname(tab_summ_coeff[,5]))))
@@ -5962,17 +6194,189 @@ server <- function(input, output, session) {
         coxph_hr_df
       })
       
+      
+      output$KPplotHRtab_add <- renderTable({
+        req(input$KPstrataCol)
+        req(input$KPcovarCol)
+        req(KPplotHRtabAdd_react())
+        req(cohort_TTE_table_strata())
+        req(input$KPplotHRtab_RefSelect)
+        req(input$KPcovarplotHRtab_RefSelect)
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        if (KPcovarTurnOn) {
+          plot_df <- cohort_TTE_table_strata()
+          strata_col <- input$KPstrataCol
+          covar_col <- input$KPcovarCol
+          tab_add <- KPplotHRtabAdd_react()
+          strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+          covar_col <- sprintf(ifelse(grepl(" ", covar_col), "`%s`", "%s"), covar_col)
+          tab_add_vars <- tab_add[["xlevels"]][[1]][1]
+          tab_add_covar_vars <- tab_add[["xlevels"]][[2]][1]
+          tab_add_summ <- summary(tab_add)
+          tab_add_summ_coeff <- tab_add_summ$coefficients
+          conf.low <- as.numeric(formatC(tab_add_summ[["conf.int"]][,3]))
+          conf.high <- as.numeric(formatC(tab_add_summ[["conf.int"]][,4]))
+          ci <- paste0(conf.low,", ",conf.high)
+          coxph_hr_df <- data.frame(v1 = rownames(tab_add_summ_coeff),
+                                    v2 = as.numeric(formatC(unname(tab_add_summ_coeff[,2]))),
+                                    v3 = ci,
+                                    v4 = as.numeric(formatC(unname(tab_add_summ_coeff[,5]))))
+          covar_row_start <- which(!grepl(strata_col,coxph_hr_df[,1]))[1]
+          coxph_hr_df[,1] <- sub(strata_col,"",coxph_hr_df[,1])
+          coxph_hr_df[,1] <- sub(covar_col,"",coxph_hr_df[,1])
+          coxph_hr_df <- rbind(c(strata_col,"-","-","-"),
+                               c(tab_add_vars,"-","-","-"),
+                               coxph_hr_df[c(1:(covar_row_start-1)),],
+                               c(covar_col,"-","-","-"),
+                               c(tab_add_covar_vars,"-","-","-"),
+                               coxph_hr_df[c(covar_row_start:nrow(coxph_hr_df)),])
+          colnames(coxph_hr_df) <- c("Characteristic","Hazard Ratio","95% Confidence Interval","P.Value")
+          coxph_hr_df
+        } 
+      })
+      output$KPplotHRtab_int <- renderTable({
+        req(input$KPstrataCol)
+        req(input$KPcovarCol)
+        req(KPplotHRtabInt_react())
+        req(cohort_TTE_table_strata())
+        req(input$KPplotHRtab_RefSelect)
+        req(input$KPcovarplotHRtab_RefSelect)
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        if (KPcovarTurnOn) {
+          plot_df <- cohort_TTE_table_strata()
+          strata_col <- input$KPstrataCol
+          covar_col <- input$KPcovarCol
+          tab_int <- KPplotHRtabInt_react()
+          strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+          covar_col <- sprintf(ifelse(grepl(" ", covar_col), "`%s`", "%s"), covar_col)
+          tab_int_vars <- tab_int[["xlevels"]][[1]][1]
+          tab_int_covar_vars <- tab_int[["xlevels"]][[2]][1]
+          tab_int_summ <- summary(tab_int)
+          tab_int_summ_coeff <- tab_int_summ$coefficients
+          conf.low <- as.numeric(formatC(tab_int_summ[["conf.int"]][,3]))
+          conf.high <- as.numeric(formatC(tab_int_summ[["conf.int"]][,4]))
+          ci <- paste0(conf.low,", ",conf.high)
+          coxph_hr_df <- data.frame(v1 = rownames(tab_int_summ_coeff),
+                                    v2 = as.numeric(formatC(unname(tab_int_summ_coeff[,2]))),
+                                    v3 = ci,
+                                    v4 = as.numeric(formatC(unname(tab_int_summ_coeff[,5]))))
+          covar_row_start <- which(!grepl(strata_col,coxph_hr_df[,1]))[1]
+          coxph_hr_df[,1] <- sub(strata_col,"",coxph_hr_df[,1])
+          coxph_hr_df[,1] <- sub(covar_col,"",coxph_hr_df[,1])
+          coxph_hr_df <- rbind(c(strata_col,"-","-","-"),
+                               c(tab_int_vars,"-","-","-"),
+                               coxph_hr_df[c(1:(covar_row_start-1)),],
+                               c(covar_col,"-","-","-"),
+                               c(tab_int_covar_vars,"-","-","-"),
+                               coxph_hr_df[c(covar_row_start:nrow(coxph_hr_df)),])
+          colnames(coxph_hr_df) <- c("Characteristic","Hazard Ratio","95% Confidence Interval","P.Value")
+          coxph_hr_df
+        } 
+      })
+      
       output$KPplotSummary <- renderPrint({
         req(KPplotHRtab_react())
         CoxPHobj <- KPplotHRtab_react()
+        #CoxPHsumm(CoxPHobj)
+        strata_col <- input$KPstrataCol
+        coxph_form <- paste0("coxph(Surv(time,status) ~ ",strata_col,")")
         out <- capture.output(summary(CoxPHobj))
         xph <- capture.output(cox.zph(CoxPHobj))
         con_line <- grep("^Concordance=",out,value = T)
         lik_line <- grep("^Likelihood ratio test=",out,value = T)
         wal_line <- grep("^Wald test",out,value = T)
         sco_line <- grep("^Score ",out,value = T)
-        text <- paste("CoxH Summary:",con_line,lik_line,wal_line,sco_line,"","Proportional Hazards assumption:",xph[1],xph[2],xph[3],sep = "\n")
+        text <- paste("CoxPH Formula:",coxph_form,"CoxH Summary:",con_line,lik_line,wal_line,sco_line,"","Proportional Hazards assumption:",xph[1],xph[2],xph[3],sep = "\n")
         cat(text)
+      })
+      
+      output$KPplot_add_form <- renderPrint({
+        req(input$KPstrataCol)
+        req(input$KPcovarCol)
+        strata_col <- input$KPstrataCol
+        covar_col <- input$KPcovarCol
+        coxph_form <- paste0("CoxPH Formula:","coxph(Surv(time,status) ~ ",strata_col," + ",covar_col,")", sep = '\n')
+        cat(coxph_form)
+      })
+      output$KPplot_int_form <- renderPrint({
+        req(input$KPstrataCol)
+        req(input$KPcovarCol)
+        strata_col <- input$KPstrataCol
+        covar_col <- input$KPcovarCol
+        coxph_form <- paste0("CoxPH Formula:","coxph(Surv(time,status) ~ ",strata_col," * ",covar_col,")", sep = '\n')
+        cat(coxph_form)
+      })
+      
+      output$KPplotSummary_add <- renderPrint({
+        req(KPplotHRtabAdd_react())
+        tab_add <- KPplotHRtabAdd_react()
+        CoxPHsumm(tab_add,bivarAdd = TRUE)
+      })
+      output$KPplotSummary_int <- renderPrint({
+        req(KPplotHRtabInt_react())
+        tab_int <- KPplotHRtabInt_react()
+        CoxPHsumm(tab_int,bivarInt = TRUE)
+      })
+      #output$KPplotSummary_anova <- renderPrint({
+      #  biVarAnova(KPplotHRtabAdd_react(),KPplotHRtabInt_react())
+      #})
+      
+      KPplotHRtabAddFeat1_react <- reactive({
+        req(cohort_TTE_table_strata())
+        req(input$KPplotHRtab_RefSelect)
+        plot_df <- cohort_TTE_table_strata()
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        strata_col <- input$KPstrataCol
+        ref_var <- input$KPplotHRtab_RefSelect
+        if (KPcovarTurnOn) {
+          if (all(c(strata_col) %in% colnames(plot_df))) {
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Performing Interactive Cox Proportional Hazards")
+              plot_df[,strata_col] <- relevel(plot_df[,strata_col], ref = ref_var)
+              strata_col <- sprintf(ifelse(grepl(" ", strata_col), "`%s`", "%s"), strata_col)
+              form_feat1 <- as.formula(paste0("Surv(time,status) ~ ",strata_col))
+              tab_feat1 <- coxph(form_feat1,data = plot_df)
+              incProgress(0.3, detail = "Complete!")
+            })
+            tab_feat1
+          }
+        } else {
+          return(NULL)
+        }
+      })
+      KPplotHRtabAddFeat2_react <- reactive({
+        req(cohort_TTE_table_strata())
+        req(input$KPcovarplotHRtab_RefSelect)
+        plot_df <- cohort_TTE_table_strata()
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        covar_col <- input$KPcovarCol
+        covarref_var <- input$KPcovarplotHRtab_RefSelect
+        if (KPcovarTurnOn) {
+          if (all(c(covar_col) %in% colnames(plot_df))) {
+            withProgress(message = "Processing", value = 0, {
+              incProgress(0.3, detail = "Performing Interactive Cox Proportional Hazards")
+              plot_df[,covar_col] <- relevel(plot_df[,covar_col], ref = covarref_var)
+              covar_col <- sprintf(ifelse(grepl(" ", covar_col), "`%s`", "%s"), covar_col)
+              form_feat2 <- as.formula(paste0("Surv(time,status) ~ ",covar_col))
+              tab_feat2 <- coxph(form_feat2,data = plot_df)
+              incProgress(0.3, detail = "Complete!")
+            })
+            tab_feat2
+          }
+        } else {
+          return(NULL)
+        }
+      })
+      output$KPplotSummary_anova1 <- renderPrint({
+        req(KPplotHRtabAdd_react())
+        req(KPplotHRtabAddFeat1_react())
+        biVarAnova(KPplotHRtabAdd_react(),KPplotHRtabAddFeat1_react())
+      })
+      
+      output$KPplotSummary_anova2 <- renderPrint({
+        req(KPplotHRtabAdd_react())
+        req(KPplotHRtabAddFeat2_react())
+        biVarAnova(KPplotHRtabAdd_react(),KPplotHRtabAddFeat2_react())
       })
       
       observe({
@@ -5990,11 +6394,11 @@ server <- function(input, output, session) {
       observe({
         req(input$SurvYearOrMonth)
         if (input$SurvYearOrMonth == "Months") {
-          updateNumericInput(session,"SurvXaxisBreaks",label = "Survival X-Axis Breaks (Months):", value = 12, step = 1)
+          updateNumericInput(session,"SurvXaxisBreaks",label = "X-Axis Breaks (Months):", value = 12, step = 1)
         } else if (input$SurvYearOrMonth == "Years") {
-          updateNumericInput(session,"SurvXaxisBreaks",label = "Survival X-Axis Breaks (Years):", value = 1, step = 1)
+          updateNumericInput(session,"SurvXaxisBreaks",label = "X-Axis Breaks (Years):", value = 1, step = 1)
         } else if (input$SurvYearOrMonth == "Days") {
-          updateNumericInput(session,"SurvXaxisBreaks",label = "Survival X-Axis Breaks (Days):", value = 90, step = 15)
+          updateNumericInput(session,"SurvXaxisBreaks",label = "X-Axis Breaks (Days):", value = 90, step = 15)
         }
       })
       
@@ -6009,10 +6413,14 @@ server <- function(input, output, session) {
         SurvXaxis <- input$SurvXaxis
         ShowConfInt <- input$ShowConfInt
         colorPal <- KPplotColorPal_sel()
-        strata_col <- input$KPstrataCol
         showMedSurv <- input$ShowMedSurvLine
         dOm <- input$SurvYearOrMonth
         xBreaks <- input$SurvXaxisBreaks
+        KPcovarTurnOn <- input$KPcovarTurnOn
+        KPplotAxisF <- input$KPplotAxisF
+        KPplotAxisTF <- KPplotAxisF+2
+        KPplotlegF <- input$KPplotlegF
+        KPplottabF <- input$KPplottabF
         #save(list = ls(), file = "cohort_TTE_table_KP_react.RData", envir = environment())
         
         if (colorPal == "Standard colors") {
@@ -6044,18 +6452,56 @@ server <- function(input, output, session) {
             xaxlim <- NULL
           }
           fit <- NULL
-          if (ncol(plot_df) == 4) {
-            if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
-              colnames(plot_df)[which(colnames(plot_df) == strata_col)] <- "Feature"
-              form <- paste0("Surv(time,status) ~ Feature")
-              fit <- eval(substitute(survfit(as.formula(form),data = plot_df, type="kaplan-meier")))
-              if (isTruthy(names(fit[["strata"]]))) {
-                names(fit[["strata"]]) <- gsub("^Feature="," ",names(fit[["strata"]]))
-                names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
-                names(fit[["strata"]]) <- str_wrap(names(fit[["strata"]]),width = 25, whitespace_only = FALSE)
+          if (strata_col %in% colnames(plot_df)) {
+            if (KPcovarTurnOn) {
+              req(input$KPcovarCol)
+              covar_col <- input$KPcovarCol
+              if (covar_col %in% colnames(plot_df)) {
+                if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df) &
+                    length(plot_df[,covar_col][which(is.na(plot_df[,covar_col]))]) < nrow(plot_df)) {
+                  colnames(plot_df)[which(colnames(plot_df) == strata_col)] <- "Feature1"
+                  colnames(plot_df)[which(colnames(plot_df) == covar_col)] <- "Feature2"
+                  form <- paste0("Surv(time,status) ~ Feature1 + Feature2")
+                  fit <- eval(substitute(survfit(as.formula(form),data = plot_df, type="kaplan-meier")))
+                  if (isTruthy(names(fit[["strata"]]))) {
+                    names(fit[["strata"]]) <- gsub("^Feature1=",paste0(strata_col,"="),names(fit[["strata"]]))
+                    names(fit[["strata"]]) <- gsub(", Feature2=",paste0(covar_col,"="),names(fit[["strata"]]))
+                    names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
+                    names(fit[["strata"]]) <- str_wrap(names(fit[["strata"]]),width = 25, whitespace_only = FALSE)
+                    #names(fit[["strata"]]) <- gsub("^Feature="," ",names(fit[["strata"]]))
+                    #names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
+                    #names(fit[["strata"]]) <- str_wrap(names(fit[["strata"]]),width = 25, whitespace_only = FALSE)
+                  }
+                  pvalSel <- input$ShowPval
+                  legpos <- input$SurvLegendPos
+                }
+              } else {
+                if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
+                  colnames(plot_df)[which(colnames(plot_df) == strata_col)] <- "Feature"
+                  form <- paste0("Surv(time,status) ~ Feature")
+                  fit <- eval(substitute(survfit(as.formula(form),data = plot_df, type="kaplan-meier")))
+                  if (isTruthy(names(fit[["strata"]]))) {
+                    names(fit[["strata"]]) <- gsub("^Feature="," ",names(fit[["strata"]]))
+                    names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
+                    names(fit[["strata"]]) <- str_wrap(names(fit[["strata"]]),width = 25, whitespace_only = FALSE)
+                  }
+                  pvalSel <- input$ShowPval
+                  legpos <- input$SurvLegendPos
+                }
               }
-              pvalSel <- input$ShowPval
-              legpos <- input$SurvLegendPos
+            } else {
+              if (length(plot_df[,strata_col][which(is.na(plot_df[,strata_col]))]) < nrow(plot_df)) {
+                colnames(plot_df)[which(colnames(plot_df) == strata_col)] <- "Feature"
+                form <- paste0("Surv(time,status) ~ Feature")
+                fit <- eval(substitute(survfit(as.formula(form),data = plot_df, type="kaplan-meier")))
+                if (isTruthy(names(fit[["strata"]]))) {
+                  names(fit[["strata"]]) <- gsub("^Feature="," ",names(fit[["strata"]]))
+                  names(fit[["strata"]]) <- gsub("_"," ",names(fit[["strata"]]))
+                  names(fit[["strata"]]) <- str_wrap(names(fit[["strata"]]),width = 25, whitespace_only = FALSE)
+                }
+                pvalSel <- input$ShowPval
+                legpos <- input$SurvLegendPos
+              }
             }
           } else {
             fit <- survfit(Surv(time,status) ~ 1, data = plot_df, type = "kaplan-meier")
@@ -6082,6 +6528,7 @@ server <- function(input, output, session) {
             } else {
               new_cols <- NULL
             }
+            #save(list = ls(), file = "ggsurvplot.RData", envir = environment())
             ggsurv <- survminer::ggsurvplot(fit, data = plot_df, risk.table = TRUE,
                                             xscale = scale,
                                             break.time.by=xBreaks,
@@ -6089,18 +6536,21 @@ server <- function(input, output, session) {
                                             xlab = xlab,
                                             ylab = "Event Free Survival Probability",
                                             submain = "Based on Kaplan-Meier estimates",
-                                            caption = "created with survminer",
+                                            #caption = "created with survminer",
                                             pval = pvalSel,
                                             conf.int = ShowConfInt,
                                             ggtheme = theme_bw(),
-                                            font.title = c(16, "bold"),
+                                            #font.title = c(16, "bold"),
                                             font.submain = c(12, "italic"),
-                                            font.caption = c(12, "plain"),
-                                            font.x = c(14, "plain"),
-                                            font.y = c(14, "plain"),
-                                            font.tickslab = c(12, "plain"),
+                                            #font.caption = c(12, "plain"),
+                                            font.x = c(KPplotAxisTF, "plain"),
+                                            font.y = c(KPplotAxisTF, "plain"),
+                                            font.tickslab = c(KPplotAxisF, "plain"),
+                                            font.legend = c(KPplotlegF, "plain"),
                                             legend = legpos,
                                             risk.table.height = 0.30,
+                                            fontsize = KPplottabF,
+                                            #risk.table.fontsize = KPplottabF,
                                             surv.median.line = showMedSurv
             )
             if (showMedSurv != "none") {
@@ -6119,6 +6569,9 @@ server <- function(input, output, session) {
               ggsurv$plot$coordinates$limits$x <- c(0,xaxlim)
               ggsurv$table$coordinates$limits$x <- c(0,xaxlim)
             }
+            ggsurv$table <- ggsurv$table +
+              theme(axis.text = element_text(size = KPplotAxisF),
+                    axis.title = element_text(size = KPplotAxisTF))
             ggsurv
           }
         }
@@ -6135,16 +6588,17 @@ server <- function(input, output, session) {
         AppTimeUnits <- tolower(GlobalAppTimeUnit_react())
         if (isTruthy(plot_df_strat)) {
           strata_col <- input$KPstrataCol
+          covar_col <- input$KPcovarCol
           plot_df <- merge(plot_df,plot_df_strat,all = T)
           plot_df <- plot_df %>%
-            relocate(any_of(c("Name","status","time","Start_Event","Progression_Event",strata_col,
+            relocate(any_of(c("Name","status","time",strata_col,covar_col,"Start_Event","Progression_Event",
                               "Start_Time_Point","End_Time_Point","Final_Time_Point"))) %>%
             as.data.frame()
           plot_df$time <- convert_time_units(plot_df$time,"days",AppTimeUnits)
           plot_df
         } else {
           plot_df <- plot_df %>%
-            relocate(any_of(c("Name","status","time","Start_Event","Progression_Event",strata_col,
+            relocate(any_of(c("Name","status","time",strata_col,covar_col,"Start_Event","Progression_Event",
                               "Start_Time_Point","End_Time_Point","Final_Time_Point"))) %>%
             as.data.frame()
           plot_df$time <- convert_time_units(plot_df$time,"days",AppTimeUnits)
@@ -6593,8 +7047,10 @@ server <- function(input, output, session) {
         if (input$mixeffSub != "Select all data") {
           req(mixeff_df_react())
           mixeff_df <- mixeff_df_react()
-          choices <- sort(unique(mixeff_df[,input$mixeffSub]))
-          updateSelectizeInput(session,"mixeffSubCrit",choices = choices, selected = choices[1], server = T)
+          if (input$mixeffSub %in% colnames(mixeff_df)) {
+            choices <- sort(unique(mixeff_df[,input$mixeffSub]))
+            updateSelectizeInput(session,"mixeffSubCrit",choices = choices, selected = choices[1], server = T)
+          }
         }
       })
       observe({
@@ -6630,8 +7086,10 @@ server <- function(input, output, session) {
           req(tab_crit)
           mixeff_df <- mixeff_df[which(mixeff_df[,tab_sub] == tab_crit),]
         }
-        yChoices <- unique(mixeff_df[,input$mixeffunitCol])
-        updateSelectizeInput(session,"mixeffunitSelect",choices = yChoices, selected = yChoices[1])
+        if (input$mixeffunitCol %in% colnames(mixeff_df)) {
+          yChoices <- unique(mixeff_df[,input$mixeffunitCol])
+          updateSelectizeInput(session,"mixeffunitSelect",choices = yChoices, selected = yChoices[1])
+        }
       })
       mixeffPlot_df <- reactive({
         req(mixeff_df_react())
@@ -6653,32 +7111,36 @@ server <- function(input, output, session) {
           plot_df <- plot_df[which(plot_df[,tab_sub] == tab_crit),]
         }
         if (all(c(isTruthy(xAxis),isTruthy(yAxis)))) {
-          plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
-          plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
-          plot_df[,xAxis] <- round(convert_time_units(suppressWarnings(as.numeric(plot_df[,xAxis])),tolower(xAxisUnits),AppTimeUnits), 2)
-          plot_df <- plot_df %>%
-            select(any_of(c(colnames(plot_df)[1],yAxis,xAxis))) %>%
-            filter(!is.na(!!sym(yAxis))) %>%
-            filter(length(!!sym(colnames(plot_df)[1])) > 1, .by = !!sym(colnames(plot_df)[1])) #%>%
-          if (mexeffStart == "First Event") {
+          if (all(c(xAxis,yAxis) %in% colnames(plot_df))) {
+            plot_df[,xAxis] <- as.numeric(plot_df[,xAxis])
+            plot_df[,yAxis] <- as.numeric(plot_df[,yAxis])
+            plot_df[,xAxis] <- round(convert_time_units(suppressWarnings(as.numeric(plot_df[,xAxis])),tolower(xAxisUnits),AppTimeUnits), 2)
             plot_df <- plot_df %>%
-              mutate(!!sym(xAxis) := !!sym(xAxis) - min(!!sym(xAxis), na.rm = T), .by = !!sym(colnames(plot_df)[1])) %>%
-              as.data.frame()
-          } else if (mexeffStart == "First Treatment Event") {
-            req(start_events)
-            req(cohort_EventSumm_df())
-            event_data <- cohort_EventSumm_df()
-            event_data_start <- unique(event_data[,c("Name","Start_Time_Point")])
-            plot_df <- merge(plot_df,event_data_start, by.x = colnames(plot_df)[1], by.y = "Name")
-            plot_df <- plot_df %>%
-              mutate(!!sym(xAxis) := !!sym(xAxis) - Start_Time_Point) %>%
-              select(-Start_Time_Point) %>%
-              as.data.frame()
-            if (mixeffVarStartOpt == "Post Treatment") {
-              plot_df <- plot_df[which(plot_df[,xAxis] > 0),]
+              select(any_of(c(colnames(plot_df)[1],yAxis,xAxis))) %>%
+              filter(!is.na(!!sym(yAxis))) %>%
+              filter(length(!!sym(colnames(plot_df)[1])) > 1, .by = !!sym(colnames(plot_df)[1])) #%>%
+            if (mexeffStart == "First Event") {
+              plot_df <- plot_df %>%
+                mutate(!!sym(xAxis) := !!sym(xAxis) - min(!!sym(xAxis), na.rm = T), .by = !!sym(colnames(plot_df)[1])) %>%
+                as.data.frame()
+            } else if (mexeffStart == "First Treatment Event") {
+              req(start_events)
+              req(cohort_EventSumm_df())
+              event_data <- cohort_EventSumm_df()
+              event_data_start <- unique(event_data[,c("Name","Start_Time_Point")])
+              plot_df <- merge(plot_df,event_data_start, by.x = colnames(plot_df)[1], by.y = "Name")
+              plot_df <- plot_df %>%
+                mutate(!!sym(xAxis) := !!sym(xAxis) - Start_Time_Point) %>%
+                select(-Start_Time_Point) %>%
+                as.data.frame()
+              if (mixeffVarStartOpt == "Post Treatment") {
+                plot_df <- plot_df[which(plot_df[,xAxis] > 0),]
+              }
             }
+            plot_df
+          } else {
+            return(NULL)
           }
-          plot_df
         } else {
           return(NULL)
         }

@@ -739,3 +739,31 @@ margin_adjust <- function(top,bot,lite = FALSE,top_new = NULL, bot_new = NULL) {
 }
 
 
+CoxPHsumm <- function(CoxPHobj,bivarAdd = FALSE,bivarInt = FALSE) {
+  out <- capture.output(summary(CoxPHobj))
+  xph <- capture.output(cox.zph(CoxPHobj))
+  con_line <- grep("^Concordance=",out,value = T)
+  lik_line <- grep("^Likelihood ratio test=",out,value = T)
+  wal_line <- grep("^Wald test",out,value = T)
+  sco_line <- grep("^Score ",out,value = T)
+  text <- paste("CoxH Summary:",con_line,lik_line,wal_line,sco_line,"","Proportional Hazards assumption:",xph[1],xph[2],xph[3],sep = "\n")
+  if (bivarAdd) {
+    text <- paste("CoxH Summary:",con_line,lik_line,wal_line,sco_line,"","Proportional Hazards assumption:",xph[1],xph[2],xph[3],xph[4],sep = "\n")
+  }
+  if (bivarInt) {
+    text <- paste("CoxH Summary:",con_line,lik_line,wal_line,sco_line,"","Proportional Hazards assumption:",xph[1],xph[2],xph[3],xph[4],xph[5], sep = "\n")
+  }
+  return(cat(text))
+}
+
+biVarAnova <- function(obj,obj2) {
+  annova_res <- anova(obj,obj2)
+  out <- capture.output(annova_res)
+  line1 <- out[3]
+  line2 <- out[4]
+  line3 <- out[5]
+  line4 <- out[6]
+  line5 <- out[7]
+  text <- paste("Model Comparison:",line1,line2,line3,line4,line5,sep = "\n")
+  return(cat(text))
+}
