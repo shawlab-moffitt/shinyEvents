@@ -441,6 +441,7 @@ apply_find_clusters_to_patients <- function(event_data, event_summary = "Treatme
       as.data.frame()
     if (all(patient_data$Event == patient_data$EventType)) {
       # Get overall treatment/response event summary
+      patient_data3 <- patient_data
       overall_cls <- assign_clusters(sub_df = patient_data3, col1 = eventstart_col, cluster_window = cluster_window)
       patient_data4 <- patient_data3 %>%
         # format treatment/response event summary column

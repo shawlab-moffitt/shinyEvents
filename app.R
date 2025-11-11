@@ -1,4 +1,4 @@
-version_id <- paste0("v1.0.20251103")
+version_id <- paste0("v1.0.20251111")
 
 # lite swap able
 
@@ -2248,7 +2248,7 @@ server <- function(input, output, session) {
         eventType_preSel <- ifelse(any(grepl("EventType",col_choices,ignore.case = T)),grep("EventType",col_choices,ignore.case = T, value = T)[1],1)
         summ_preSel <- ifelse(any(grepl("summary",col_choices,ignore.case = T)),grep("summary",col_choices,ignore.case = T, value = T)[1],1)
         
-        updateSelectizeInput(session,"EventDataPatientIDcol",choices = c(col_choices,"Single ID (No column needed)"), selected = col_choices[1], server = T)
+        updateSelectizeInput(session,"EventDataPatientIDcol",choices = c(col_choices,"Single ID (No column available/needed)"), selected = col_choices[1], server = T)
         updateSelectizeInput(session,"EventDataEventcol",choices = col_choices, selected = col_choices[2], server = T)
         updateSelectizeInput(session,"EventDataEventStartcol",choices = col_choices, selected = start_preSel, server = T)
         updateSelectizeInput(session,"EventDataEventEndcol",choices = col_choices, selected = end_preSel, server = T)
@@ -2305,8 +2305,8 @@ server <- function(input, output, session) {
         req(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
         required_inputs <- c(input$EventDataPatientIDcol,input$EventDataEventcol,input$EventDataEventStartcol,input$EventDataEventEndcol)
         EventDataPatientIDcol <- input$EventDataPatientIDcol
-        if (EventDataPatientIDcol == "Single ID (No column needed)") {
-          required_inputs <- required_inputs[which(required_inputs != "Single ID (No column needed)")]
+        if (EventDataPatientIDcol == "Single ID (No column available/needed)") {
+          required_inputs <- required_inputs[which(required_inputs != "Single ID (No column available/needed)")]
           #eventData_nameCol <- "NULL"
         } #else {
           #eventData_nameCol <- eventDataInput_raw[,EventDataPatientIDcol]
@@ -2398,7 +2398,7 @@ server <- function(input, output, session) {
             
             incProgress(0.2, detail = "Formatting event data")
             
-            if (EventDataPatientIDcol == "Single ID (No column needed)") {
+            if (EventDataPatientIDcol == "Single ID (No column available/needed)") {
               eventData_nameCol <- "NULL"
             } else {
               eventData_nameCol <- eventDataInput_raw[,EventDataPatientIDcol]
@@ -2411,14 +2411,6 @@ server <- function(input, output, session) {
                                                EventEnd = eventDataInput_raw[,EventDataEventEndcol],
                                                EventColumn = eventDataInput_raw[,EventDataEventTypecol]
             )
-            #event_data_processed <- data.frame(Name = eventDataInput_raw[,EventDataPatientIDcol],
-            #                                   Event = eventDataInput_raw[,EventDataEventcol],
-            #                                   EventType = eventDataInput_raw[,EventDataEventTypecol],
-            #                                   EventTab = "InputData",
-            #                                   EventStart = eventDataInput_raw[,EventDataEventStartcol],
-            #                                   EventEnd = eventDataInput_raw[,EventDataEventEndcol],
-            #                                   EventColumn = eventDataInput_raw[,EventDataEventTypecol]
-            #)
             if (all(c("EventStart","EventEnd") %in% colnames(event_data_processed))) {
               event_data_processed[,"EventEnd"] <- ifelse(is.na(event_data_processed[,"EventEnd"]),
                                                           event_data_processed[,"EventStart"],
@@ -2464,12 +2456,10 @@ server <- function(input, output, session) {
             event_params[which(event_params$`Event Category` %in% respn_event_types),"Response"] <- TRUE
             
             
-            if (EventDataPatientIDcol == "Single ID (No column needed)") {
-              eventDataInput_raw <- cbind(Name = "NULL",eventDataInput_raw)
-              #eventData_nameCol <- "NULL"
-            } #else {
-              #eventData_nameCol <- eventDataInput_raw[,EventDataPatientIDcol]
-            #}
+            if (EventDataPatientIDcol == "Single ID (No column available/needed)") {
+              eventDataInput_raw <- cbind(ShinyEvents_Name = "NULL",eventDataInput_raw)
+              #eventDataInput_raw <- cbind(Name = "NULL",eventDataInput_raw)
+            }
             wkbk <- list(InputData = eventDataInput_raw)
             
             incProgress(0.2, detail = "Formatting patient selection table")
